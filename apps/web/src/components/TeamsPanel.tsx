@@ -323,10 +323,7 @@ function TeamDetailView({
                   <li key={i.id}>
                     <span>
                       {i.email}
-                      <small>
-                        {' '}
-                        · expira {new Date(i.expiresAt).toLocaleDateString('pt-BR')}
-                      </small>
+                      <small> · expira {new Date(i.expiresAt).toLocaleDateString('pt-BR')}</small>
                     </span>
                     <button className="account-btn danger" onClick={() => revoke(i.id)}>
                       Revogar
@@ -355,8 +352,8 @@ function TeamDetailView({
               </button>
             </form>
             <p className="modal-note">
-              Depois de transferir, o projeto passa a ser da equipe — todos os membros veem e
-              salvam versões.
+              Depois de transferir, o projeto passa a ser da equipe — todos os membros veem e salvam
+              versões.
             </p>
           </>
         )}

@@ -135,7 +135,12 @@ teams.patch('/:id', async (c) => {
          name = COALESCE($2, name),
          university = CASE WHEN $4 THEN $3 ELSE university END
        WHERE id = $1 RETURNING *`,
-      [teamId, parsed.data.name ?? null, parsed.data.university ?? null, 'university' in parsed.data],
+      [
+        teamId,
+        parsed.data.name ?? null,
+        parsed.data.university ?? null,
+        'university' in parsed.data,
+      ],
     )
     await audit(db, {
       actorUserId: sub,
@@ -193,13 +198,15 @@ teams.post('/:id/invites', async (c) => {
   if (result === 'forbidden')
     return problem(c, 403, 'Sem permissão', 'Apenas owner/admin convidam.')
   if (result === 'limit')
-    return problem(c, 403, 'Limite de convites', `Máximo de ${MAX_PENDING_INVITES} convites pendentes.`)
+    return problem(
+      c,
+      403,
+      'Limite de convites',
+      `Máximo de ${MAX_PENDING_INVITES} convites pendentes.`,
+    )
   // Resposta idêntica exista ou não conta com esse e-mail (C9 — sem enumeração).
   // O token só aparece AQUI, uma única vez; no banco fica apenas o hash.
-  return c.json(
-    { id: result.id, email: result.email, expiresAt: result.expires_at, token },
-    201,
-  )
+  return c.json({ id: result.id, email: result.email, expiresAt: result.expires_at, token }, 201)
 })
 
 teams.delete('/:id/invites/:inviteId', async (c) => {
@@ -316,7 +323,12 @@ teams.delete('/:id/members/:userId', async (c) => {
   if (result === 'last-owner')
     return problem(c, 409, 'Última pessoa owner', 'Passe a propriedade a alguém antes de sair.')
   if (result === 'has-projects')
-    return problem(c, 409, 'Equipe possui projetos', 'Transfira ou exclua os projetos antes de sair.')
+    return problem(
+      c,
+      409,
+      'Equipe possui projetos',
+      'Transfira ou exclua os projetos antes de sair.',
+    )
   return c.body(null, 204)
 })
 
@@ -357,8 +369,7 @@ teams.patch('/:id/members/:userId', async (c) => {
     return 'ok' as const
   })
   if (result === 'notfound') return problem(c, 404, 'Membro não encontrado')
-  if (result === 'forbidden')
-    return problem(c, 403, 'Sem permissão', 'Apenas owner troca papéis.')
+  if (result === 'forbidden') return problem(c, 403, 'Sem permissão', 'Apenas owner troca papéis.')
   if (result === 'last-owner')
     return problem(c, 409, 'Última pessoa owner', 'Promova outra pessoa a owner antes.')
   return c.body(null, 204)

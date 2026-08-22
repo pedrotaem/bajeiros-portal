@@ -45,7 +45,10 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
   }
 
   async function accept(by: TestUser, token: string) {
-    return app.request('/api/v1/invites/accept', authed(by, { method: 'POST', body: json({ token }) }))
+    return app.request(
+      '/api/v1/invites/accept',
+      authed(by, { method: 'POST', body: json({ token }) }),
+    )
   }
 
   it('criador vira owner', async () => {
@@ -88,9 +91,10 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
 
   it('convite expirado → 404', async () => {
     const { body } = await invite(ana, caio.email)
-    await admin.query(`UPDATE team_invites SET expires_at = now() - interval '1 day' WHERE id = $1`, [
-      body.id,
-    ])
+    await admin.query(
+      `UPDATE team_invites SET expires_at = now() - interval '1 day' WHERE id = $1`,
+      [body.id],
+    )
     expect((await accept(caio, body.token)).status).toBe(404)
     const nova = await invite(ana, caio.email)
     expect((await accept(caio, nova.body.token)).status).toBe(200)

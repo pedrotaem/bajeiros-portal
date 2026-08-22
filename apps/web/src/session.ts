@@ -76,7 +76,10 @@ if (typeof window !== 'undefined') {
       body: JSON.stringify({ token }),
     })
       .then((team) =>
-        useSession.setState({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` }),
+        useSession.setState({
+          panel: 'teams',
+          inviteNotice: `Você entrou na equipe ${team.name}.`,
+        }),
       )
       .catch(() =>
         useSession.setState({
