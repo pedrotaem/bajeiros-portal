@@ -1,0 +1,18 @@
+{
+  "name": "@bajeiros/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Motor de regras B6 e modelos de domínio da gaiola — puro TypeScript, roda em browser e Node",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.10"
+  }
+}

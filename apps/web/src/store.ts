@@ -7,18 +7,18 @@ import type {
   SteelMaterialRef,
   SteeringMount,
   Vec3,
-} from './model/types'
-import { mirrorId } from './model/types'
-import { templateCage } from './model/template'
-import { DEFAULT_MATERIAL_ID, STEELS, migrateSection } from './model/materials'
-import { sanitizeContinuity } from './model/continuity'
+} from '@bajeiros/core/model/types'
+import { mirrorId } from '@bajeiros/core/model/types'
+import { templateCage } from '@bajeiros/core/model/template'
+import { DEFAULT_MATERIAL_ID, STEELS, migrateSection } from '@bajeiros/core/model/materials'
+import { sanitizeContinuity } from '@bajeiros/core/model/continuity'
 import {
   defaultManikin,
   profileById,
   solveManikin,
   type JointId,
   type ManikinConfig,
-} from './model/manikin'
+} from '@bajeiros/core/model/manikin'
 
 interface Pending {
   type: MemberType

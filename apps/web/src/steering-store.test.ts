@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate, removalImpact } from './b6'
-import { templateCage } from '../model/template'
-import { useStore } from '../store'
-import type { Cage } from '../model/types'
+import { evaluate, removalImpact } from '@bajeiros/core/rules/b6'
+import { templateCage } from '@bajeiros/core/model/template'
+import { useStore } from './store'
+import type { Cage } from '@bajeiros/core/model/types'
 
 const byId = (cage: Cage, id: string) => evaluate(cage).find((r) => r.id === id)
 

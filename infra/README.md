@@ -11,6 +11,8 @@ Stack: S3 privado (OAC) + CloudFront (PriceClass_All) + ACM + Route53 + IAM OIDC
 
 ## Bootstrap (manual, uma única vez)
 
+> ⚠️ **Antes de qualquer apply** (revisão v2, C1/C17): criar AWS Organizations com contas separadas `staging` e `prod` (+ `management`). Distribuição CloudFront não migra entre contas — provisionar já no lugar certo. O bootstrap abaixo (bucket tfstate) e cada env rodam na conta correspondente. Ajuste decorrente pendente nos backends: 1 bucket de state por conta (`bajeiros-tfstate-staging`/`-prod`) e zona Route53 no env `global` da conta prod, com o env staging referenciando a zona via variável (o `terraform_remote_state` atual assume bucket único).
+
 Com credenciais admin (SSO) na conta:
 
 ```bash

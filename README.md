@@ -23,14 +23,16 @@ npm run build      # tsc + vite build → dist/
 
 Node: ver `.nvmrc`.
 
-## Estrutura
+## Estrutura (monorepo npm workspaces)
 
-- `src/model/` — domínio puro (gaiola, materiais, massa, continuidade, juntas, manequim, builder)
-- `src/rules/` — motor de regras B6
-- `src/components/` — UI 3D (Viewport, Inspector, Wizard, RulePanel…)
+- `apps/web/` — SPA (Vite + React + R3F): componentes 3D, store, testes de integração c/ store
+- `packages/core/` — `@bajeiros/core`: motor de regras B6 + modelos de domínio (TS puro, roda em browser e Node)
+- `contracts/` — contratos de dados ODCS (schema + PII/base legal LGPD/retenção)
+- `infra/` — Terraform (S3 + CloudFront + Route53 + ACM + OIDC)
+- `docs/` — planos de produção (v1/v2), revisões das personas, ADRs, threat model, runbook
 - `specs/` — especificações e user stories
-- `infra/` — Terraform (S3 + CloudFront + Route53 + ACM)
-- `docs/` — plano de produção, revisão, runbook
+
+Scripts na raiz: `npm run dev | build | test | lint | typecheck | contracts:check`.
 
 ## Deploy
 

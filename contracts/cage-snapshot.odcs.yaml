@@ -1,0 +1,57 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:cage-snapshot
+name: cage_snapshot
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Versão imutável da gaiola (JSON do editor) + resultado do motor de regras.
+  usage: Histórico/versionamento por projeto; save explícito com conflito otimista (13.3).
+schema:
+  - name: cage_snapshot
+    logicalType: object
+    physicalType: table
+    physicalName: cage_snapshots
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: seq
+        logicalType: integer
+        required: true
+        description: Sequência por projeto (1, 2, 3…); base do lock otimista.
+      - name: cage_json
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: Formato de export atual do editor (packages/core Cage).
+      - name: rules_result
+        logicalType: object
+        physicalType: jsonb
+        required: false
+        description: Resultado do motor B6 no momento do save (validação server-side).
+      - name: saved_by_user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        description: Quem salvou ("quem salvou" na colaboração assíncrona — 14.3).
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: immutability
+    value: append-only; snapshots nunca são editados
+  - property: entitlement
+    value: N snapshots retidos por plano (13.1)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

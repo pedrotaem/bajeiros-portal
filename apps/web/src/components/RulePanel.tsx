@@ -1,4 +1,4 @@
-import type { RuleResult, Status } from '../rules/b6'
+import type { RuleResult, Status } from '@bajeiros/core/rules/b6'
 import { useStore } from '../store'
 
 const BADGE: Record<Status, { label: string; className: string }> = {

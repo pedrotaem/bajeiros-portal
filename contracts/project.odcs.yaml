@@ -1,0 +1,51 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:project
+name: project
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Projeto = um carro (contém gaiola; futuros recursos — suspensão, ergonomia).
+  usage: Organização do trabalho; ownership pessoal (user) OU de equipe (team).
+schema:
+  - name: project
+    logicalType: object
+    physicalType: table
+    physicalName: projects
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: owner_user_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Exatamente um de owner_user_id/owner_team_id (CHECK constraint).
+      - name: owner_team_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+      - name: name
+        logicalType: string
+        required: true
+      - name: description
+        logicalType: string
+        required: false
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: entitlement
+    value: max_projects por plano — checado no backend (fase 15.1)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

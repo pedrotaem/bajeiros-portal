@@ -1,6 +1,8 @@
 # Plano: Portal Bajeiros — do zero à produção
 
-**Data:** 2026-08-22 · **Versão:** 1.0 (rascunho para revisão)
+> **Nota (2026-08-22):** este plano (v1, site estático) segue válido como fundação e está executado no repo. A evolução p/ produto SaaS (auth, equipes, planos pagos, ODCS) está em `plano-producao-v2.md`, que estende este documento.
+
+**Data:** 2026-08-22 · **Versão:** 1.1 (fundação executada)
 **Stack alvo:** GitHub + GitHub Actions + AWS
 **Natureza do app:** SPA 100% estática (Vite + React + react-three-fiber). Sem backend, sem banco, sem coleta de dados na fase 1. Todo o processamento (motor de regras B6) roda no browser.
 
@@ -10,13 +12,13 @@ Essa natureza estática define a arquitetura: **S3 privado + CloudFront** — su
 
 ## Fase 0 — Pré-requisitos (manual, fora do repo)
 
-| #   | Passo                        | Detalhe                                                                                                                                                                                                                                                                              |
-| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0.1 | Conta AWS dedicada           | Criar conta nova (ou usar existente) com **MFA no root**, root sem access keys. Criar usuário/role admin via IAM Identity Center (SSO) — nunca operar como root.                                                                                                                     |
-| 0.2 | Billing guardrails           | **AWS Budgets** (actual + forecast) como mecanismo primário: budget de US$ 20/mês com alertas em 50/80/100% (actual) + alerta forecast. Ativar Cost Explorer.                                                                                                                        |
-| 0.3 | Registrar domínio            | `bajeiros.com.br` no Registro.br (~R$ 40/ano). Opcional: `bajeiros.com` como redirect.                                                                                                                                                                                               |
-| 0.4 | Conta GitHub                 | Repo em conta pessoal (org opcional depois). Ativar 2FA.                                                                                                                                                                                                                             |
-| 0.5 | Decidir visibilidade do repo | **Privado** no lançamento (CodeQL e secret scanning push protection são grátis em público; em privado exigem Advanced Security — mitigação: rodar CodeQL via workflow público equivalente ou abrir o repo depois). Recomendação: **começar privado**, avaliar open-source na fase 2. |
+| #   | Passo                        | Detalhe                                                                                                                                                                                                                                                                                   |
+| --- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1 | Conta AWS dedicada           | **Atualizado pela revisão v2 (C1/C17):** criar AWS Organizations com contas separadas `staging`/`prod` (+ `management`) ANTES do primeiro apply — CloudFront não migra entre contas. **MFA no root**, root sem access keys, admin via IAM Identity Center (SSO) — nunca operar como root. |
+| 0.2 | Billing guardrails           | **AWS Budgets** (actual + forecast) como mecanismo primário: budget de US$ 20/mês com alertas em 50/80/100% (actual) + alerta forecast. Ativar Cost Explorer.                                                                                                                             |
+| 0.3 | Registrar domínio            | ✅ **Feito** — `bajeiros.com.br` registrado no Registro.br. Opcional: `bajeiros.com` como redirect.                                                                                                                                                                                        |
+| 0.4 | Conta GitHub                 | Repo em conta pessoal (org opcional depois). Ativar 2FA.                                                                                                                                                                                                                                  |
+| 0.5 | Decidir visibilidade do repo | **Privado** no lançamento (CodeQL e secret scanning push protection são grátis em público; em privado exigem Advanced Security — mitigação: rodar CodeQL via workflow público equivalente ou abrir o repo depois). Recomendação: **começar privado**, avaliar open-source na fase 2.      |
 
 ## Fase 1 — Higiene do repositório
 

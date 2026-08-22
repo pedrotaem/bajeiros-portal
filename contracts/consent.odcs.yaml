@@ -1,0 +1,67 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:consent
+name: consent
+version: 1.0.0
+status: draft
+domain: identity
+dataProduct: bajeiros-portal
+description:
+  purpose: >
+    Evidência de consentimento APENAS para finalidades opcionais (marketing,
+    analytics). A conta em si usa execução de contrato (art. 7º, V) — não gera
+    registro aqui (revisão v2, C2).
+  usage: Prova de conformidade LGPD; consulta em auditoria e em revogação.
+schema:
+  - name: consent
+    logicalType: object
+    physicalType: table
+    physicalName: consents
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        description: FK → users.id
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: obrigacao-legal
+          - property: retention
+            value: 5 anos (prova de conformidade)
+      - name: purpose
+        logicalType: string
+        required: true
+        description: Finalidade opcional consentida (enum — ex. marketing_email, analytics).
+      - name: term_version
+        logicalType: string
+        required: true
+        description: Versão do termo apresentado.
+      - name: granted
+        logicalType: boolean
+        required: true
+        description: true = concedido; false = revogado (evento novo, nunca update).
+      - name: ip_address
+        logicalType: string
+        required: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: obrigacao-legal
+          - property: retention
+            value: 5 anos
+      - name: occurred_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: immutability
+    value: append-only — revogação é novo registro, não update/delete
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

@@ -1,0 +1,69 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:user
+name: user
+version: 1.0.0
+status: draft
+domain: identity
+dataProduct: bajeiros-portal
+description:
+  purpose: Conta e perfil do usuário (estudante). Coleta mínima — LGPD minimização.
+  usage: Autenticação, identificação em equipes/projetos, comunicação transacional.
+schema:
+  - name: user
+    logicalType: object
+    physicalType: table
+    physicalName: users
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+        description: Identificador interno; espelha o `sub` do Cognito.
+      - name: email
+        logicalType: string
+        required: true
+        unique: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: conta ativa + 30d pós-exclusão (purge de backups)
+      - name: display_name
+        logicalType: string
+        required: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: conta ativa + 30d pós-exclusão
+      - name: university
+        logicalType: string
+        required: false
+        classification: pii
+        description: Opcional; declarada pelo usuário.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: conta ativa + 30d pós-exclusão
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: deleted_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        description: Soft delete; purge definitivo em 30d (fase 12.3).
+customProperties:
+  - property: tenancy
+    value: global (usuário é raiz de tenancy pessoal)
+  - property: subjectRights
+    value: export JSON, exclusão, retificação — fase 12.3
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

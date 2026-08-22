@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
-import { buildCage, defaultParams, type WizardParams } from '../model/builder'
-import type { Cage } from '../model/types'
+import { buildCage, defaultParams, type WizardParams } from '@bajeiros/core/model/builder'
+import type { Cage } from '@bajeiros/core/model/types'
 
 interface Field {
   key: keyof WizardParams

@@ -1,13 +1,13 @@
 import * as THREE from 'three'
-import type { Cage } from '../model/types'
+import type { Cage } from '@bajeiros/core/model/types'
 import {
   defaultManikin,
   manikinReadings,
   profileById,
   solveManikin,
   type LandmarkId,
-} from '../model/manikin'
-import type { Vec3 } from '../model/types'
+} from '@bajeiros/core/model/manikin'
+import type { Vec3 } from '@bajeiros/core/model/types'
 
 const S = 0.001
 

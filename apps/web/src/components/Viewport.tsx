@@ -3,12 +3,12 @@ import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Grid, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store'
-import type { RuleResult } from '../rules/b6'
-import { isNamedIn, anchorLabel, PRIMARY_TYPES } from '../model/types'
+import type { RuleResult } from '@bajeiros/core/rules/b6'
+import { isNamedIn, anchorLabel, PRIMARY_TYPES } from '@bajeiros/core/model/types'
 import { Geraldao } from './Geraldao'
-import { chainOf } from '../model/continuity'
+import { chainOf } from '@bajeiros/core/model/continuity'
 import { Manikin } from './Manikin'
-import { defaultManikin, profileById, solveManikin } from '../model/manikin'
+import { defaultManikin, profileById, solveManikin } from '@bajeiros/core/model/manikin'
 
 const S = 0.001 // mm → m na cena
 const DRAG_THRESHOLD = 0.005 // 5 mm em cena: distingue clique de arrasto

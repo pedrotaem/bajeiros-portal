@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { Vec3 } from '../model/types'
+import type { Vec3 } from '@bajeiros/core/model/types'
 
 const S = 0.001 // mm → m
 const COLOR = '#7da2c4' // cinza-azulado translúcido — não compete com status

@@ -1,0 +1,67 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:audit-event
+name: audit_event
+version: 1.0.0
+status: draft
+domain: platform
+dataProduct: bajeiros-portal
+description:
+  purpose: Trilha de auditoria — quem fez o quê, incluindo acesso/alteração de dado pessoal.
+  usage: Resposta a incidentes (16.5), evidência LGPD, investigação de abuso.
+schema:
+  - name: audit_event
+    logicalType: object
+    physicalType: table
+    physicalName: audit_events
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: actor_user_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Nulo p/ eventos de sistema (webhook, job).
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: 1 ano
+      - name: action
+        logicalType: string
+        required: true
+        description: Verbo namespaced (ex. project.create, consent.revoke, user.export).
+      - name: resource_type
+        logicalType: string
+        required: true
+      - name: resource_id
+        logicalType: string
+        required: false
+      - name: ip_address
+        logicalType: string
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: 1 ano
+      - name: occurred_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: metadata
+        logicalType: object
+        physicalType: jsonb
+        required: false
+        description: Contexto adicional — PROIBIDO conter dado pessoal em claro.
+customProperties:
+  - property: immutability
+    value: append-only; retenção 1 ano com purge automático
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

@@ -1,0 +1,66 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:subscription
+name: subscription
+version: 1.0.0
+status: draft
+domain: billing
+dataProduct: bajeiros-portal
+description:
+  purpose: Assinatura/plano do usuário ou equipe. NUNCA dados de cartão (PCI SAQ-A).
+  usage: Gate de entitlements; sincronizada por webhook do provedor (assinado, dedupe por event.id — C10).
+schema:
+  - name: subscription
+    logicalType: object
+    physicalType: table
+    physicalName: subscriptions
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: owner_user_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Exatamente um de owner_user_id/owner_team_id.
+      - name: owner_team_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+      - name: plan
+        logicalType: string
+        required: true
+        description: free | team | pro (enum evolui por migração)
+      - name: status
+        logicalType: string
+        required: true
+        description: active | past_due | canceled
+      - name: provider_customer_id
+        logicalType: string
+        required: false
+        classification: pii
+        description: Referência opaca no provedor de billing (ex. Stripe customer id).
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 5 anos (obrigação fiscal)
+      - name: provider_subscription_id
+        logicalType: string
+        required: false
+      - name: current_period_end
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: downgrade
+    value: nunca apagar dados — excedente vira read-only (15.4)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

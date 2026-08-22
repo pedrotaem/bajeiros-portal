@@ -8,11 +8,11 @@ import {
   type Anchor,
   type MemberType,
   type TubeSection,
-} from '../model/types'
-import { STEELS, materialOf } from '../model/materials'
-import { estimateMass, removalMassDelta, weldPerJointG } from '../model/mass'
-import { chainOf, continuityAt } from '../model/continuity'
-import { copeSvg, detectJoints, totalWeldLength } from '../model/joints'
+} from '@bajeiros/core/model/types'
+import { STEELS, materialOf } from '@bajeiros/core/model/materials'
+import { estimateMass, removalMassDelta, weldPerJointG } from '@bajeiros/core/model/mass'
+import { chainOf, continuityAt } from '@bajeiros/core/model/continuity'
+import { copeSvg, detectJoints, totalWeldLength } from '@bajeiros/core/model/joints'
 import {
   JOINT_RANGES,
   PROFILES,
@@ -21,8 +21,8 @@ import {
   profileById,
   solveManikin,
   type JointId,
-} from '../model/manikin'
-import { dist, distPointToSegment, sub, norm, dot } from '../rules/geometry'
+} from '@bajeiros/core/model/manikin'
+import { dist, distPointToSegment, sub, norm, dot } from '@bajeiros/core/rules/geometry'
 
 function NumField({
   label,

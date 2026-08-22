@@ -7,11 +7,11 @@ import {
   physicalChains,
   sanitizeContinuity,
   spliceCandidates,
-} from './continuity'
-import { countJoints } from './mass'
-import { templateCage } from './template'
-import { useStore } from '../store'
-import type { Cage } from './types'
+} from '@bajeiros/core/model/continuity'
+import { countJoints } from '@bajeiros/core/model/mass'
+import { templateCage } from '@bajeiros/core/model/template'
+import { useStore } from './store'
+import type { Cage } from '@bajeiros/core/model/types'
 
 function lCage(): Cage {
   return {

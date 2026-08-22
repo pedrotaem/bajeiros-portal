@@ -1,0 +1,96 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team
+name: team
+version: 1.0.0
+status: draft
+domain: collaboration
+dataProduct: bajeiros-portal
+description:
+  purpose: Equipe de universidade; unidade de tenancy compartilhada (RLS por team_id).
+  usage: Compartilhamento de projetos, RBAC (owner/admin/member), convites.
+schema:
+  - name: team
+    logicalType: object
+    physicalType: table
+    physicalName: teams
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: name
+        logicalType: string
+        required: true
+      - name: university
+        logicalType: string
+        required: false
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: team_member
+    logicalType: object
+    physicalType: table
+    physicalName: team_members
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da associação; remoção ao sair da equipe
+      - name: role
+        logicalType: string
+        required: true
+        description: owner | admin | member
+      - name: joined_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: team_invite
+    logicalType: object
+    physicalType: table
+    physicalName: team_invites
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: email
+        logicalType: string
+        required: true
+        classification: pii
+        description: Resposta idêntica exista ou não conta (sem enumeração — C9).
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: expira em 7d; purge em 30d
+      - name: token_hash
+        logicalType: string
+        required: true
+        description: Hash do token de convite (nunca o token em claro).
+      - name: expires_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+team:
+  - username: pedrotaem@gmail.com
+    role: owner
