@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.local
+.env
+.env.*
+.DS_Store
+*.log
+.vite/
+infra/**/.terraform/
+infra/**/*.tfstate*
+infra/**/*.tfvars
+!infra/**/example.tfvars
+infra/**/.terraform.lock.hcl.backup
+crash.log

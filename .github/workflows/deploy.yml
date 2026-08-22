@@ -1,0 +1,109 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build:
+    name: Build único
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+
+  deploy-staging:
+    name: Deploy staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.bajeiros.com.br
+    permissions:
+      contents: read
+      id-token: write # OIDC
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-${{ github.sha }}
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync S3 (assets primeiro, index por último)
+        run: |
+          aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \
+            --exclude index.html \
+            --cache-control "public,max-age=31536000,immutable" --delete
+          aws s3 cp dist/index.html "s3://${{ vars.SITE_BUCKET }}/index.html" \
+            --cache-control "no-cache"
+      - name: Invalidation mínima
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
+            --paths "/index.html" "/"
+      - name: Smoke test
+        run: |
+          sleep 15
+          body=$(curl -fsS --retry 5 --retry-delay 10 "https://staging.bajeiros.com.br/")
+          echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
+
+  deploy-production:
+    name: Deploy produção (gated)
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://bajeiros.com.br
+    permissions:
+      contents: read
+      id-token: write # OIDC
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-${{ github.sha }} # mesmo artefato do staging — sem rebuild
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync S3 (assets primeiro, index por último)
+        run: |
+          aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \
+            --exclude index.html \
+            --cache-control "public,max-age=31536000,immutable" --delete
+          aws s3 cp dist/index.html "s3://${{ vars.SITE_BUCKET }}/index.html" \
+            --cache-control "no-cache"
+      - name: Invalidation mínima
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
+            --paths "/index.html" "/"
+      - name: Smoke test
+        run: |
+          sleep 15
+          body=$(curl -fsS --retry 5 --retry-delay 10 "https://bajeiros.com.br/")
+          echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
