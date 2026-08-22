@@ -20,7 +20,7 @@ provider "aws" {
 
 variable "github_repo" {
   type    = string
-  default = "CHANGE_ME/bajeiros-portal" # org/repo — ajustar após criar o repo
+  default = "pedrotaem/bajeiros-portal"
 }
 
 data "terraform_remote_state" "global" {

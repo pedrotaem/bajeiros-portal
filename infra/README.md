@@ -30,8 +30,8 @@ Lock de state: nativo do S3 (`use_lockfile = true`, Terraform ≥ 1.10) — sem 
 ```bash
 cd infra/envs/global  && terraform init && terraform apply
 # anotar outputs: name_servers (→ Registro.br), oidc_provider_arn
-cd ../staging         && terraform init && terraform apply -var github_repo=SEU_USER/bajeiros-portal
-cd ../prod            && terraform init && terraform apply -var github_repo=SEU_USER/bajeiros-portal
+cd ../staging         && terraform init && terraform apply
+cd ../prod            && terraform init && terraform apply
 ```
 
 Depois de cada env: copiar outputs (`bucket_name`, `distribution_id`, `deploy_role_arn`) p/ as **variables dos environments** `staging`/`production` no GitHub (`SITE_BUCKET`, `CF_DISTRIBUTION_ID`, `AWS_DEPLOY_ROLE_ARN`).
