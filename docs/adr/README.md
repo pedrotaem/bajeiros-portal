@@ -11,3 +11,4 @@ Formato: contexto → decisão → consequências. Status: `aceito` | `proposto`
 | [005](005-monorepo-workspaces.md)    | Monorepo npm workspaces                           | aceito |
 | [006](006-odcs-escopo.md)            | ODCS: documentação viva + gate de CI, sem codegen | aceito |
 | [007](007-rds-data-api.md)           | RDS Data API (Lambda sem VPC)                     | aceito |
+| [008](008-regiao-dados.md)           | Região dos dados: sa-east-1 (voto de minerva)     | aceito |
