@@ -1,0 +1,171 @@
+import { Hono } from 'hono'
+import { z } from 'zod'
+import { withUser } from '../../db'
+import { problem } from '../../problem'
+import { audit, clientIp } from '../../audit'
+import type { AuthEnv } from '../../auth/middleware'
+
+export const identity = new Hono<AuthEnv>()
+
+const CONSENT_PURPOSES = ['marketing_email', 'analytics'] as const
+
+// Bootstrap idempotente: cria (ou retorna) o usuário a partir dos claims do token.
+// Base legal: execução de contrato (art. 7º, V) — não gera registro de consentimento.
+identity.post('/', async (c) => {
+  const { sub, email, name } = c.get('auth')
+  const user = await withUser(sub, async (db) => {
+    const existing = await db.query('SELECT * FROM users WHERE id = $1', [sub])
+    if (existing.rowCount) return existing.rows[0]
+    const created = await db.query(
+      `INSERT INTO users (id, email, display_name) VALUES ($1, $2, $3) RETURNING *`,
+      [sub, email, name],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'user.bootstrap',
+      resourceType: 'user',
+      resourceId: sub,
+      ip: clientIp(c.req.raw.headers),
+    })
+    return created.rows[0]
+  })
+  if (user.deleted_at) return problem(c, 410, 'Conta excluída', 'Exclusão em processamento.')
+  return c.json(toUser(user))
+})
+
+identity.get('/', async (c) => {
+  const { sub } = c.get('auth')
+  const row = await withUser(
+    sub,
+    async (db) =>
+      (await db.query('SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL', [sub])).rows[0],
+  )
+  if (!row) return problem(c, 404, 'Usuário não cadastrado', 'Chame POST /api/v1/me primeiro.')
+  return c.json(toUser(row))
+})
+
+const patchBody = z.object({
+  displayName: z.string().min(1).max(120).optional(),
+  university: z.string().max(200).nullable().optional(),
+})
+
+identity.patch('/', async (c) => {
+  const parsed = patchBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const row = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `UPDATE users SET
+         display_name = COALESCE($2, display_name),
+         university   = CASE WHEN $4 THEN $3 ELSE university END
+       WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
+      [
+        sub,
+        parsed.data.displayName ?? null,
+        parsed.data.university ?? null,
+        'university' in parsed.data,
+      ],
+    )
+    return r.rows[0]
+  })
+  if (!row) return problem(c, 404, 'Usuário não cadastrado')
+  return c.json(toUser(row))
+})
+
+// Direito de exclusão (LGPD, fase 12.3): soft delete agora, purge em 30d (job futuro).
+identity.delete('/', async (c) => {
+  const { sub } = c.get('auth')
+  await withUser(sub, async (db) => {
+    await db.query('UPDATE users SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL', [
+      sub,
+    ])
+    await audit(db, {
+      actorUserId: sub,
+      action: 'user.delete',
+      resourceType: 'user',
+      resourceId: sub,
+      ip: clientIp(c.req.raw.headers),
+    })
+  })
+  return c.body(null, 204)
+})
+
+// Direito de portabilidade: tudo que a RLS deixa este usuário ver.
+identity.get('/export', async (c) => {
+  const { sub } = c.get('auth')
+  const data = await withUser(sub, async (db) => {
+    const [user, consents, projects, snapshots, events] = await Promise.all([
+      db.query('SELECT * FROM users WHERE id = $1', [sub]),
+      db.query('SELECT * FROM consents ORDER BY occurred_at', []),
+      db.query('SELECT * FROM projects ORDER BY created_at', []),
+      db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
+      db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
+    ])
+    await audit(db, {
+      actorUserId: sub,
+      action: 'user.export',
+      resourceType: 'user',
+      resourceId: sub,
+      ip: clientIp(c.req.raw.headers),
+    })
+    return {
+      exportedAt: new Date().toISOString(),
+      user: user.rows[0] ?? null,
+      consents: consents.rows,
+      projects: projects.rows,
+      cageSnapshots: snapshots.rows,
+      auditEvents: events.rows,
+    }
+  })
+  return c.json(data)
+})
+
+const consentBody = z.object({
+  purpose: z.enum(CONSENT_PURPOSES),
+  granted: z.boolean(),
+  termVersion: z.string().min(1),
+})
+
+// Append-only: revogação é um novo registro granted=false (contrato consent).
+identity.post('/consents', async (c) => {
+  const parsed = consentBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const ip = clientIp(c.req.raw.headers) ?? '0.0.0.0'
+  const row = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `INSERT INTO consents (user_id, purpose, term_version, granted, ip_address)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [sub, parsed.data.purpose, parsed.data.termVersion, parsed.data.granted, ip],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: parsed.data.granted ? 'consent.grant' : 'consent.revoke',
+      resourceType: 'consent',
+      resourceId: r.rows[0].id,
+      ip,
+      metadata: { purpose: parsed.data.purpose, termVersion: parsed.data.termVersion },
+    })
+    return r.rows[0]
+  })
+  return c.json(row, 201)
+})
+
+identity.get('/consents', async (c) => {
+  const { sub } = c.get('auth')
+  const rows = await withUser(
+    sub,
+    async (db) => (await db.query('SELECT * FROM consents ORDER BY occurred_at DESC', [])).rows,
+  )
+  return c.json(rows)
+})
+
+function toUser(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    university: row.university,
+    createdAt: row.created_at,
+  }
+}
