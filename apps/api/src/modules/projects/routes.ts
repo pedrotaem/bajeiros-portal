@@ -123,6 +123,45 @@ projects.delete('/:id', async (c) => {
   return c.body(null, 204)
 })
 
+// Transferir projeto pessoal p/ uma equipe (fase 14) — todos os membros passam a acessar.
+const transferBody = z.object({ teamId: z.string().uuid() })
+
+projects.post('/:id/transfer', async (c) => {
+  const parsed = transferBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const projectId = c.req.param('id')
+  const result = await withUser(sub, async (db) => {
+    const proj = await db.query('SELECT owner_user_id FROM projects WHERE id = $1', [projectId])
+    if (!proj.rowCount) return 'notfound' as const
+    if (proj.rows[0].owner_user_id !== sub) return 'not-owner' as const
+    // requisitante precisa ser membro da equipe destino (RLS esconde equipes alheias → 404 uniforme)
+    const member = await db.query(
+      'SELECT 1 FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [parsed.data.teamId, sub],
+    )
+    if (!member.rowCount) return 'no-team' as const
+    const r = await db.query(
+      `UPDATE projects SET owner_user_id = NULL, owner_team_id = $2 WHERE id = $1 RETURNING *`,
+      [projectId, parsed.data.teamId],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'project.transfer',
+      resourceType: 'project',
+      resourceId: projectId,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { teamId: parsed.data.teamId },
+    })
+    return r.rows[0]
+  })
+  if (result === 'notfound') return problem(c, 404, 'Projeto não encontrado')
+  if (result === 'no-team') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'not-owner')
+    return problem(c, 403, 'Sem permissão', 'Só quem é dono do projeto pode transferi-lo.')
+  return c.json(toProject(result))
+})
+
 const snapshotBody = z.object({
   cage: z.record(z.string(), z.unknown()),
   // lock otimista: cliente manda o último seq que conhece; conflito → 409

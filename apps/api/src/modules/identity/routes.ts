@@ -94,12 +94,18 @@ identity.delete('/', async (c) => {
 identity.get('/export', async (c) => {
   const { sub } = c.get('auth')
   const data = await withUser(sub, async (db) => {
-    const [user, consents, projects, snapshots, events] = await Promise.all([
+    const [user, consents, projects, snapshots, events, memberships] = await Promise.all([
       db.query('SELECT * FROM users WHERE id = $1', [sub]),
       db.query('SELECT * FROM consents ORDER BY occurred_at', []),
       db.query('SELECT * FROM projects ORDER BY created_at', []),
       db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
       db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
+      db.query(
+        `SELECT t.id, t.name, t.university, m.role, m.joined_at
+         FROM team_members m JOIN teams t ON t.id = m.team_id
+         WHERE m.user_id = $1 ORDER BY m.joined_at`,
+        [sub],
+      ),
     ])
     await audit(db, {
       actorUserId: sub,
@@ -115,6 +121,7 @@ identity.get('/export', async (c) => {
       projects: projects.rows,
       cageSnapshots: snapshots.rows,
       auditEvents: events.rows,
+      teamMemberships: memberships.rows,
     }
   })
   return c.json(data)

@@ -32,19 +32,60 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | null
+export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
 
 interface SessionState {
   token: string | null
   user: UserInfo | null
   currentProject: CurrentProject | null
   panel: PanelId
+  inviteToken: string | null
+  inviteNotice: string | null
   setPanel: (p: PanelId) => void
   setCurrentProject: (p: CurrentProject | null) => void
+  clearInviteNotice: () => void
   login: (email: string, name: string) => Promise<void>
   logout: () => void
   api: <T = unknown>(path: string, init?: RequestInit) => Promise<T>
   setUser: (u: UserInfo | null) => void
+}
+
+// Link copiável de convite: https://…/#convite=TOKEN — capturado no load e
+// consumido logo após o login (o token some da URL p/ não vazar em histórico/refer[r]er).
+function readInviteFromUrl(): string | null {
+  if (typeof window === 'undefined') return null
+  const m = window.location.hash.match(/convite=([A-Za-z0-9_-]{20,200})/)
+  if (!m) return null
+  history.replaceState(null, '', window.location.pathname + window.location.search)
+  return m[1]
+}
+const initialInvite = readInviteFromUrl()
+
+// Link aberto numa aba já carregada (só o hash muda, sem reload): captura também.
+if (typeof window !== 'undefined') {
+  window.addEventListener('hashchange', () => {
+    const token = readInviteFromUrl()
+    if (!token) return
+    const s = useSession.getState()
+    if (!s.user) {
+      useSession.setState({ inviteToken: token, panel: 'login' })
+      return
+    }
+    s.api<{ name: string }>('/api/v1/invites/accept', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    })
+      .then((team) =>
+        useSession.setState({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` }),
+      )
+      .catch(() =>
+        useSession.setState({
+          panel: 'teams',
+          inviteNotice:
+            'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
+        }),
+      )
+  })
 }
 
 const DEV_SUBS_KEY = 'bajeiros:dev-subs'
@@ -83,7 +124,10 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   currentProject: null,
-  panel: null,
+  panel: initialInvite ? 'login' : null,
+  inviteToken: initialInvite,
+  inviteNotice: null,
+  clearInviteNotice: () => set({ inviteNotice: null }),
   setPanel: (panel) => set({ panel }),
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
@@ -117,6 +161,25 @@ export const useSession = create<SessionState>((set, get) => ({
     set({ token: issued.token })
     const user = await get().api<UserInfo>('/api/v1/me', { method: 'POST' })
     set({ user, panel: null })
+
+    // convite pendente na URL? aceita agora, já autenticado
+    const invite = get().inviteToken
+    if (invite) {
+      set({ inviteToken: null })
+      try {
+        const team = await get().api<{ name: string }>('/api/v1/invites/accept', {
+          method: 'POST',
+          body: JSON.stringify({ token: invite }),
+        })
+        set({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` })
+      } catch {
+        set({
+          panel: 'teams',
+          inviteNotice:
+            'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
+        })
+      }
+    }
   },
 
   logout: () => set({ token: null, user: null, currentProject: null, panel: null }),
