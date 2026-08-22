@@ -9,6 +9,7 @@ Editor 3D de nós e membros (Vite + React + react-three-fiber), motor de ~40 reg
 - Ferramenta **educacional**. **Não substitui** a inspeção técnica oficial da competição.
 - Projeto comunitário **sem vínculo com a SAE** ou com organizadores de competição.
 - As verificações são **paráfrases interpretativas** do regulamento — o texto oficial do RATBSB prevalece sempre. O texto do regulamento **não** é reproduzido neste repositório.
+- Código-fonte público para transparência; **todos os direitos reservados** (sem licença de reuso até definição formal de LICENSE).
 
 ## Desenvolvimento
 

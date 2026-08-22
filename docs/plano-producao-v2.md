@@ -37,7 +37,7 @@ Browser (SPA React) ── CloudFront ──► S3 (frontend estático)      [j�
 
 **Decisão A2.3 — Cognito p/ identidade**: e-mail+senha e social login, MFA opcional, tokens OIDC validados no API GW (JWT authorizer). Customização de UI limitada — aceita; telas próprias via SDK.
 
-**Decisão A2.4 — Billing: Stripe** (checkout hospedado, assinaturas, webhooks; suporta Pix/boleto via configuração BR). _Alternativa BR-first:_ Mercado Pago/Pagar.me. Nunca tocar dado de cartão (SAQ-A). **Personas: opinar.**
+**Decisão A2.4 — Billing: Stripe** — **decidido pelo product owner (ADR-004)**: conta Stripe já existente; modelo = Pix por usuário/mês em valor simbólico. Atenção: Pix recorrente exige `send_invoice` por ciclo ou Pix Automático (verificar suporte Stripe BR na fase 15). Nunca tocar dado de cartão (SAQ-A).
 
 **Decisão A2.5 — Monorepo npm workspaces:**
 
@@ -173,4 +173,4 @@ Motor de regras roda no browser (grátis, offline) E no backend (validação ser
 7. ~~18+ na v1~~ **Resolvido (C8):** 18+ na v1 (art. 14 LGPD — consentimento parental p/ menores é complexidade indevida agora); reavaliar no M2.
 8. **Colaboração assíncrona (não realtime) na v1** — expectativa de usuário vs custo/complexidade CRDT.
 9. ~~VPC p/ Lambda+Aurora~~ **Resolvido (C4):** RDS Data API como padrão (Lambda sem VPC, sem NAT, IAM auth); fallback Lambda-em-VPC + endpoints documentado; verificar engine/região no apply.
-10. **Tudo em `us-east-1`** (v1) vs `sa-east-1` p/ dados (latência BR, residência de dados; CloudFront/ACM continuam us-east-1).
+10. ~~Tudo em us-east-1~~ **Resolvido (ADR-008):** camada de dados/API em **sa-east-1** (voto de minerva da Segurança — residência LGPD elimina obrigação de transferência internacional; latência BR ~5–30 ms vs ~140 ms); CloudFront/ACM continuam us-east-1; condição: verificar Data API + 0 ACU em sa-east-1 na fase 11.
