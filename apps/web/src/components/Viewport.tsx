@@ -194,7 +194,7 @@ function Scene({ results, removalMap }: Props) {
                 color={sel ? '#3b82f6' : pending ? '#f3a712' : named ? '#d8dee5' : '#6b7683'}
               />
             </mesh>
-            <Html distanceFactor={4} style={{ pointerEvents: 'none' }}>
+            <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
               <div className={named ? 'node-label' : 'node-label free'}>{id}</div>
             </Html>
           </group>
@@ -235,7 +235,7 @@ function Scene({ results, removalMap }: Props) {
               />
             </mesh>
             {sel && (
-              <Html distanceFactor={4} style={{ pointerEvents: 'none' }}>
+              <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
                 <div className="node-label anchor">{anchorLabel(a)}</div>
               </Html>
             )}
@@ -267,7 +267,7 @@ function Scene({ results, removalMap }: Props) {
               <meshStandardMaterial color={sel ? '#3b82f6' : '#22d3ee'} />
             </mesh>
             {sel && (
-              <Html distanceFactor={4} style={{ pointerEvents: 'none' }}>
+              <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
                 <div className="node-label anchor">volante · {pt.id}</div>
               </Html>
             )}
