@@ -57,3 +57,6 @@ graph LR
 - **DF-7 — Juntas/boca de lobo:** detecção e classificação de juntas (T/Y/K/topo/
   cruzamento), comprimento da linha de contato de solda e gabarito de corte (SVG 1:1)
   por extremidade.
+- **DF-8 — Assistente de Regras:** chat de IA em linguagem natural sobre o regulamento
+  completo (não só B6), com citações seção+página, via **Bajeiros AI Gateway** (repo
+  separado, spec própria); revisado em `docs/revisao-assistente-ia.md`.
