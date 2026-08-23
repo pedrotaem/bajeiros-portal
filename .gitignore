@@ -14,3 +14,6 @@ infra/**/*.tfvars
 !infra/**/example.tfvars
 infra/**/.terraform.lock.hcl.backup
 crash.log
+
+# handoff de sessão é nota de trabalho local (contém detalhes operacionais) — fora do repo público
+docs/handoff-sessao.md
