@@ -1,5 +1,6 @@
 import type { RuleResult, Status } from '@bajeiros/core/rules/b6'
 import { useStore } from '../store'
+import { askAssistant } from './AssistantPanel'
 
 const BADGE: Record<Status, { label: string; className: string }> = {
   pass: { label: 'OK', className: 'badge pass' },
@@ -44,6 +45,24 @@ export function RulePanel({ results }: { results: RuleResult[] }) {
               </div>
             )}
             {r.note && <div className="rule-note">{r.note}</div>}
+            {r.status !== 'pass' && (
+              <button
+                className="rule-ask"
+                title="Abrir o Assistente de Regras com esta regra como contexto"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  askAssistant(
+                    `Sobre a regra ${r.id} (${r.title}): meu projeto está com status "${r.status}"` +
+                      (r.measured ? `, medido: ${r.measured}` : '') +
+                      (r.limit ? `, limite: ${r.limit}` : '') +
+                      '. O que essa regra exige e como posso corrigir?',
+                    { ruleId: r.id, status: r.status },
+                  )
+                }}
+              >
+                perguntar ao assistente
+              </button>
+            )}
           </li>
         ))}
       </ul>

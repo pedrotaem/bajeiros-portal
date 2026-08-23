@@ -33,7 +33,7 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | 'admin' | null
+export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | 'admin' | 'assistant' | null
 
 // DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
 export function track(page: string) {

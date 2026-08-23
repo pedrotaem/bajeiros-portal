@@ -7,6 +7,7 @@ import { identity } from './modules/identity/routes'
 import { projects } from './modules/projects/routes'
 import { teams, invites } from './modules/teams/routes'
 import { admin } from './modules/admin/routes'
+import { assistant } from './modules/assistant/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -22,6 +23,7 @@ app.route('/api/v1/projects', projects)
 app.route('/api/v1/teams', teams)
 app.route('/api/v1/invites', invites)
 app.route('/api/v1/activity', activity)
+app.route('/api/v1/assistant', assistant)
 app.route('/api/v1/admin', admin)
 
 app.notFound((c) => problem(c, 404, 'Rota não encontrada'))

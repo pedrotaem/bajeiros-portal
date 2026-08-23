@@ -69,6 +69,9 @@ export function AccountMenu() {
       <button className="account-btn" onClick={() => setPanel('projects')}>
         Projetos
       </button>
+      <button className="account-btn" onClick={() => setPanel('assistant')}>
+        Assistente
+      </button>
       <button className="account-btn" onClick={() => setPanel('teams')}>
         Equipes
       </button>
