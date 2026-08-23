@@ -9,7 +9,7 @@ import { Wizard } from './components/Wizard'
 import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
 import { Landing } from './components/Landing'
-import { useSession } from './session'
+import { useSession, track } from './session'
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -65,6 +65,12 @@ export default function App() {
   // Landing é a página inicial: todo acesso à raiz cai nela (estudo UX, R1 v2);
   // link de convite (#convite=) pula direto p/ o login
   const [showLanding, setShowLanding] = useState(() => !useSession.getState().inviteToken)
+
+  // DF-9: pageview (só p/ logado; anônimo não é rastreado)
+  const sessionUser = useSession((s) => s.user)
+  useEffect(() => {
+    if (sessionUser) track(showLanding ? 'landing' : 'editor')
+  }, [showLanding, sessionUser])
 
   useEffect(() => {
     if (selectedMember || selectedNode) setRightOpen(true)

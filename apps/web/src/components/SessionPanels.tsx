@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useSession, ApiError, type UserInfo } from '../session'
 import { useStore } from '../store'
 import { TeamsPanel } from './TeamsPanel'
+import { AdminPanel } from './AdminPanel'
 import type { Cage } from '@bajeiros/core/model/types'
 
 // Modais de sessão: login (dev), perfil/privacidade (LGPD), projetos/versões.
@@ -10,11 +11,12 @@ export function SessionPanels() {
   if (!panel) return null
   return (
     <div className="modal-overlay" onClick={() => useSession.getState().setPanel(null)}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className={panel === 'admin' ? 'modal modal-wide' : 'modal'} onClick={(e) => e.stopPropagation()}>
         {panel === 'login' && <LoginPanel />}
         {panel === 'profile' && <ProfilePanel />}
         {panel === 'projects' && <ProjectsPanel />}
         {panel === 'teams' && <TeamsPanel Head={Head} />}
+        {panel === 'admin' && <AdminPanel Head={Head} />}
       </div>
     </div>
   )

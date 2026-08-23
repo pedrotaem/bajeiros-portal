@@ -2,7 +2,7 @@ apiVersion: v3.0.2
 kind: DataContract
 id: urn:bajeiros:contract:user
 name: user
-version: 1.0.0
+version: 1.1.0
 status: draft
 domain: identity
 dataProduct: bajeiros-portal
@@ -59,6 +59,21 @@ schema:
         physicalType: timestamptz
         required: false
         description: Soft delete; purge definitivo em 30d (fase 12.3).
+      - name: is_admin
+        logicalType: boolean
+        required: true
+        description: Operador do portal (DF-9). Promoção só manual no banco (conexão owner) — nenhuma rota concede.
+      - name: last_login_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        classification: pii
+        description: Atualizado no bootstrap de sessão (POST /me) — DF-9.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: conta ativa + 30d pós-exclusão
 customProperties:
   - property: tenancy
     value: global (usuário é raiz de tenancy pessoal)

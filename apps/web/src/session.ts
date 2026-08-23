@@ -24,6 +24,7 @@ export interface UserInfo {
   email: string
   displayName: string
   university: string | null
+  isAdmin?: boolean
 }
 
 export interface CurrentProject {
@@ -32,7 +33,18 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
+export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | 'admin' | null
+
+// DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
+export function track(page: string) {
+  const { token } = useSession.getState()
+  if (!token) return
+  void fetch('/api/v1/activity/pageview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ page }),
+  }).catch(() => {})
+}
 
 interface SessionState {
   token: string | null
@@ -131,7 +143,10 @@ export const useSession = create<SessionState>((set, get) => ({
   inviteToken: initialInvite,
   inviteNotice: null,
   clearInviteNotice: () => set({ inviteNotice: null }),
-  setPanel: (panel) => set({ panel }),
+  setPanel: (panel) => {
+    if (panel) track(`panel:${panel}`)
+    set({ panel })
+  },
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
 

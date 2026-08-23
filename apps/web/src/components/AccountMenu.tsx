@@ -72,6 +72,11 @@ export function AccountMenu() {
       <button className="account-btn" onClick={() => setPanel('teams')}>
         Equipes
       </button>
+      {user.isAdmin && (
+        <button className="account-btn" onClick={() => setPanel('admin')}>
+          Admin
+        </button>
+      )}
       <div className="account-user">
         <button className="account-btn" onClick={() => setMenuOpen((v) => !v)}>
           {user.displayName} ▾

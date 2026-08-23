@@ -14,10 +14,14 @@ const CONSENT_PURPOSES = ['marketing_email', 'analytics'] as const
 identity.post('/', async (c) => {
   const { sub, email, name } = c.get('auth')
   const user = await withUser(sub, async (db) => {
-    const existing = await db.query('SELECT * FROM users WHERE id = $1', [sub])
+    // bootstrap = início de sessão → carimba last_login_at (DF-9)
+    const existing = await db.query(
+      'UPDATE users SET last_login_at = now() WHERE id = $1 RETURNING *',
+      [sub],
+    )
     if (existing.rowCount) return existing.rows[0]
     const created = await db.query(
-      `INSERT INTO users (id, email, display_name) VALUES ($1, $2, $3) RETURNING *`,
+      `INSERT INTO users (id, email, display_name, last_login_at) VALUES ($1, $2, $3, now()) RETURNING *`,
       [sub, email, name],
     )
     await audit(db, {
@@ -94,12 +98,16 @@ identity.delete('/', async (c) => {
 identity.get('/export', async (c) => {
   const { sub } = c.get('auth')
   const data = await withUser(sub, async (db) => {
-    const [user, consents, projects, snapshots, events, memberships] = await Promise.all([
+    const [user, consents, projects, snapshots, events, accessLog, assistantLog, memberships] =
+      await Promise.all([
       db.query('SELECT * FROM users WHERE id = $1', [sub]),
       db.query('SELECT * FROM consents ORDER BY occurred_at', []),
       db.query('SELECT * FROM projects ORDER BY created_at', []),
       db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
       db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
+      // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
+      db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
+      db.query('SELECT * FROM assistant_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
       db.query(
         `SELECT t.id, t.name, t.university, m.role, m.joined_at
          FROM team_members m JOIN teams t ON t.id = m.team_id
@@ -122,6 +130,8 @@ identity.get('/export', async (c) => {
       cageSnapshots: snapshots.rows,
       auditEvents: events.rows,
       teamMemberships: memberships.rows,
+      accessLog: accessLog.rows,
+      assistantLog: assistantLog.rows,
     }
   })
   return c.json(data)
@@ -174,5 +184,6 @@ function toUser(row: Record<string, unknown>) {
     displayName: row.display_name,
     university: row.university,
     createdAt: row.created_at,
+    isAdmin: row.is_admin === true,
   }
 }
