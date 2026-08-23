@@ -27,7 +27,11 @@ describe('admin (DF-9)', () => {
   })
 
   it('não-admin recebe 403 problem+json em qualquer rota admin (AC-DF9.1)', async () => {
-    for (const path of ['/api/v1/admin/overview', '/api/v1/admin/users', '/api/v1/admin/activity']) {
+    for (const path of [
+      '/api/v1/admin/overview',
+      '/api/v1/admin/users',
+      '/api/v1/admin/activity',
+    ]) {
       const r = await app.request(path, authed(member))
       expect(r.status).toBe(403)
       expect(r.headers.get('content-type')).toContain('application/problem+json')
@@ -35,7 +39,10 @@ describe('admin (DF-9)', () => {
   })
 
   it('admin lista usuários com last_login, equipes e projetos (AC-DF9.2)', async () => {
-    await app.request('/api/v1/teams', authed(member, { method: 'POST', body: JSON.stringify({ name: 'Equipe X' }) }))
+    await app.request(
+      '/api/v1/teams',
+      authed(member, { method: 'POST', body: JSON.stringify({ name: 'Equipe X' }) }),
+    )
     const r = await app.request('/api/v1/admin/users?q=comum', authed(admin))
     expect(r.status).toBe(200)
     const rows = await r.json()
@@ -63,8 +70,16 @@ describe('admin (DF-9)', () => {
     const r = await app.request(`/api/v1/admin/activity?userId=${member.sub}`, authed(admin))
     expect(r.status).toBe(200)
     const rows = await r.json()
-    expect(rows.some((a: { method: string; path: string }) => a.method === 'GET' && a.path === '/api/v1/me')).toBe(true)
-    expect(rows.some((a: { method: string; route: string }) => a.method === 'PAGE' && a.route === 'editor')).toBe(true)
+    expect(
+      rows.some(
+        (a: { method: string; path: string }) => a.method === 'GET' && a.path === '/api/v1/me',
+      ),
+    ).toBe(true)
+    expect(
+      rows.some(
+        (a: { method: string; route: string }) => a.method === 'PAGE' && a.route === 'editor',
+      ),
+    ).toBe(true)
     expect(rows.every((a: { userId: string }) => a.userId === member.sub)).toBe(true)
   })
 
@@ -99,7 +114,8 @@ describe('admin (DF-9)', () => {
     const data = await r.json()
     expect(
       data.auditEvents.some(
-        (e: { action: string; resource_id: string }) => e.action === 'admin.view' && e.resource_id === 'users',
+        (e: { action: string; resource_id: string }) =>
+          e.action === 'admin.view' && e.resource_id === 'users',
       ),
     ).toBe(true)
   })

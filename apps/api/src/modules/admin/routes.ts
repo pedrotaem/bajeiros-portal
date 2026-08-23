@@ -18,9 +18,8 @@ const requireAdmin = createMiddleware<AuthEnv>(async (c, next) => {
   const row = await withUser(
     sub,
     async (db) =>
-      (
-        await db.query('SELECT is_admin FROM users WHERE id = $1 AND deleted_at IS NULL', [sub])
-      ).rows[0],
+      (await db.query('SELECT is_admin FROM users WHERE id = $1 AND deleted_at IS NULL', [sub]))
+        .rows[0],
   )
   if (!row?.is_admin) return problem(c, 403, 'Acesso restrito', 'Requer perfil de administrador.')
   await next()

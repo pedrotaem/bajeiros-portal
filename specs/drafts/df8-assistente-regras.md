@@ -113,16 +113,16 @@ O portal trata o gateway como caixa-preta com contrato versionado.
 
 ## 6. Módulos afetados (portal)
 
-| Módulo                        | Mudança                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `apps/api` (novo entrypoint)  | Lambda `assistant` própria (Function URL `RESPONSE_STREAM`, fora do API GW): JWT via JWKS, quota, zod, cliente SigV4 do gateway, SSE pass-through |
-| `infra/` (portal)             | behavior `/api/v1/assistant/*` no CloudFront + Function URL + header secreto CF→origin + ADR do padrão (C1/C2) |
-| `apps/api/migrations`         | `000X_assistant.sql`: tabela `assistant_usage` + RLS                     |
-| `contracts/`                  | contrato ODCS `assistant_usage`                                          |
-| `apps/web` (novo)             | `Assistant.tsx` (chat), store zustand da conversa, parser SSE            |
-| `apps/web/Landing.tsx`        | entrada secundária p/ o assistente                                       |
-| `apps/web` checklist          | ação "perguntar ao assistente" por item                                  |
-| `SessionPanels`/consents      | finalidade opcional "assistente de IA"                                   |
+| Módulo                       | Mudança                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api` (novo entrypoint) | Lambda `assistant` própria (Function URL `RESPONSE_STREAM`, fora do API GW): JWT via JWKS, quota, zod, cliente SigV4 do gateway, SSE pass-through |
+| `infra/` (portal)            | behavior `/api/v1/assistant/*` no CloudFront + Function URL + header secreto CF→origin + ADR do padrão (C1/C2)                                    |
+| `apps/api/migrations`        | `000X_assistant.sql`: tabela `assistant_usage` + RLS                                                                                              |
+| `contracts/`                 | contrato ODCS `assistant_usage`                                                                                                                   |
+| `apps/web` (novo)            | `Assistant.tsx` (chat), store zustand da conversa, parser SSE                                                                                     |
+| `apps/web/Landing.tsx`       | entrada secundária p/ o assistente                                                                                                                |
+| `apps/web` checklist         | ação "perguntar ao assistente" por item                                                                                                           |
+| `SessionPanels`/consents     | finalidade opcional "assistente de IA"                                                                                                            |
 
 ## 7. UI/UX
 
@@ -138,14 +138,14 @@ O portal trata o gateway como caixa-preta com contrato versionado.
 
 ## 8. Critérios de aceite
 
-| #        | Critério                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------ |
-| AC-DF8.1 | Pergunta sobre regra fora do B6 (ex.: freios) responde com citação de seção/página corretas conferíveis no PDF     |
-| AC-DF8.2 | Estourar a quota free retorna 429 RFC 9457 e a UI mostra mensagem com horário de renovação                          |
-| AC-DF8.3 | Resposta chega em streaming visível (primeiro token < poucos segundos; sem esperar a resposta inteira)             |
-| AC-DF8.4 | Nenhuma credencial do gateway aparece no bundle, no network do browser ou em variável exposta ao Vite               |
-| AC-DF8.5 | "Perguntar ao assistente" numa infração inclui id da regra + medida/limite no prompt pré-preenchido                 |
-| AC-DF8.6 | Com o gateway fora do ar, o chat mostra erro amigável e o resto do portal segue funcionando                         |
+| #        | Critério                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-DF8.1 | Pergunta sobre regra fora do B6 (ex.: freios) responde com citação de seção/página corretas conferíveis no PDF                               |
+| AC-DF8.2 | Estourar a quota free retorna 429 RFC 9457 e a UI mostra mensagem com horário de renovação                                                   |
+| AC-DF8.3 | Resposta chega em streaming visível (primeiro token < poucos segundos; sem esperar a resposta inteira)                                       |
+| AC-DF8.4 | Nenhuma credencial do gateway aparece no bundle, no network do browser ou em variável exposta ao Vite                                        |
+| AC-DF8.5 | "Perguntar ao assistente" numa infração inclui id da regra + medida/limite no prompt pré-preenchido                                          |
+| AC-DF8.6 | Com o gateway fora do ar, o chat mostra erro amigável e o resto do portal segue funcionando                                                  |
 | AC-DF8.7 | Primeira utilização exibe o aviso de transparência e registra o aceite; sem aceite o chat não envia, e o restante do portal segue utilizável |
 
 ## 9. Riscos e questões em aberto

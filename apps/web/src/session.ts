@@ -214,6 +214,5 @@ export const useSession = create<SessionState>((set, get) => ({
     }
   },
 
-  logout: () =>
-    set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' }),
+  logout: () => set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' }),
 }))

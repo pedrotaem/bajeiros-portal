@@ -176,7 +176,11 @@ function Pager({
   if (offset === 0 && !more) return null
   return (
     <div className="admin-pager">
-      <button className="account-btn" disabled={offset === 0} onClick={() => load(Math.max(0, offset - PAGE))}>
+      <button
+        className="account-btn"
+        disabled={offset === 0}
+        onClick={() => load(Math.max(0, offset - PAGE))}
+      >
         ← Anteriores
       </button>
       <button className="account-btn" disabled={!more} onClick={() => load(offset + PAGE)}>
@@ -240,7 +244,11 @@ function UsersTab({
           setQuery(q)
         }}
       >
-        <input placeholder="Buscar por e-mail ou nome…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input
+          placeholder="Buscar por e-mail ou nome…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
         <button className="account-btn">Buscar</button>
       </form>
       {!rows ? (
@@ -270,18 +278,22 @@ function UsersTab({
                     {u.university && <span className="admin-dim"> · {u.university}</span>}
                   </td>
                   <td>
-                    {u.teams.length
-                      ? u.teams.map((t) => `${t.name} (${t.role})`).join(', ')
-                      : '—'}
+                    {u.teams.length ? u.teams.map((t) => `${t.name} (${t.role})`).join(', ') : '—'}
                   </td>
                   <td>{u.projectCount}</td>
                   <td>{when(u.lastLoginAt)}</td>
                   <td>{when(u.createdAt)}</td>
                   <td>
-                    <button className="disclaimer-link" onClick={() => onActivity({ id: u.id, email: u.email })}>
+                    <button
+                      className="disclaimer-link"
+                      onClick={() => onActivity({ id: u.id, email: u.email })}
+                    >
                       atividade
                     </button>{' '}
-                    <button className="disclaimer-link" onClick={() => onAssistant({ id: u.id, email: u.email })}>
+                    <button
+                      className="disclaimer-link"
+                      onClick={() => onAssistant({ id: u.id, email: u.email })}
+                    >
                       chat
                     </button>
                   </td>
@@ -326,7 +338,10 @@ function TeamsTab({ api, fail }: { api: Api; fail: (e: unknown) => void }) {
                 <td>
                   {t.members.map((m) => (
                     <div key={m.userId}>
-                      {m.displayName} <span className="admin-dim">({m.role} · {m.email})</span>
+                      {m.displayName}{' '}
+                      <span className="admin-dim">
+                        ({m.role} · {m.email})
+                      </span>
                     </div>
                   ))}
                 </td>
@@ -435,13 +450,18 @@ function AssistantTab({
           <tbody>
             {rows.map((s) => (
               <Fragment key={s.id}>
-                <tr className="admin-row-click" onClick={() => setOpen(open === s.id ? null : s.id)}>
+                <tr
+                  className="admin-row-click"
+                  onClick={() => setOpen(open === s.id ? null : s.id)}
+                >
                   <td>{when(s.occurredAt)}</td>
                   <td className="admin-dim">{s.email}</td>
                   <td>{s.question.length > 80 ? s.question.slice(0, 80) + '…' : s.question}</td>
                   <td>
                     {s.inputTokens ?? '—'}/{s.outputTokens ?? '—'}
-                    {s.cacheReadTokens ? <span className="admin-dim"> (cache {s.cacheReadTokens})</span> : null}
+                    {s.cacheReadTokens ? (
+                      <span className="admin-dim"> (cache {s.cacheReadTokens})</span>
+                    ) : null}
                   </td>
                   <td>{s.durationMs ?? '—'}</td>
                   <td>{s.status}</td>

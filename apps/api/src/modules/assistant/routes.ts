@@ -49,10 +49,10 @@ interface Gate {
 async function gate(sub: string): Promise<Gate> {
   return withUser(sub, async (db) => {
     const [accepted, used] = await Promise.all([
-      db.query(
-        `SELECT 1 FROM audit_events WHERE actor_user_id = $1 AND action = $2 LIMIT 1`,
-        [sub, NOTICE_ACTION],
-      ),
+      db.query(`SELECT 1 FROM audit_events WHERE actor_user_id = $1 AND action = $2 LIMIT 1`, [
+        sub,
+        NOTICE_ACTION,
+      ]),
       db.query(
         `SELECT count(*)::int AS n FROM assistant_log
          WHERE user_id = $1 AND occurred_at >= date_trunc('day', now())`,
@@ -131,10 +131,19 @@ assistant.post('/chat', async (c) => {
     upstream = await fetch(`${env('GATEWAY_URL')}/v1/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ messages: parsed.data.messages, context: parsed.data.context, rateKey }),
+      body: JSON.stringify({
+        messages: parsed.data.messages,
+        context: parsed.data.context,
+        rateKey,
+      }),
     })
   } catch {
-    return problem(c, 502, 'Assistente indisponível', 'Serviço de IA fora do ar. Tente de novo em instantes.')
+    return problem(
+      c,
+      502,
+      'Assistente indisponível',
+      'Serviço de IA fora do ar. Tente de novo em instantes.',
+    )
   }
   if (!upstream.ok || !upstream.body) {
     return problem(c, 502, 'Assistente indisponível', `Serviço de IA respondeu ${upstream.status}.`)

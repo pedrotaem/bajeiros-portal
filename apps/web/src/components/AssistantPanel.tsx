@@ -131,7 +131,10 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
     if (!question || streaming) return
     setErr(null)
     setInput('')
-    const history = [...useAssistant.getState().messages, { role: 'user' as const, content: question }]
+    const history = [
+      ...useAssistant.getState().messages,
+      { role: 'user' as const, content: question },
+    ]
     useAssistant.setState({
       messages: [...history, { role: 'assistant', content: '' }],
       streaming: true,
@@ -197,7 +200,9 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
       useAssistant.setState((s) => ({
         streaming: false,
         // resposta vazia (erro antes do 1º delta) não fica pendurada na conversa
-        messages: s.messages.filter((m, i) => !(i === s.messages.length - 1 && m.role === 'assistant' && !m.content)),
+        messages: s.messages.filter(
+          (m, i) => !(i === s.messages.length - 1 && m.role === 'assistant' && !m.content),
+        ),
       }))
       useAssistant.setState({ context: null })
     }
@@ -236,15 +241,15 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
               (transferência internacional com salvaguardas contratuais — LGPD art. 33).
             </li>
             <li>
-              Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador
-              do portal, para operação e melhoria do serviço.
+              Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador do
+              portal, para operação e melhoria do serviço.
             </li>
             <li>
               <b>Não digite dados pessoais</b> (nomes, e-mails, documentos) nas perguntas.
             </li>
             <li>
-              O assistente pode errar: ele <b>não substitui</b> o regulamento oficial nem a
-              inspeção técnica. Confira sempre a citação no PDF.
+              O assistente pode errar: ele <b>não substitui</b> o regulamento oficial nem a inspeção
+              técnica. Confira sempre a citação no PDF.
             </li>
           </ul>
           {err && <p className="modal-err">{err}</p>}
@@ -264,8 +269,8 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
       <div className="assistant-thread" ref={scrollRef}>
         {messages.length === 0 && (
           <p className="assistant-hint">
-            Pergunte qualquer coisa do regulamento — freios, elétrica, extintor, documentação…
-            Não só B6. Respostas citam seção e página do PDF oficial.
+            Pergunte qualquer coisa do regulamento — freios, elétrica, extintor, documentação… Não
+            só B6. Respostas citam seção e página do PDF oficial.
           </p>
         )}
         {messages.map((m, i) => (
@@ -286,7 +291,11 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
       <form className="assistant-input" onSubmit={send}>
         <textarea
           value={input}
-          placeholder={quotaLeft > 0 ? 'Sua pergunta… (Enter envia, Shift+Enter quebra linha)' : 'Limite diário atingido'}
+          placeholder={
+            quotaLeft > 0
+              ? 'Sua pergunta… (Enter envia, Shift+Enter quebra linha)'
+              : 'Limite diário atingido'
+          }
           disabled={quotaLeft <= 0}
           rows={2}
           onChange={(e) => setInput(e.target.value)}
@@ -312,7 +321,9 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
           O assistente pode errar — confira no PDF oficial. Não substitui a inspeção (B6.4).
         </span>
         <span className="admin-dim">
-          {quotaLeft > 0 ? `${quotaLeft}/${status.dailyLimit} mensagens hoje` : 'limite renova à meia-noite (UTC)'}
+          {quotaLeft > 0
+            ? `${quotaLeft}/${status.dailyLimit} mensagens hoje`
+            : 'limite renova à meia-noite (UTC)'}
         </span>
       </div>
     </div>

@@ -88,9 +88,8 @@ export function Landing({ onClose }: { onClose: () => void }) {
         <p className="landing-intro">
           Tire dúvidas do regulamento (RATBSB, emenda 7) em linguagem natural com o Assistente de
           Regras e valide a gaiola de proteção do seu carro no editor 3D — ~40 verificações
-          automáticas da seção B6 em tempo real, mais itens de inspeção manual, estimativa de
-          massa, gabaritos de junta e manequim do piloto. Gratuito, feito por bajeiros, para
-          bajeiros.
+          automáticas da seção B6 em tempo real, mais itens de inspeção manual, estimativa de massa,
+          gabaritos de junta e manequim do piloto. Gratuito, feito por bajeiros, para bajeiros.
         </p>
 
         <div className="landing-legal">

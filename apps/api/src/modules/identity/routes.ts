@@ -100,21 +100,21 @@ identity.get('/export', async (c) => {
   const data = await withUser(sub, async (db) => {
     const [user, consents, projects, snapshots, events, accessLog, assistantLog, memberships] =
       await Promise.all([
-      db.query('SELECT * FROM users WHERE id = $1', [sub]),
-      db.query('SELECT * FROM consents ORDER BY occurred_at', []),
-      db.query('SELECT * FROM projects ORDER BY created_at', []),
-      db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
-      db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
-      // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
-      db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
-      db.query('SELECT * FROM assistant_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
-      db.query(
-        `SELECT t.id, t.name, t.university, m.role, m.joined_at
+        db.query('SELECT * FROM users WHERE id = $1', [sub]),
+        db.query('SELECT * FROM consents ORDER BY occurred_at', []),
+        db.query('SELECT * FROM projects ORDER BY created_at', []),
+        db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
+        db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
+        // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
+        db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
+        db.query('SELECT * FROM assistant_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
+        db.query(
+          `SELECT t.id, t.name, t.university, m.role, m.joined_at
          FROM team_members m JOIN teams t ON t.id = m.team_id
          WHERE m.user_id = $1 ORDER BY m.joined_at`,
-        [sub],
-      ),
-    ])
+          [sub],
+        ),
+      ])
     await audit(db, {
       actorUserId: sub,
       action: 'user.export',

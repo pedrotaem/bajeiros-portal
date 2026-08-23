@@ -87,11 +87,11 @@
 ## 6. Critérios de aceite
 
 | #        | Critério                                                                              |
-| -------- | -------------------------------------------------------------------------------------- |
+| -------- | ------------------------------------------------------------------------------------- |
 | AC-DF9.1 | Não-admin em `/api/v1/admin/*` recebe 403 problem+json; sem vazar existência de dados |
-| AC-DF9.2 | Admin lista usuários com último login, equipes e nº de projetos                        |
-| AC-DF9.3 | Chamada de API de usuário logado aparece em `access_log` com rota/status/duração       |
-| AC-DF9.4 | Pageview da SPA aparece como método `PAGE`                                             |
-| AC-DF9.5 | Registro em `assistant_log` aparece na visão de chat com tokens e latência             |
-| AC-DF9.6 | Export LGPD do usuário inclui suas linhas de access_log/assistant_log                  |
-| AC-DF9.7 | Consulta admin gera `audit_events` `admin.view`                                        |
+| AC-DF9.2 | Admin lista usuários com último login, equipes e nº de projetos                       |
+| AC-DF9.3 | Chamada de API de usuário logado aparece em `access_log` com rota/status/duração      |
+| AC-DF9.4 | Pageview da SPA aparece como método `PAGE`                                            |
+| AC-DF9.5 | Registro em `assistant_log` aparece na visão de chat com tokens e latência            |
+| AC-DF9.6 | Export LGPD do usuário inclui suas linhas de access_log/assistant_log                 |
+| AC-DF9.7 | Consulta admin gera `audit_events` `admin.view`                                       |
