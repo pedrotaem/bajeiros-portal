@@ -4,7 +4,8 @@ import { useStore } from '../store'
 
 // Área de conta na topbar: login (dev), chip do projeto atual + salvar, menu do usuário.
 export function AccountMenu() {
-  const { user, currentProject, setPanel, logout, api, setCurrentProject } = useSession()
+  const { user, currentProject, setPanel, setPage, page, logout, api, setCurrentProject } =
+    useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [flash, setFlash] = useState<string | null>(null)
@@ -69,14 +70,20 @@ export function AccountMenu() {
       <button className="account-btn" onClick={() => setPanel('projects')}>
         Projetos
       </button>
-      <button className="account-btn" onClick={() => setPanel('assistant')}>
+      <button
+        className={page === 'assistant' ? 'account-btn page-active' : 'account-btn'}
+        onClick={() => setPage(page === 'assistant' ? 'editor' : 'assistant')}
+      >
         Assistente
       </button>
       <button className="account-btn" onClick={() => setPanel('teams')}>
         Equipes
       </button>
       {user.isAdmin && (
-        <button className="account-btn" onClick={() => setPanel('admin')}>
+        <button
+          className={page === 'admin' ? 'account-btn page-active' : 'account-btn'}
+          onClick={() => setPage(page === 'admin' ? 'editor' : 'admin')}
+        >
           Admin
         </button>
       )}

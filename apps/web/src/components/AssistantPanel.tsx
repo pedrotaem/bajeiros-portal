@@ -36,11 +36,12 @@ export const useAssistant = create<AssistantState>((set) => ({
   clear: () => set({ messages: [], streaming: false }),
 }))
 
-/** Abre o assistente com pergunta pré-preenchida (uso: checklist). */
+/** Abre a página do assistente com pergunta pré-preenchida (uso: checklist). */
 export function askAssistant(question: string, ctx?: { ruleId: string; status?: string }) {
   useAssistant.getState().setPrefill(question, ctx)
   const s = useSession.getState()
-  s.setPanel(s.user ? 'assistant' : 'login')
+  if (s.user) s.setPage('assistant')
+  else s.setPanel('login')
 }
 
 const WINDOW = 12 // janela de mensagens enviada por chamada

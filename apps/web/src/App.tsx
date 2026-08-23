@@ -9,7 +9,22 @@ import { Wizard } from './components/Wizard'
 import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
 import { Landing } from './components/Landing'
+import { AssistantPanel } from './components/AssistantPanel'
+import { AdminPanel } from './components/AdminPanel'
 import { useSession, track } from './session'
+
+// Cabeçalho de página inteira (assistente/admin) — troca o ✕ do modal por "voltar".
+function PageHead({ title }: { title: string }) {
+  const setPage = useSession((s) => s.setPage)
+  return (
+    <div className="page-head">
+      <span>{title}</span>
+      <button className="account-btn" onClick={() => setPage('editor')}>
+        ← Voltar ao editor
+      </button>
+    </div>
+  )
+}
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -68,9 +83,16 @@ export default function App() {
 
   // DF-9: pageview (só p/ logado; anônimo não é rastreado)
   const sessionUser = useSession((s) => s.user)
+  const page = useSession((s) => s.page)
+  const setPage = useSession((s) => s.setPage)
   useEffect(() => {
     if (sessionUser) track(showLanding ? 'landing' : 'editor')
   }, [showLanding, sessionUser])
+
+  // páginas assistente/admin exigem sessão — logout volta ao editor
+  useEffect(() => {
+    if (!sessionUser && page !== 'editor') setPage('editor')
+  }, [sessionUser, page, setPage])
 
   useEffect(() => {
     if (selectedMember || selectedNode) setRightOpen(true)
@@ -103,7 +125,21 @@ export default function App() {
       </header>
       {showLanding && <Landing onClose={() => setShowLanding(false)} />}
       <SessionPanels />
-      <div className="main">
+      {page === 'assistant' && (
+        <div className="page-body">
+          <div className="page-inner page-narrow">
+            <AssistantPanel Head={PageHead} />
+          </div>
+        </div>
+      )}
+      {page === 'admin' && (
+        <div className="page-body">
+          <div className="page-inner">
+            <AdminPanel Head={PageHead} />
+          </div>
+        </div>
+      )}
+      <div className="main" style={page !== 'editor' ? { display: 'none' } : undefined}>
         {leftOpen ? (
           <aside className="sidebar left">
             <div className="panel-head">

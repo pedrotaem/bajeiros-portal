@@ -33,7 +33,10 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | 'admin' | 'assistant' | null
+export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
+
+// Páginas inteiras da SPA (DF-8/DF-9): editor 3D, assistente e admin.
+export type PageId = 'editor' | 'assistant' | 'admin'
 
 // DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
 export function track(page: string) {
@@ -51,9 +54,11 @@ interface SessionState {
   user: UserInfo | null
   currentProject: CurrentProject | null
   panel: PanelId
+  page: PageId
   inviteToken: string | null
   inviteNotice: string | null
   setPanel: (p: PanelId) => void
+  setPage: (p: PageId) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
   login: (email: string, name: string) => Promise<void>
@@ -139,6 +144,7 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   currentProject: null,
+  page: 'editor',
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
@@ -146,6 +152,10 @@ export const useSession = create<SessionState>((set, get) => ({
   setPanel: (panel) => {
     if (panel) track(`panel:${panel}`)
     set({ panel })
+  },
+  setPage: (page) => {
+    track(`page:${page}`)
+    set({ page })
   },
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
@@ -200,5 +210,6 @@ export const useSession = create<SessionState>((set, get) => ({
     }
   },
 
-  logout: () => set({ token: null, user: null, currentProject: null, panel: null }),
+  logout: () =>
+    set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' }),
 }))

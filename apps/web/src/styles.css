@@ -1350,3 +1350,44 @@ button.primary:hover {
 .assistant-gap {
   height: 6px;
 }
+
+/* ---------- páginas inteiras (assistente/admin) ---------- */
+.page-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(23, 28, 34, 0.92), rgba(23, 28, 34, 0.92)),
+    repeating-linear-gradient(0deg, transparent 0 39px, #1c232c 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, #1c232c 39px 40px);
+}
+.page-inner {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #171c22;
+  border: 1px solid #2c3542;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.page-inner.page-narrow {
+  max-width: 860px;
+}
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #2c3542;
+  font-weight: 600;
+}
+.page-inner .assistant-panel,
+.page-inner .admin-panel {
+  flex: 1;
+  min-height: 0;
+}
