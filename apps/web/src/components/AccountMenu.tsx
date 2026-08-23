@@ -47,6 +47,12 @@ export function AccountMenu() {
     return (
       <div className="account">
         {flash && <span className="account-flash">{flash}</span>}
+        <button
+          className={page === 'assistant' ? 'account-btn page-active' : 'account-btn'}
+          onClick={() => setPage(page === 'assistant' ? 'editor' : 'assistant')}
+        >
+          Assistente
+        </button>
         <button className="account-btn" onClick={() => setPanel('login')}>
           Entrar
         </button>

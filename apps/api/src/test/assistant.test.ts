@@ -117,6 +117,57 @@ describe('assistente (DF-8)', () => {
     expect(r.headers.get('content-type')).toContain('application/problem+json')
   })
 
+  it('anônimo: status informa anonymous + limite 2; 2 perguntas ok, 3ª → 429; nada em assistant_log', async () => {
+    const ip = { 'x-forwarded-for': '203.0.113.77' }
+    const s = await (await app.request('/api/v1/assistant/status', { headers: ip })).json()
+    expect(s.anonymous).toBe(true)
+    expect(s.dailyLimit).toBe(2)
+    expect(s.usedToday).toBe(0)
+
+    const owner = new pg.Client({ connectionString: process.env.DATABASE_URL })
+    await owner.connect()
+    const before = (await owner.query('SELECT count(*)::int AS n FROM assistant_log')).rows[0].n
+
+    for (let i = 0; i < 2; i++) {
+      const r = await app.request('/api/v1/assistant/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...ip },
+        body: JSON.stringify(chatBody),
+      })
+      expect(r.status).toBe(200)
+      expect(await r.text()).toContain('event: done')
+    }
+    const r3 = await app.request('/api/v1/assistant/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...ip },
+      body: JSON.stringify(chatBody),
+    })
+    expect(r3.status).toBe(429)
+    expect(r3.headers.get('content-type')).toContain('application/problem+json')
+
+    // anônimo não é rastreado: nenhuma linha nova no assistant_log
+    await new Promise((r) => setTimeout(r, 300))
+    const after = (await owner.query('SELECT count(*)::int AS n FROM assistant_log')).rows[0].n
+    await owner.end()
+    expect(after).toBe(before)
+  })
+
+  it('IPs anônimos diferentes têm quotas independentes', async () => {
+    const r = await app.request('/api/v1/assistant/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.78' },
+      body: JSON.stringify(chatBody),
+    })
+    expect(r.status).toBe(200)
+  })
+
+  it('token inválido → 401 (não vira anônimo silencioso)', async () => {
+    const r = await app.request('/api/v1/assistant/status', {
+      headers: { Authorization: 'Bearer lixo' },
+    })
+    expect(r.status).toBe(401)
+  })
+
   it('gateway fora do ar → 502 problem+json (AC-DF8.6)', async () => {
     const fresh = await makeUser('SemGateway')
     await app.request('/api/v1/me', authed(fresh, { method: 'POST' }))

@@ -53,14 +53,8 @@ export function Landing({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
-  // sem sessão: fecha a landing antes do modal (landing tem z-index acima dos modais)
   const openAssistant = () => {
-    if (!user) {
-      onClose()
-      setPanel('login')
-      return
-    }
-    setPage('assistant')
+    setPage('assistant') // anônimo pode (2 perguntas/dia)
     onClose()
   }
 
@@ -121,7 +115,8 @@ export function Landing({ onClose }: { onClose: () => void }) {
             <b>Assistente de Regras (IA)</b>
             <span>
               Pergunte em linguagem natural sobre o regulamento completo — não só B6. Respostas
-              citam seção e página do PDF oficial.{!user && ' Requer conta gratuita.'}
+              citam seção e página do PDF oficial.
+              {!user && ' Experimente sem conta (2 perguntas/dia).'}
             </span>
           </span>
           <span className="landing-cta-arrow" aria-hidden>

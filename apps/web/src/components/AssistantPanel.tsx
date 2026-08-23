@@ -12,11 +12,15 @@ export interface ChatMsg {
 }
 
 interface AssistantStatus {
+  anonymous: boolean
   noticeAccepted: boolean
   noticeVersion: string
   dailyLimit: number
   usedToday: number
 }
+
+// Anônimo: aceite do aviso vive só no browser (servidor não rastreia anônimos)
+const ANON_NOTICE_KEY = 'bajeiros:assistant-notice-v1'
 
 interface AssistantState {
   messages: ChatMsg[]
@@ -39,9 +43,7 @@ export const useAssistant = create<AssistantState>((set) => ({
 /** Abre a página do assistente com pergunta pré-preenchida (uso: checklist). */
 export function askAssistant(question: string, ctx?: { ruleId: string; status?: string }) {
   useAssistant.getState().setPrefill(question, ctx)
-  const s = useSession.getState()
-  if (s.user) s.setPage('assistant')
-  else s.setPanel('login')
+  useSession.getState().setPage('assistant') // anônimo pode (2 perguntas/dia)
 }
 
 const WINDOW = 12 // janela de mensagens enviada por chamada
@@ -84,7 +86,7 @@ function Rich({ text }: { text: string }) {
 }
 
 export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.Element }) {
-  const { token, api } = useSession()
+  const { token, api, setPanel } = useSession()
   const { messages, streaming, prefill, context } = useAssistant()
   const [status, setStatus] = useState<AssistantStatus | null>(null)
   const [input, setInput] = useState('')
@@ -94,9 +96,14 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
 
   useEffect(() => {
     api<AssistantStatus>('/api/v1/assistant/status')
-      .then(setStatus)
+      .then((s) =>
+        setStatus(
+          // aceite anônimo lembrado no browser
+          s.anonymous && localStorage.getItem(ANON_NOTICE_KEY) ? { ...s, noticeAccepted: true } : s,
+        ),
+      )
       .catch(() => setErr('Não foi possível carregar o assistente — API local rodando?'))
-  }, [api])
+  }, [api, token])
 
   useEffect(() => {
     if (prefill) {
@@ -112,7 +119,8 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
   const accept = async () => {
     setErr(null)
     try {
-      await api('/api/v1/assistant/notice', { method: 'POST' })
+      if (token) await api('/api/v1/assistant/notice', { method: 'POST' })
+      else localStorage.setItem(ANON_NOTICE_KEY, new Date().toISOString())
       setStatus((s) => (s ? { ...s, noticeAccepted: true } : s))
     } catch {
       setErr('Falha ao registrar o aceite. Tente de novo.')
@@ -154,7 +162,10 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
       const res = await fetch('/api/v1/assistant/chat', {
         method: 'POST',
         signal: ctrl.signal,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: history.slice(-WINDOW),
           context: context ?? undefined,
@@ -240,10 +251,18 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
               Suas perguntas são processadas por um provedor de IA <b>fora do Brasil</b>{' '}
               (transferência internacional com salvaguardas contratuais — LGPD art. 33).
             </li>
-            <li>
-              Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador do
-              portal, para operação e melhoria do serviço.
-            </li>
+            {status.anonymous ? (
+              <li>
+                Sem conta você tem <b>{status.dailyLimit} perguntas por dia</b> e nada é armazenado.
+                Com conta (gratuita), perguntas e respostas são <b>armazenadas</b> (90 dias) e
+                visíveis ao administrador do portal, para operação e melhoria do serviço.
+              </li>
+            ) : (
+              <li>
+                Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador
+                do portal, para operação e melhoria do serviço.
+              </li>
+            )}
             <li>
               <b>Não digite dados pessoais</b> (nomes, e-mails, documentos) nas perguntas.
             </li>
@@ -294,7 +313,9 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
           placeholder={
             quotaLeft > 0
               ? 'Sua pergunta… (Enter envia, Shift+Enter quebra linha)'
-              : 'Limite diário atingido'
+              : status.anonymous
+                ? 'Limite sem conta atingido — entre para continuar'
+                : 'Limite diário atingido'
           }
           disabled={quotaLeft <= 0}
           rows={2}
@@ -310,6 +331,10 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
           <button type="button" className="account-btn" onClick={stop}>
             Parar
           </button>
+        ) : status.anonymous && quotaLeft <= 0 ? (
+          <button type="button" className="account-btn primary" onClick={() => setPanel('login')}>
+            Entrar
+          </button>
         ) : (
           <button className="account-btn primary" disabled={!input.trim() || quotaLeft <= 0}>
             Enviar
@@ -321,9 +346,13 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
           O assistente pode errar — confira no PDF oficial. Não substitui a inspeção (B6.4).
         </span>
         <span className="admin-dim">
-          {quotaLeft > 0
-            ? `${quotaLeft}/${status.dailyLimit} mensagens hoje`
-            : 'limite renova à meia-noite (UTC)'}
+          {status.anonymous
+            ? quotaLeft > 0
+              ? `${quotaLeft}/${status.dailyLimit} perguntas sem conta — entre p/ ter 20/dia`
+              : 'limite sem conta atingido — crie uma conta gratuita (20/dia)'
+            : quotaLeft > 0
+              ? `${quotaLeft}/${status.dailyLimit} mensagens hoje`
+              : 'limite renova à meia-noite (UTC)'}
         </span>
       </div>
     </div>

@@ -6,17 +6,27 @@ import { env } from '../../env'
 import { withUser } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
-import type { AuthEnv } from '../../auth/middleware'
+import { optionalAuth, type OptionalAuthEnv } from '../../auth/middleware'
+import { accessLog } from '../../access-log'
 
 // DF-8 — Assistente de Regras: proxy SSE p/ o Bajeiros AI Gateway.
-// Portal é dono de: auth (JWT), aviso de transparência (gate), quota diária,
-// rateKey pseudonimizado (C10) e registro em assistant_log (DF-9).
+// Portal é dono de: auth (JWT OPCIONAL — anônimo pode experimentar), aviso de
+// transparência, quotas, rateKey pseudonimizado (C10) e registro em assistant_log.
+// Anônimo: 2 perguntas/dia (funil de conta), contadas por IP em memória
+// (best-effort; reinício zera — aceito, o teto real de custo é a quota do gateway),
+// SEM persistência em assistant_log (promessa "anônimos não são rastreados") e
+// aviso exibido/aceito só no cliente. Logado: aviso registrado + 20/dia + log DF-9.
 // Em dev o server Hono (Node) faz SSE pass-through; em prod esta rota sai do
 // API GW p/ Lambda Function URL RESPONSE_STREAM (revisão C1) — mesma lógica.
 
-export const assistant = new Hono<AuthEnv>()
+export const assistant = new Hono<OptionalAuthEnv>()
+
+// auth opcional + atividade (accessLog ignora anônimo por design)
+assistant.use('*', optionalAuth)
+assistant.use('*', accessLog)
 
 const FREE_DAILY = 20 // entitlement free hardcoded, mesmo padrão de projetos
+const ANON_DAILY = 2 // degustação sem conta
 const NOTICE_ACTION = 'assistant.notice_accept'
 export const NOTICE_VERSION = 'v1'
 
@@ -41,6 +51,28 @@ const chatBody = z.object({
     .optional(),
 })
 
+// ---------- quota anônima por IP (memória, best-effort) ----------
+
+const anonUsage = new Map<string, { day: string; n: number }>()
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function anonCount(ip: string): number {
+  const u = anonUsage.get(ip)
+  return u && u.day === today() ? u.n : 0
+}
+
+function anonBump(ip: string) {
+  const day = today()
+  const u = anonUsage.get(ip)
+  anonUsage.set(ip, u && u.day === day ? { day, n: u.n + 1 } : { day, n: 1 })
+  if (anonUsage.size > 10_000) anonUsage.clear() // teto de memória; melhor esforço
+}
+
+// ---------- gate do usuário logado ----------
+
 interface Gate {
   accepted: boolean
   usedToday: number
@@ -63,11 +95,22 @@ async function gate(sub: string): Promise<Gate> {
   })
 }
 
-// Estado p/ a UI: aviso aceito? quota restante?
+// Estado p/ a UI: anônimo × logado, aviso, quota.
 assistant.get('/status', async (c) => {
-  const { sub } = c.get('auth')
-  const g = await gate(sub)
+  const auth = c.get('auth')
+  if (!auth) {
+    const ip = clientIp(c.req.raw.headers) ?? 'local'
+    return c.json({
+      anonymous: true,
+      noticeAccepted: false, // aceite anônimo vive só no cliente
+      noticeVersion: NOTICE_VERSION,
+      dailyLimit: ANON_DAILY,
+      usedToday: anonCount(ip),
+    })
+  }
+  const g = await gate(auth.sub)
   return c.json({
+    anonymous: false,
     noticeAccepted: g.accepted,
     noticeVersion: NOTICE_VERSION,
     dailyLimit: FREE_DAILY,
@@ -77,12 +120,14 @@ assistant.get('/status', async (c) => {
 
 // Aceite do aviso de transparência (art. 9) — registro append-only na trilha de
 // auditoria; NÃO é consentimento revogável (revisão C9: base legal = contrato).
+// Anônimo não tem onde registrar (e não é rastreado): aceite fica no cliente.
 assistant.post('/notice', async (c) => {
-  const { sub } = c.get('auth')
+  const auth = c.get('auth')
+  if (!auth) return c.body(null, 204)
   const ip = clientIp(c.req.raw.headers)
-  await withUser(sub, (db) =>
+  await withUser(auth.sub, (db) =>
     audit(db, {
-      actorUserId: sub,
+      actorUserId: auth.sub,
       action: NOTICE_ACTION,
       resourceType: 'assistant',
       ip,
@@ -105,25 +150,37 @@ function parseSseEvent(raw: string): { event: string; data: string } | null {
 assistant.post('/chat', async (c) => {
   const parsed = chatBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
-  const { sub } = c.get('auth')
+  const auth = c.get('auth')
+  const ip = clientIp(c.req.raw.headers) ?? 'local'
 
-  const g = await gate(sub)
-  if (!g.accepted) {
-    return problem(c, 403, 'Aviso pendente', 'Aceite o aviso do assistente antes de usar.')
-  }
-  if (g.usedToday >= FREE_DAILY) {
-    return problem(
-      c,
-      429,
-      'Limite diário atingido',
-      `Plano gratuito: ${FREE_DAILY} mensagens por dia. O limite renova à meia-noite (UTC).`,
-    )
+  if (auth) {
+    const g = await gate(auth.sub)
+    if (!g.accepted) {
+      return problem(c, 403, 'Aviso pendente', 'Aceite o aviso do assistente antes de usar.')
+    }
+    if (g.usedToday >= FREE_DAILY) {
+      return problem(
+        c,
+        429,
+        'Limite diário atingido',
+        `Plano gratuito: ${FREE_DAILY} mensagens por dia. O limite renova à meia-noite (UTC).`,
+      )
+    }
+  } else {
+    if (anonCount(ip) >= ANON_DAILY) {
+      return problem(
+        c,
+        429,
+        'Limite sem conta atingido',
+        `Sem conta são ${ANON_DAILY} perguntas por dia. Crie uma conta gratuita para ter ${FREE_DAILY}/dia.`,
+      )
+    }
+    anonBump(ip) // conta a tentativa antes do stream (custo de LLM já incorre)
   }
 
-  // rateKey pseudonimizado c/ sal diário (C10) — gateway nunca vê o user_id real
-  const day = new Date().toISOString().slice(0, 10)
-  const rateKey = createHmac('sha256', `${env('ASSISTANT_RATE_SALT')}:${day}`)
-    .update(sub)
+  // rateKey pseudonimizado c/ sal diário (C10) — gateway nunca vê identidade real
+  const rateKey = createHmac('sha256', `${env('ASSISTANT_RATE_SALT')}:${today()}`)
+    .update(auth ? auth.sub : `anon:${ip}`)
     .digest('hex')
 
   let upstream: Response
@@ -203,17 +260,18 @@ assistant.post('/chat', async (c) => {
       })
     }
 
-    // DF-9: registro de uso (o aviso de transparência declara armazenamento +
-    // visibilidade admin). Falha de log não derruba a resposta já entregue.
+    // DF-9: registro de uso — SÓ logado (anônimo não é rastreado; o aviso de
+    // transparência declara armazenamento + visibilidade admin p/ quem tem conta).
+    if (!auth) return
     try {
-      await withUser(sub, (db) =>
+      await withUser(auth.sub, (db) =>
         db.query(
           `INSERT INTO assistant_log
              (user_id, question, answer, status, model, corpus_version,
               input_tokens, output_tokens, cache_read_tokens, duration_ms)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
-            sub,
+            auth.sub,
             question,
             answer || null,
             status,

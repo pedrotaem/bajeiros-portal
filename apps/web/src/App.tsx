@@ -102,9 +102,9 @@ export default function App() {
     if (sessionUser) track(showLanding ? 'landing' : 'editor')
   }, [showLanding, sessionUser])
 
-  // páginas assistente/admin exigem sessão — logout volta ao editor
+  // admin exige sessão — logout volta ao editor (assistente aceita anônimo)
   useEffect(() => {
-    if (!sessionUser && page !== 'editor') setPage('editor')
+    if (!sessionUser && page === 'admin') setPage('editor')
   }, [sessionUser, page, setPage])
 
   useEffect(() => {

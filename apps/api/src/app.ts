@@ -16,6 +16,10 @@ export const app = new Hono()
 app.get('/api/v1/health', (c) => c.json({ ok: true, service: 'bajeiros-api' }))
 if (env('AUTH_MODE') === 'dev') app.route('/api/v1/dev', devIssuer)
 
+// assistente aceita anônimo (2 perguntas/dia) — auth opcional dentro do módulo,
+// por isso montado ANTES do requireAuth global
+app.route('/api/v1/assistant', assistant)
+
 app.use('/api/v1/*', requireAuth)
 app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
 app.route('/api/v1/me', identity)
@@ -23,7 +27,6 @@ app.route('/api/v1/projects', projects)
 app.route('/api/v1/teams', teams)
 app.route('/api/v1/invites', invites)
 app.route('/api/v1/activity', activity)
-app.route('/api/v1/assistant', assistant)
 app.route('/api/v1/admin', admin)
 
 app.notFound((c) => problem(c, 404, 'Rota não encontrada'))

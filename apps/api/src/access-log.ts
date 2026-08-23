@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { withUser } from './db'
 import { problem } from './problem'
 import { clientIp } from './audit'
-import type { AuthEnv } from './auth/middleware'
+import type { AuthEnv, OptionalAuthEnv } from './auth/middleware'
 
 // DF-9 §3.2 — atividade por usuário autenticado (contracts/access-log.odcs.yaml).
 // Anônimo não é registrado (rotas públicas ficam antes do requireAuth).
@@ -38,7 +38,7 @@ async function insertAccess(row: {
 // Registra toda chamada de API autenticada. O insert roda após a resposta estar
 // pronta e é aguardado (Lambda congela após o return — fire-and-forget perderia linhas);
 // falha de log nunca derruba a requisição.
-export const accessLog = createMiddleware<AuthEnv>(async (c, next) => {
+export const accessLog = createMiddleware<OptionalAuthEnv>(async (c, next) => {
   const started = Date.now()
   await next()
   const path = c.req.path
