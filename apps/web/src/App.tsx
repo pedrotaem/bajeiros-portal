@@ -8,7 +8,7 @@ import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
 import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
-import { Landing, LANDING_SEEN_KEY } from './components/Landing'
+import { Landing } from './components/Landing'
 import { useSession } from './session'
 
 function ViewportToggles() {
@@ -62,14 +62,9 @@ export default function App() {
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
-  // Landing na 1ª visita (estudo UX, R1); link de convite pula direto p/ o login
-  const [showLanding, setShowLanding] = useState(() => {
-    try {
-      return !localStorage.getItem(LANDING_SEEN_KEY) && !useSession.getState().inviteToken
-    } catch {
-      return true
-    }
-  })
+  // Landing é a página inicial: todo acesso à raiz cai nela (estudo UX, R1 v2);
+  // link de convite (#convite=) pula direto p/ o login
+  const [showLanding, setShowLanding] = useState(() => !useSession.getState().inviteToken)
 
   useEffect(() => {
     if (selectedMember || selectedNode) setRightOpen(true)
