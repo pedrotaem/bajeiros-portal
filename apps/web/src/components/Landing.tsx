@@ -34,11 +34,35 @@ function IconShield() {
   )
 }
 
+function IconChat() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <path d="M4 5.5h16v11H9l-5 4z" />
+      <path d="M8 9.5h8M8 12.5h5" />
+    </svg>
+  )
+}
+
 export function Landing({ onClose }: { onClose: () => void }) {
   const user = useSession((s) => s.user)
   const setPanel = useSession((s) => s.setPanel)
+  const setPage = useSession((s) => s.setPage)
 
-  const openEditor = () => onClose()
+  const openEditor = () => {
+    setPage('editor')
+    onClose()
+  }
+
+  // sem sessão: fecha a landing antes do modal (landing tem z-index acima dos modais)
+  const openAssistant = () => {
+    if (!user) {
+      onClose()
+      setPanel('login')
+      return
+    }
+    setPage('assistant')
+    onClose()
+  }
 
   const account = () => {
     onClose()
@@ -58,14 +82,15 @@ export function Landing({ onClose }: { onClose: () => void }) {
       <div className="landing-inner">
         <header className="landing-head">
           <h1 className="landing-brand">Bajeiros</h1>
-          <p className="landing-tag">o validador 3D de gaiola da comunidade Baja brasileira</p>
+          <p className="landing-tag">ferramentas da comunidade Baja brasileira</p>
         </header>
 
         <p className="landing-intro">
-          Monte ou importe a gaiola de proteção do seu carro e confira, em tempo real, ~40
-          verificações automáticas da seção B6 do regulamento (RATBSB, emenda 7) — mais os itens de
-          inspeção manual, estimativa de massa, gabaritos de junta e manequim do piloto. Gratuito,
-          feito por bajeiros, para bajeiros.
+          Tire dúvidas do regulamento (RATBSB, emenda 7) em linguagem natural com o Assistente de
+          Regras e valide a gaiola de proteção do seu carro no editor 3D — ~40 verificações
+          automáticas da seção B6 em tempo real, mais itens de inspeção manual, estimativa de
+          massa, gabaritos de junta e manequim do piloto. Gratuito, feito por bajeiros, para
+          bajeiros.
         </p>
 
         <div className="landing-legal">
@@ -88,6 +113,22 @@ export function Landing({ onClose }: { onClose: () => void }) {
             </li>
           </ul>
         </div>
+
+        <button className="landing-cta" onClick={openAssistant}>
+          <span className="landing-cta-icon">
+            <IconChat />
+          </span>
+          <span className="landing-cta-text">
+            <b>Assistente de Regras (IA)</b>
+            <span>
+              Pergunte em linguagem natural sobre o regulamento completo — não só B6. Respostas
+              citam seção e página do PDF oficial.{!user && ' Requer conta gratuita.'}
+            </span>
+          </span>
+          <span className="landing-cta-arrow" aria-hidden>
+            →
+          </span>
+        </button>
 
         <button className="landing-cta" onClick={openEditor}>
           <span className="landing-cta-icon">

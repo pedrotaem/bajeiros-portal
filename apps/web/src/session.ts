@@ -55,10 +55,12 @@ interface SessionState {
   currentProject: CurrentProject | null
   panel: PanelId
   page: PageId
+  landing: boolean
   inviteToken: string | null
   inviteNotice: string | null
   setPanel: (p: PanelId) => void
   setPage: (p: PageId) => void
+  setLanding: (v: boolean) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
   login: (email: string, name: string) => Promise<void>
@@ -145,6 +147,7 @@ export const useSession = create<SessionState>((set, get) => ({
   user: null,
   currentProject: null,
   page: 'editor',
+  landing: !initialInvite, // landing é a página inicial; convite pula direto p/ login
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
@@ -157,6 +160,7 @@ export const useSession = create<SessionState>((set, get) => ({
     track(`page:${page}`)
     set({ page })
   },
+  setLanding: (landing) => set({ landing }),
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
 
