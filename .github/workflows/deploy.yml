@@ -55,23 +55,31 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: Sync S3 (assets primeiro, index por último)
+      - name: Gerar config.json do ambiente # build é único; config por env entra aqui
+        run: |
+          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
+            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" > dist/config.json
+      - name: Sync S3 (assets primeiro, index e config por último)
         run: |
           aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \
-            --exclude index.html \
+            --exclude index.html --exclude config.json \
             --cache-control "public,max-age=31536000,immutable" --delete
+          aws s3 cp dist/config.json "s3://${{ vars.SITE_BUCKET }}/config.json" \
+            --cache-control "no-cache" --content-type "application/json"
           aws s3 cp dist/index.html "s3://${{ vars.SITE_BUCKET }}/index.html" \
             --cache-control "no-cache"
       - name: Invalidation mínima
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
-            --paths "/index.html" "/"
+            --paths "/index.html" "/" "/config.json"
       - name: Smoke test
         run: |
           sleep 15
           body=$(curl -fsS --retry 5 --retry-delay 10 "https://staging.bajeiros.com.br/")
           echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
+          curl -fsS "https://staging.bajeiros.com.br/config.json" | grep -q clientId \
+            || { echo "smoke FAIL: config.json sem clientId"; exit 1; }
 
   deploy-production:
     name: Deploy produção (gated)
@@ -92,20 +100,28 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: Sync S3 (assets primeiro, index por último)
+      - name: Gerar config.json do ambiente
+        run: |
+          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
+            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" > dist/config.json
+      - name: Sync S3 (assets primeiro, index e config por último)
         run: |
           aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \
-            --exclude index.html \
+            --exclude index.html --exclude config.json \
             --cache-control "public,max-age=31536000,immutable" --delete
+          aws s3 cp dist/config.json "s3://${{ vars.SITE_BUCKET }}/config.json" \
+            --cache-control "no-cache" --content-type "application/json"
           aws s3 cp dist/index.html "s3://${{ vars.SITE_BUCKET }}/index.html" \
             --cache-control "no-cache"
       - name: Invalidation mínima
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
-            --paths "/index.html" "/"
+            --paths "/index.html" "/" "/config.json"
       - name: Smoke test
         run: |
           sleep 15
           body=$(curl -fsS --retry 5 --retry-delay 10 "https://bajeiros.com.br/")
           echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
+          curl -fsS "https://bajeiros.com.br/config.json" | grep -q clientId \
+            || { echo "smoke FAIL: config.json sem clientId"; exit 1; }
