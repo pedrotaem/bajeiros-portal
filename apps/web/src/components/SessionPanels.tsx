@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSession, ApiError, type UserInfo } from '../session'
 import { useStore } from '../store'
+import { TeamsPanel } from './TeamsPanel'
 import type { Cage } from '@bajeiros/core/model/types'
 
 // Modais de sessão: login (dev), perfil/privacidade (LGPD), projetos/versões.
@@ -13,6 +14,7 @@ export function SessionPanels() {
         {panel === 'login' && <LoginPanel />}
         {panel === 'profile' && <ProfilePanel />}
         {panel === 'projects' && <ProjectsPanel />}
+        {panel === 'teams' && <TeamsPanel Head={Head} />}
       </div>
     </div>
   )
@@ -247,6 +249,7 @@ interface ProjectRow {
   id: string
   name: string
   description: string | null
+  ownerTeamId: string | null
   lastSeq?: number
   updatedAt: string
 }
@@ -375,6 +378,7 @@ function ProjectsPanel() {
             <li key={p.id} className={currentProject?.id === p.id ? 'current' : ''}>
               <span>
                 <b>{p.name}</b>
+                {p.ownerTeamId && <small> · equipe</small>}
                 <small>
                   {p.lastSeq ? ` v${p.lastSeq}` : ' sem versões'} ·{' '}
                   {new Date(p.updatedAt).toLocaleDateString('pt-BR')}

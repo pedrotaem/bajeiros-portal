@@ -8,6 +8,8 @@ import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
 import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
+import { Landing } from './components/Landing'
+import { useSession } from './session'
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -60,6 +62,9 @@ export default function App() {
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
+  // Landing é a página inicial: todo acesso à raiz cai nela (estudo UX, R1 v2);
+  // link de convite (#convite=) pula direto p/ o login
+  const [showLanding, setShowLanding] = useState(() => !useSession.getState().inviteToken)
 
   useEffect(() => {
     if (selectedMember || selectedNode) setRightOpen(true)
@@ -83,12 +88,14 @@ export default function App() {
           <span className="brand-sub">Validador de Gaiola · B6 · RATBSB emenda 7 · protótipo</span>
         </div>
         <div className="disclaimer">
-          Ferramenta educacional de apoio ao projeto — não substitui a Inspeção de Conformidade
-          Técnica e Segurança nem o julgamento dos Juízes Credenciados de Segurança (B6.4). Projeto
-          comunitário independente, sem vínculo com a SAE ou organizadores de competição.
+          Ferramenta educacional — não substitui a inspeção oficial (B6.4). Sem vínculo com a SAE.{' '}
+          <button className="disclaimer-link" onClick={() => setShowLanding(true)}>
+            Sobre o portal
+          </button>
         </div>
         <AccountMenu />
       </header>
+      {showLanding && <Landing onClose={() => setShowLanding(false)} />}
       <SessionPanels />
       <div className="main">
         {leftOpen ? (
