@@ -1,0 +1,79 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:access-log
+name: access-log
+version: 1.0.0
+status: draft
+domain: operations
+dataProduct: bajeiros-portal
+description:
+  purpose: Log de acesso a páginas (SPA) e recursos (API) por usuário autenticado — DF-9.
+  usage: Visão administrativa de atividade, segurança e melhoria do produto. Anônimos não são registrados.
+schema:
+  - name: access_log
+    logicalType: object
+    physicalType: table
+    physicalName: access_log
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: 90d (purge por idade; some no purge da conta em 30d pós-exclusão)
+      - name: method
+        logicalType: string
+        required: true
+        description: Método HTTP, ou 'PAGE' para pageview da SPA.
+      - name: route
+        logicalType: string
+        required: true
+        description: Padrão da rota (ex. /api/v1/projects/:id) ou nome da página.
+      - name: path
+        logicalType: string
+        required: true
+        classification: pii
+        description: Caminho real (pode conter ids de recursos do usuário).
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: 90d
+      - name: status
+        logicalType: integer
+        required: false
+      - name: duration_ms
+        logicalType: integer
+        required: false
+      - name: ip_address
+        logicalType: string
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: legitimo-interesse
+          - property: retention
+            value: 90d
+      - name: occurred_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: appendOnly
+    value: sem UPDATE/DELETE para a role da aplicação
+  - property: subjectRights
+    value: incluído no export /me/export; oposição (art. 18 §2º) via contato — avaliado caso a caso
+  - property: adminAccess
+    value: leitura integral por admin (users.is_admin), auditada em audit_events (admin.view)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

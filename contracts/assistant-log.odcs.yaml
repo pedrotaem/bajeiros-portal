@@ -1,0 +1,89 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:assistant-log
+name: assistant-log
+version: 1.0.0
+status: draft
+domain: assistant
+dataProduct: bajeiros-portal
+description:
+  purpose: Registro de interações do assistente de IA (DF-8/DF-9) — pergunta, resposta, custo e latência.
+  usage: Visão administrativa de uso/custo, qualidade (insumo de evals) e suporte. Preenchido pelo proxy do chat; decisão do usuário em 2026-08-23 reverte o "sem persistência" da v1 do DF-8 (lado portal).
+schema:
+  - name: assistant_log
+    logicalType: object
+    physicalType: table
+    physicalName: assistant_log
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 90d (purge por idade; some no purge da conta em 30d pós-exclusão)
+      - name: question
+        logicalType: string
+        required: true
+        classification: pii
+        description: Texto livre do usuário — potencialmente pessoal; aviso do chat orienta a não inserir dados pessoais e declara armazenamento + visibilidade admin.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 90d
+      - name: answer
+        logicalType: string
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 90d
+      - name: status
+        logicalType: string
+        required: true
+        description: ok | error | refused.
+      - name: model
+        logicalType: string
+        required: false
+      - name: corpus_version
+        logicalType: string
+        required: false
+      - name: input_tokens
+        logicalType: integer
+        required: false
+      - name: output_tokens
+        logicalType: integer
+        required: false
+      - name: cache_read_tokens
+        logicalType: integer
+        required: false
+      - name: duration_ms
+        logicalType: integer
+        required: false
+      - name: occurred_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: appendOnly
+    value: sem UPDATE/DELETE para a role da aplicação
+  - property: subjectRights
+    value: incluído no export /me/export; exclusão da conta remove no purge 30d
+  - property: adminAccess
+    value: leitura integral por admin (users.is_admin), auditada em audit_events (admin.view)
+  - property: transparency
+    value: aviso de primeira utilização do chat (FR-DF8.10) declara armazenamento, finalidades e visibilidade admin
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

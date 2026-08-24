@@ -9,7 +9,35 @@ import { Wizard } from './components/Wizard'
 import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
 import { Landing } from './components/Landing'
-import { useSession } from './session'
+import { AssistantPanel } from './components/AssistantPanel'
+import { AdminPanel } from './components/AdminPanel'
+import { useSession, track } from './session'
+
+// Cabeçalhos de página inteira — o assistente volta ao INÍCIO (landing: o portal é
+// maior que o validador B6); o admin, ferramenta de operação, volta ao editor.
+function PageHeadToLanding({ title }: { title: string }) {
+  const setLanding = useSession((s) => s.setLanding)
+  return (
+    <div className="page-head">
+      <span>{title}</span>
+      <button className="account-btn" onClick={() => setLanding(true)}>
+        ← Voltar ao início
+      </button>
+    </div>
+  )
+}
+
+function PageHeadToEditor({ title }: { title: string }) {
+  const setPage = useSession((s) => s.setPage)
+  return (
+    <div className="page-head">
+      <span>{title}</span>
+      <button className="account-btn" onClick={() => setPage('editor')}>
+        ← Voltar ao editor
+      </button>
+    </div>
+  )
+}
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -62,9 +90,22 @@ export default function App() {
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
-  // Landing é a página inicial: todo acesso à raiz cai nela (estudo UX, R1 v2);
-  // link de convite (#convite=) pula direto p/ o login
-  const [showLanding, setShowLanding] = useState(() => !useSession.getState().inviteToken)
+  // Landing é a página inicial (estado no store — assistente/admin navegam p/ ela)
+  const showLanding = useSession((s) => s.landing)
+  const setShowLanding = useSession((s) => s.setLanding)
+
+  // DF-9: pageview (só p/ logado; anônimo não é rastreado)
+  const sessionUser = useSession((s) => s.user)
+  const page = useSession((s) => s.page)
+  const setPage = useSession((s) => s.setPage)
+  useEffect(() => {
+    if (sessionUser) track(showLanding ? 'landing' : 'editor')
+  }, [showLanding, sessionUser])
+
+  // admin exige sessão — logout volta ao editor (assistente aceita anônimo)
+  useEffect(() => {
+    if (!sessionUser && page === 'admin') setPage('editor')
+  }, [sessionUser, page, setPage])
 
   useEffect(() => {
     if (selectedMember || selectedNode) setRightOpen(true)
@@ -97,7 +138,21 @@ export default function App() {
       </header>
       {showLanding && <Landing onClose={() => setShowLanding(false)} />}
       <SessionPanels />
-      <div className="main">
+      {page === 'assistant' && (
+        <div className="page-body">
+          <div className="page-inner page-narrow">
+            <AssistantPanel Head={PageHeadToLanding} />
+          </div>
+        </div>
+      )}
+      {page === 'admin' && (
+        <div className="page-body">
+          <div className="page-inner">
+            <AdminPanel Head={PageHeadToEditor} />
+          </div>
+        </div>
+      )}
+      <div className="main" style={page !== 'editor' ? { display: 'none' } : undefined}>
         {leftOpen ? (
           <aside className="sidebar left">
             <div className="panel-head">

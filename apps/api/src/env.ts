@@ -5,6 +5,8 @@ const def = {
   DEV_JWT_SECRET: 'dev-secret-nao-usar-em-prod',
   COGNITO_ISSUER: '',
   PORT: '8787',
+  GATEWAY_URL: 'http://localhost:8788',
+  ASSISTANT_RATE_SALT: 'dev-salt-nao-usar-em-prod',
 }
 
 type EnvKey = keyof typeof def

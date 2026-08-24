@@ -1117,3 +1117,277 @@ button.primary:hover {
   padding: 0;
   text-decoration: underline;
 }
+
+/* ---------- DF-9: painel de administração ---------- */
+.modal-wide {
+  max-width: 1100px;
+}
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+  flex-wrap: wrap;
+}
+.admin-panel .modal-err,
+.admin-filter {
+  margin: 8px 14px 0;
+  font-size: 12px;
+}
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+.admin-card {
+  background: #10151b;
+  border: 1px solid #2c3542;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-card b {
+  font-size: 20px;
+}
+.admin-card span {
+  font-size: 11px;
+  color: #8ea0b5;
+}
+.admin-search {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+}
+.admin-search input {
+  flex: 1;
+  background: #10151b;
+  border: 1px solid #2c3542;
+  border-radius: 4px;
+  color: inherit;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.admin-table-wrap {
+  overflow: auto;
+  padding: 10px 14px;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #232b36;
+  vertical-align: top;
+}
+.admin-table th {
+  color: #8ea0b5;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: #171c22;
+}
+.admin-dim {
+  color: #8ea0b5;
+}
+.admin-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  background: #1d3a5f;
+  color: #9ec7f7;
+}
+.admin-chip.bad {
+  background: #4a1d20;
+  color: #f1a3a6;
+}
+.admin-deleted td {
+  opacity: 0.55;
+}
+.admin-row-click {
+  cursor: pointer;
+}
+.admin-detail {
+  background: #10151b;
+}
+.admin-detail p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+.admin-pager {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 0 14px 12px;
+}
+
+/* ---------- DF-8: assistente de regras ---------- */
+.modal-tall {
+  max-width: 720px;
+  height: min(82vh, 700px);
+}
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.assistant-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.assistant-hint {
+  color: #8ea0b5;
+  font-size: 12px;
+  margin: 8px 2px;
+}
+.assistant-msg {
+  max-width: 88%;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.assistant-msg.user {
+  align-self: flex-end;
+  background: #1d3a5f;
+}
+.assistant-msg.assistant {
+  align-self: flex-start;
+  background: #10151b;
+  border: 1px solid #2c3542;
+}
+.assistant-typing {
+  color: #8ea0b5;
+}
+.assistant-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 4px;
+  align-items: flex-end;
+}
+.assistant-input textarea {
+  flex: 1;
+  resize: none;
+  background: #10151b;
+  border: 1px solid #2c3542;
+  border-radius: 6px;
+  color: inherit;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.assistant-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 14px 12px;
+  font-size: 10.5px;
+  color: #8ea0b5;
+}
+.assistant-notice {
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-y: auto;
+}
+.assistant-notice ul {
+  padding-left: 18px;
+  margin: 8px 0 14px;
+}
+.assistant-notice li {
+  margin-bottom: 6px;
+}
+.assistant-panel .modal-err {
+  margin: 4px 14px;
+}
+.rule-ask {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  color: #e6a817;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.assistant-msg.assistant {
+  white-space: normal;
+}
+.assistant-h {
+  font-weight: 700;
+  margin: 6px 0 3px;
+}
+.assistant-li {
+  padding-left: 14px;
+  position: relative;
+}
+.assistant-li::before {
+  content: '–';
+  position: absolute;
+  left: 2px;
+  color: #8ea0b5;
+}
+.assistant-gap {
+  height: 6px;
+}
+
+/* ---------- páginas inteiras (assistente/admin) ---------- */
+.page-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(23, 28, 34, 0.92), rgba(23, 28, 34, 0.92)),
+    repeating-linear-gradient(0deg, transparent 0 39px, #1c232c 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, #1c232c 39px 40px);
+}
+.page-inner {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #171c22;
+  border: 1px solid #2c3542;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.page-inner.page-narrow {
+  max-width: 860px;
+}
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #2c3542;
+  font-weight: 600;
+}
+.page-inner .assistant-panel,
+.page-inner .admin-panel {
+  flex: 1;
+  min-height: 0;
+}

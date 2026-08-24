@@ -24,6 +24,7 @@ export interface UserInfo {
   email: string
   displayName: string
   university: string | null
+  isAdmin?: boolean
 }
 
 export interface CurrentProject {
@@ -34,14 +35,32 @@ export interface CurrentProject {
 
 export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
 
+// Páginas inteiras da SPA (DF-8/DF-9): editor 3D, assistente e admin.
+export type PageId = 'editor' | 'assistant' | 'admin'
+
+// DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
+export function track(page: string) {
+  const { token } = useSession.getState()
+  if (!token) return
+  void fetch('/api/v1/activity/pageview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ page }),
+  }).catch(() => {})
+}
+
 interface SessionState {
   token: string | null
   user: UserInfo | null
   currentProject: CurrentProject | null
   panel: PanelId
+  page: PageId
+  landing: boolean
   inviteToken: string | null
   inviteNotice: string | null
   setPanel: (p: PanelId) => void
+  setPage: (p: PageId) => void
+  setLanding: (v: boolean) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
   login: (email: string, name: string) => Promise<void>
@@ -127,11 +146,21 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   currentProject: null,
+  page: 'editor',
+  landing: !initialInvite, // landing é a página inicial; convite pula direto p/ login
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
   clearInviteNotice: () => set({ inviteNotice: null }),
-  setPanel: (panel) => set({ panel }),
+  setPanel: (panel) => {
+    if (panel) track(`panel:${panel}`)
+    set({ panel })
+  },
+  setPage: (page) => {
+    track(`page:${page}`)
+    set({ page })
+  },
+  setLanding: (landing) => set({ landing }),
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
 
@@ -185,5 +214,5 @@ export const useSession = create<SessionState>((set, get) => ({
     }
   },
 
-  logout: () => set({ token: null, user: null, currentProject: null, panel: null }),
+  logout: () => set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' }),
 }))
