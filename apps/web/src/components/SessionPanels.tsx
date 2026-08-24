@@ -50,6 +50,7 @@ function Head({ title }: { title: string }) {
 
 function LoginPanel() {
   const login = useSession((s) => s.login)
+  const authNotice = useSession((s) => s.authNotice)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -74,6 +75,7 @@ function LoginPanel() {
             Você será redirecionado à página segura de login — lá dá para entrar, criar conta ou
             recuperar a senha.
           </p>
+          {authNotice && <p className="modal-err">{authNotice}</p>}
           {err && <p className="modal-err">{err}</p>}
           <button className="account-btn primary" disabled={busy} onClick={go}>
             {busy ? 'Redirecionando…' : 'Entrar'}

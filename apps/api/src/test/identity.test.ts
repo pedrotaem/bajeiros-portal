@@ -15,6 +15,21 @@ describe('identity (fase 12 — usuários + LGPD)', () => {
     expect((await r2.json()).id).toBe(u.sub)
   })
 
+  it('bootstrap com e-mail de outra conta (sub novo) → 409, não 500', async () => {
+    const u1 = await makeUser('Carla')
+    await app.request('/api/v1/me', authed(u1, { method: 'POST' }))
+    // mesmo e-mail, sub diferente — ex.: conta dev antiga × sub novo do Cognito
+    const { randomUUID } = await import('node:crypto')
+    const { signDevToken } = await import('../auth/jwt')
+    const sub2 = randomUUID()
+    const u2 = { sub: sub2, email: u1.email, name: u1.name, token: '' }
+    u2.token = await signDevToken({ sub: sub2, email: u1.email, name: u1.name })
+    const r = await app.request('/api/v1/me', authed(u2, { method: 'POST' }))
+    expect(r.status).toBe(409)
+    expect(r.headers.get('content-type')).toContain('problem+json')
+    expect((await r.json()).title).toBe('E-mail já cadastrado')
+  })
+
   it('GET /me sem bootstrap → 404 problem+json', async () => {
     const u = await makeUser('Novo')
     const r = await app.request('/api/v1/me', authed(u))
