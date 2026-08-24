@@ -206,12 +206,23 @@ export async function initSession(config: AppConfig): Promise<void> {
 
 async function parseOrThrow<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as T
-  const isProblem = res.headers.get('content-type')?.includes('problem+json')
+  const contentType = res.headers.get('content-type') ?? ''
+  const isProblem = contentType.includes('problem+json')
   const body = await res.json().catch(() => null)
   if (!res.ok) {
     throw new ApiError(
       isProblem && body ? body : { title: `Erro ${res.status}`, status: res.status },
     )
+  }
+  // 2xx sem JSON = não veio da API (ex.: fallback SPA do CloudFront quando o
+  // backend não existe no ambiente) — tratar como indisponibilidade, não sucesso
+  if (!contentType.includes('json') || body === null) {
+    throw new ApiError({
+      title: 'API indisponível',
+      status: res.status,
+      detail:
+        'O backend ainda não está disponível neste ambiente — a conta funciona, mas os recursos que dependem da API (projetos, equipes) ficam para quando ele for publicado.',
+    })
   }
   return body as T
 }
