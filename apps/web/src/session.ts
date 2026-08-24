@@ -67,6 +67,7 @@ interface SessionState {
   landing: boolean
   inviteToken: string | null
   inviteNotice: string | null
+  authNotice: string | null // falha do pós-login cognito (ex.: 409 de e-mail), exibida no LoginPanel
   setPanel: (p: PanelId) => void
   setPage: (p: PageId) => void
   setLanding: (v: boolean) => void
@@ -184,8 +185,17 @@ export async function initSession(config: AppConfig): Promise<void> {
   try {
     const user = await useSession.getState().api<UserInfo>('/api/v1/me', { method: 'POST' })
     useSession.setState({ user, panel: null })
-  } catch {
-    return // API fora do ar (ex.: staging sem backend) — segue deslogado
+  } catch (e) {
+    // API fora do ar (ex.: staging sem backend) ou bootstrap recusado (409/410):
+    // segue deslogado, mas com o motivo visível no painel de login
+    if (e instanceof ApiError) {
+      useSession.setState({
+        token: null,
+        panel: 'login',
+        authNotice: e.problem.detail ?? e.problem.title,
+      })
+    }
+    return
   }
   const invite = result.appState.invite ?? useSession.getState().inviteToken
   if (invite) {
@@ -215,6 +225,7 @@ export const useSession = create<SessionState>((set, get) => ({
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
+  authNotice: null,
   clearInviteNotice: () => set({ inviteNotice: null }),
   setPanel: (panel) => {
     if (panel) track(`panel:${panel}`)
@@ -257,6 +268,7 @@ export const useSession = create<SessionState>((set, get) => ({
     // Modo cognito: redireciona ao Managed Login; o convite pendente viaja no
     // appState (sessionStorage) e volta em initSession após o callback.
     if (appConfig.authMode === 'cognito' && authClient) {
+      set({ authNotice: null })
       const invite = get().inviteToken
       await authClient.login(invite ? { invite } : {})
       return // a navegação sai da página

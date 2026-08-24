@@ -13,7 +13,29 @@ const CONSENT_PURPOSES = ['marketing_email', 'analytics'] as const
 // Base legal: execução de contrato (art. 7º, V) — não gera registro de consentimento.
 identity.post('/', async (c) => {
   const { sub, email, name } = c.get('auth')
-  const user = await withUser(sub, async (db) => {
+  let user: Record<string, unknown>
+  try {
+    user = await bootstrap(sub, email, name, clientIp(c.req.raw.headers))
+  } catch (e) {
+    // e-mail já pertence a outro sub (ex.: conta antiga do dev issuer, ou
+    // recadastro após exclusão) — 409 claro em vez de 500 opaco
+    const pg = e as { code?: string; constraint?: string }
+    if (pg.code === '23505' && pg.constraint === 'users_email_key') {
+      return problem(
+        c,
+        409,
+        'E-mail já cadastrado',
+        'Este e-mail já está associado a outra conta. Se você excluiu a conta antiga, aguarde o processamento; caso contrário, contate o suporte.',
+      )
+    }
+    throw e
+  }
+  if (user.deleted_at) return problem(c, 410, 'Conta excluída', 'Exclusão em processamento.')
+  return c.json(toUser(user))
+})
+
+function bootstrap(sub: string, email: string, name: string, ip: string | undefined) {
+  return withUser(sub, async (db) => {
     // bootstrap = início de sessão → carimba last_login_at (DF-9)
     const existing = await db.query(
       'UPDATE users SET last_login_at = now() WHERE id = $1 RETURNING *',
@@ -29,13 +51,11 @@ identity.post('/', async (c) => {
       action: 'user.bootstrap',
       resourceType: 'user',
       resourceId: sub,
-      ip: clientIp(c.req.raw.headers),
+      ip,
     })
     return created.rows[0]
   })
-  if (user.deleted_at) return problem(c, 410, 'Conta excluída', 'Exclusão em processamento.')
-  return c.json(toUser(user))
-})
+}
 
 identity.get('/', async (c) => {
   const { sub } = c.get('auth')
