@@ -9,6 +9,29 @@
 5. Mesmo artefato vai p/ prod → smoke test automático.
 6. Tag de release: `git tag vX.Y.Z && git push --tags` (C9 da revisão).
 
+## API (fase 11) — operação
+
+- **Cold start + resume do Aurora (0 ACU)**: primeira request após inatividade leva **15–20s** (resume ~15s + cold da Lambda). O driver tem retry interno e o timeout é 28s; o smoke do deploy usa `--retry-all-errors`. Não é incidente — é o custo do 0 ACU.
+- **Migração**: roda automaticamente no deploy (`migrate.bundle.mjs`, secret MASTER), ANTES de publicar a Lambda. Manual (emergência):
+
+```bash
+AWS_REGION=sa-east-1 \
+DB_CLUSTER_ARN=... DB_MASTER_SECRET_ARN=... DB_APP_SECRET_ARN=... \
+node apps/api/dist/lambda/migrate.bundle.mjs --dir apps/api/migrations
+# (gerar o bundle antes: npm run build:lambda -w @bajeiros/api)
+```
+
+- **Rollback da Lambda**: baixar o artifact `lambda-<SHA-anterior>` do run verde anterior (retenção 30d) e republicar:
+
+```bash
+aws lambda update-function-code --function-name bajeiros-<env>-api \
+  --zip-file fileb://lambda.zip --publish --region sa-east-1
+```
+
+Migrações são forward-only — rollback de código não desfaz migração; se a migração for o problema, corrigir com NOVA migração.
+
+- **Budget**: US$ 40/mês por conta (alertas 50/80/100% + forecast → e-mail). Estourou: Cost Explorer por serviço; suspeitos usuais = Aurora fora do auto-pause (ver `ServerlessDatabaseCapacity` no CloudWatch) e tráfego CloudFront.
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.

@@ -60,6 +60,21 @@ module "site" {
   noindex            = false
   csp_enforce        = false # promover a true após CSP limpa no staging (C2)
   extra_connect_src  = [module.auth.auth_domain_url]
+  api_origin_domain  = module.api.api_endpoint_domain
+}
+
+# API (fase 11): Aurora 0 ACU + Data API + Lambda + API GW — tudo em sa-east-1 (ADR-008)
+module "api" {
+  source    = "../../modules/api"
+  providers = { aws = aws.sa_east_1 }
+
+  name                  = "bajeiros-prod"
+  cognito_issuer        = module.auth.issuer
+  cognito_client_id     = module.auth.client_id
+  aurora_max_capacity   = 2
+  backup_retention_days = 35
+  deletion_protection   = true
+  budget_alert_emails   = ["pedrotaem@gmail.com"]
 }
 
 module "auth" {
@@ -108,4 +123,9 @@ resource "aws_cloudwatch_metric_alarm" "cf_5xx" {
 
 output "site" {
   value = module.site
+}
+
+output "api" {
+  description = "GitHub variables: LAMBDA_FUNCTION_NAME, DB_CLUSTER_ARN, DB_MASTER_SECRET_ARN, DB_APP_SECRET_ARN"
+  value       = module.api
 }
