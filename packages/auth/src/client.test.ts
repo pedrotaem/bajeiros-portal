@@ -24,30 +24,40 @@ const CFG = {
   logoutUri: 'https://app.example/',
 }
 
+interface WindowStub {
+  location: { search: string; hash: string; pathname: string; assign: (u: string) => void }
+  history: { replaceState: (s: unknown, t: string, u: string) => void }
+}
+
+const globals = globalThis as unknown as {
+  sessionStorage?: ReturnType<typeof makeStorage>
+  window?: WindowStub
+}
+
 function setUrl(search: string, hash = '') {
-  ;(globalThis as any).window.location.search = search
-  ;(globalThis as any).window.location.hash = hash
+  globals.window!.location.search = search
+  globals.window!.location.hash = hash
 }
 
 beforeEach(() => {
   assigned = []
   replaced = []
-  ;(globalThis as any).sessionStorage = makeStorage()
-  ;(globalThis as any).window = {
+  globals.sessionStorage = makeStorage()
+  globals.window = {
     location: {
       search: '',
       hash: '',
       pathname: '/',
-      assign: (u: string) => void assigned.push(u),
+      assign: (u) => void assigned.push(u),
     },
-    history: { replaceState: (_s: unknown, _t: string, u: string) => void replaced.push(u) },
+    history: { replaceState: (_s, _t, u) => void replaced.push(u) },
   }
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
-  delete (globalThis as any).sessionStorage
-  delete (globalThis as any).window
+  delete globals.sessionStorage
+  delete globals.window
 })
 
 describe('createAuthClient', () => {
