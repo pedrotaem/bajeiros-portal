@@ -26,9 +26,11 @@ provider "aws" {
   profile = "bajeiros-staging"
 }
 
+# Forma IMUTÁVEL do sub OIDC (owner@id/repo@id) — repos criados após 15/07/2026
+# emitem só esse formato (changelog GitHub 2026-04-23). IDs: gh api repos/... .id
 variable "github_repo" {
   type    = string
-  default = "pedrotaem/bajeiros-portal"
+  default = "pedrotaem@29166147/bajeiros-portal@1342987014"
 }
 
 resource "aws_route53_zone" "staging" {
