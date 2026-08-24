@@ -30,6 +30,12 @@ variable "csp_value" {
   default     = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 }
 
+variable "extra_connect_src" {
+  description = "Origens extras no connect-src (ex.: domínio do Cognito Managed Login p/ o /oauth2/token)"
+  type        = list(string)
+  default     = []
+}
+
 variable "noindex" {
   description = "true adiciona X-Robots-Tag: noindex (staging)"
   type        = bool

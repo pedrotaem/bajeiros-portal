@@ -159,8 +159,12 @@ resource "aws_cloudfront_response_headers_policy" "site" {
   custom_headers_config {
     items {
       # Report-Only até validar em staging (C2 da revisão)
-      header   = var.csp_enforce ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only"
-      value    = var.csp_value
+      header = var.csp_enforce ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only"
+      value = replace(
+        var.csp_value,
+        "connect-src 'self'",
+        trimspace("connect-src 'self' ${join(" ", var.extra_connect_src)}"),
+      )
       override = true
     }
     items {

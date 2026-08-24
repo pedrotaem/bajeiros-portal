@@ -23,6 +23,13 @@ provider "aws" {
   profile = "bajeiros-prod"
 }
 
+# Cognito em sa-east-1 (ADR-008: dados pessoais no Brasil)
+provider "aws" {
+  alias   = "sa_east_1"
+  region  = "sa-east-1"
+  profile = "bajeiros-prod"
+}
+
 # Forma IMUTÁVEL do sub OIDC (owner@id/repo@id) — repos criados após 15/07/2026
 # emitem só esse formato (changelog GitHub 2026-04-23). IDs: gh api repos/... .id
 variable "github_repo" {
@@ -52,6 +59,29 @@ module "site" {
   github_environment = "production"
   noindex            = false
   csp_enforce        = false # promover a true após CSP limpa no staging (C2)
+  extra_connect_src  = [module.auth.auth_domain_url]
+}
+
+module "auth" {
+  source    = "../../modules/auth"
+  providers = { aws = aws.sa_east_1 }
+
+  name                = "bajeiros-prod"
+  domain_prefix       = "bajeiros" # prefixo é único por região — validar no 1º apply
+  deletion_protection = true
+  callback_urls = [
+    "https://bajeiros.com.br/",
+    "https://www.bajeiros.com.br/",
+  ]
+  logout_urls = [
+    "https://bajeiros.com.br/",
+    "https://www.bajeiros.com.br/",
+  ]
+}
+
+output "auth" {
+  description = "issuer/client_id/domínio p/ as variables do GitHub"
+  value       = module.auth
 }
 
 # Alarme 5xx (C7.1 do plano)
