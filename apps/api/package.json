@@ -7,10 +7,13 @@
     "dev": "tsx watch src/index.ts",
     "db:start": "node scripts/dev-db.mjs",
     "db:migrate": "node-pg-migrate up -m migrations",
+    "db:migrate:aws": "node scripts/migrate-data-api.mjs",
+    "build:lambda": "node scripts/build-lambda.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-rds-data": "^3.700.0",
     "@bajeiros/core": "*",
     "@hono/node-server": "^1.13.7",
     "hono": "^4.6.14",
@@ -19,7 +22,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0",
     "@types/pg": "^8.11.10",
+    "esbuild": "^0.25.0",
     "embedded-postgres": "17.10.0-beta.17",
     "node-pg-migrate": "^9.0.0",
     "tsx": "^4.19.2",

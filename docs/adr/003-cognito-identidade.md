@@ -24,3 +24,7 @@ O Bearer aceito pela API é o **ID token** (o access token do Cognito não carre
 
 - Branding do Managed Login gerenciado via Terraform (`aws_cognito_managed_login_branding`); começa com defaults do Cognito.
 - Proteção contra credential stuffing (tier **Plus**, pricing nov/2024) fica p/ o gate M3 — persona de segurança registrou preferência por Plus desde já (2×1).
+
+## Nota (2026-08-24, fase 11)
+
+A validação do ID token permanece na aplicação (jose + JWKS do pool) também na AWS — sem JWT authorizer no API Gateway (ver nota no ADR-001). `assertAuthEnv`/`assertProdEnv` rodam no module scope da Lambda: cold start falha alto com config incompleta.
