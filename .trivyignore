@@ -1,0 +1,14 @@
+# Riscos aceitos no IaC (site estático MVP) — revisar no marco M3 (pagamentos).
+
+# CloudFront sem WAF: conteúdo 100% público e estático, sem formulários na
+# camada CDN; custo do WAF não se justifica nesta fase.
+AVD-AWS-0011
+
+# Buckets com SSE-S3 (AES256) em vez de KMS CMK: conteúdo público (site) e
+# logs de acesso; CMK adicionaria custo/complexidade sem ganho real.
+AVD-AWS-0132
+
+# Tópico SNS de alarmes sem criptografia: só transporta notificações de
+# alarme CloudWatch (sem dados pessoais). Criptografar com aws/sns quebraria
+# a publicação pelo CloudWatch (exigiria CMK com key policy própria).
+AVD-AWS-0095

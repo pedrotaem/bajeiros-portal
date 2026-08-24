@@ -1,5 +1,6 @@
-# Recursos compartilhados: hosted zone + OIDC provider do GitHub.
-# Aplicar PRIMEIRO (uma vez), antes de staging/prod.
+# Recursos compartilhados da CONTA PROD: hosted zone pai + OIDC provider do GitHub.
+# Aplicar PRIMEIRO (uma vez), antes de staging/prod, com AWS_PROFILE=bajeiros-prod.
+# A conta staging tem zona delegada própria (staging.bajeiros.com.br) — ver envs/staging.
 
 terraform {
   required_version = ">= 1.10"
@@ -10,15 +11,17 @@ terraform {
     }
   }
   backend "s3" {
-    bucket       = "bajeiros-tfstate" # criado no bootstrap (ver infra/README.md)
+    bucket       = "bajeiros-tfstate-prod" # criado no bootstrap (ver infra/README.md)
     key          = "global/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
+    profile      = "bajeiros-prod"
   }
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
+  profile = "bajeiros-prod"
 }
 
 resource "aws_route53_zone" "main" {
@@ -36,6 +39,28 @@ resource "aws_route53_record" "caa" {
     "0 issue \"awstrust.com\"",
     "0 issue \"amazonaws.com\"",
   ]
+}
+
+# Delegação da zona staging (conta bajeiros-staging).
+# Default = NS reais da zona delegada (output name_servers do env staging);
+# atualizar se a zona staging for recriada.
+variable "staging_zone_name_servers" {
+  type = list(string)
+  default = [
+    "ns-1098.awsdns-09.org",
+    "ns-137.awsdns-17.com",
+    "ns-1807.awsdns-33.co.uk",
+    "ns-617.awsdns-13.net",
+  ]
+}
+
+resource "aws_route53_record" "staging_delegation" {
+  count   = length(var.staging_zone_name_servers) > 0 ? 1 : 0
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "staging.bajeiros.com.br"
+  type    = "NS"
+  ttl     = 3600
+  records = var.staging_zone_name_servers
 }
 
 # Thumbprint não é mais usado p/ validação (AWS confia na CA raiz do GitHub),

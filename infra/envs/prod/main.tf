@@ -7,15 +7,20 @@ terraform {
     }
   }
   backend "s3" {
-    bucket       = "bajeiros-tfstate"
+    bucket       = "bajeiros-tfstate-prod"
     key          = "prod/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
+    profile      = "bajeiros-prod"
   }
 }
 
+# Conta bajeiros-prod (035842308271). Aplicar com AWS_PROFILE=bajeiros-prod,
+# DEPOIS do env global (zona + OIDC vivem no state global, mesma conta).
+
 provider "aws" {
-  region = "us-east-1" # ACM p/ CloudFront exige us-east-1
+  region  = "us-east-1" # ACM p/ CloudFront exige us-east-1
+  profile = "bajeiros-prod"
 }
 
 variable "github_repo" {
@@ -26,9 +31,10 @@ variable "github_repo" {
 data "terraform_remote_state" "global" {
   backend = "s3"
   config = {
-    bucket = "bajeiros-tfstate"
-    key    = "global/terraform.tfstate"
-    region = "us-east-1"
+    bucket  = "bajeiros-tfstate-prod"
+    key     = "global/terraform.tfstate"
+    region  = "us-east-1"
+    profile = "bajeiros-prod"
   }
 }
 
