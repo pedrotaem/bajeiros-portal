@@ -26,6 +26,13 @@ provider "aws" {
   profile = "bajeiros-staging"
 }
 
+# Cognito em sa-east-1 (ADR-008: dados pessoais no Brasil)
+provider "aws" {
+  alias   = "sa_east_1"
+  region  = "sa-east-1"
+  profile = "bajeiros-staging"
+}
+
 # Forma IMUTÁVEL do sub OIDC (owner@id/repo@id) — repos criados após 15/07/2026
 # emitem só esse formato (changelog GitHub 2026-04-23). IDs: gh api repos/... .id
 variable "github_repo" {
@@ -68,6 +75,31 @@ module "site" {
   github_environment = "staging"
   noindex            = true
   csp_enforce        = false # Report-Only até validar (C2)
+  extra_connect_src  = [module.auth.auth_domain_url]
+}
+
+module "auth" {
+  source    = "../../modules/auth"
+  providers = { aws = aws.sa_east_1 }
+
+  name          = "bajeiros-staging"
+  domain_prefix = "bajeiros-staging"
+  # match EXATO (esquema/host/porta/barra final); localhost p/ dev contra o pool real
+  callback_urls = [
+    "https://staging.bajeiros.com.br/",
+    "http://localhost:5173/",
+    "http://localhost:5175/",
+  ]
+  logout_urls = [
+    "https://staging.bajeiros.com.br/",
+    "http://localhost:5173/",
+    "http://localhost:5175/",
+  ]
+}
+
+output "auth" {
+  description = "issuer/client_id/domínio p/ as variables do GitHub e API local"
+  value       = module.auth
 }
 
 output "name_servers" {

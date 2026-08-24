@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useSession, ApiError, type UserInfo } from '../session'
+import { authMode, useSession, ApiError, type UserInfo } from '../session'
 import { useStore } from '../store'
 import { TeamsPanel } from './TeamsPanel'
 import type { Cage } from '@bajeiros/core/model/types'
@@ -46,7 +46,7 @@ function Head({ title }: { title: string }) {
   )
 }
 
-// ---------- Login (dev issuer) ----------
+// ---------- Login (cognito = redirect ao Managed Login; dev = form local) ----------
 
 function LoginPanel() {
   const login = useSession((s) => s.login)
@@ -54,6 +54,38 @@ function LoginPanel() {
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, fail, clear] = useErr()
+
+  if (authMode() === 'cognito') {
+    const go = async () => {
+      clear()
+      setBusy(true)
+      try {
+        await login() // redireciona; só volta aqui se algo falhar antes da navegação
+      } catch (e2) {
+        fail(e2)
+        setBusy(false)
+      }
+    }
+    return (
+      <>
+        <Head title="Entrar" />
+        <div className="modal-body">
+          <p className="modal-note">
+            Você será redirecionado à página segura de login — lá dá para entrar, criar conta ou
+            recuperar a senha.
+          </p>
+          {err && <p className="modal-err">{err}</p>}
+          <button className="account-btn primary" disabled={busy} onClick={go}>
+            {busy ? 'Redirecionando…' : 'Entrar'}
+          </button>
+          <p className="modal-note">
+            Ao entrar você concorda com o uso dos dados necessários à prestação do serviço (LGPD
+            art. 7º, V). Comunicações opcionais são controladas em Perfil e privacidade.
+          </p>
+        </div>
+      </>
+    )
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -73,8 +105,8 @@ function LoginPanel() {
       <Head title="Entrar" />
       <form className="modal-body" onSubmit={submit}>
         <p className="modal-note">
-          Ambiente de desenvolvimento: informe e-mail e nome — a conta é criada/reaberta na hora
-          (sem senha). Login real (Cognito) entra na fase 12.
+          Ambiente de desenvolvimento local: informe e-mail e nome — a conta é criada/reaberta na
+          hora (sem senha). Nos ambientes publicados o login real usa Cognito.
         </p>
         <label className="field">
           E-mail

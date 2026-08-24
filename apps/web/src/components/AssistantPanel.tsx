@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { create } from 'zustand'
-import { useSession } from '../session'
+import { authHeaders, useSession } from '../session'
 
 // DF-8 — Assistente de Regras: chat sobre o regulamento completo via AI Gateway.
 // Conversa vive em memória (zustand de módulo — fechar o painel preserva; recarregar
@@ -164,7 +164,7 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
         signal: ctrl.signal,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...authHeaders(), // lê o token atual (pode ter sido renovado por refresh)
         },
         body: JSON.stringify({
           messages: history.slice(-WINDOW),

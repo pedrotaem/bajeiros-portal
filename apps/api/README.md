@@ -49,4 +49,6 @@ Erros: RFC 9457 (`application/problem+json`).
 
 ## Produção (fase 11)
 
-Trocar `AUTH_MODE=cognito` + `COGNITO_ISSUER`; Aurora via RDS Data API exigirá driver próprio no lugar de `pg` (ADR-007) — interface `withUser()` é o ponto de troca.
+Modo cognito (real): `AUTH_MODE=cognito` + `COGNITO_ISSUER` (`https://cognito-idp.sa-east-1.amazonaws.com/<poolId>`) + `COGNITO_CLIENT_ID` — config validada no boot (`assertAuthEnv`). O Bearer é o **ID token** do Managed Login (RS256, JWKS), validado com issuer + aud + `token_use=id` + `email_verified`. Receita p/ rodar local contra o pool de staging: exportar as 3 vars (valores em `terraform output auth` no env staging) e criar `apps/web/public/config.json` (gitignored) com `{"authMode":"cognito","cognito":{"domain":"…","clientId":"…"}}`.
+
+Aurora via RDS Data API exigirá driver próprio no lugar de `pg` (ADR-007) — interface `withUser()` é o ponto de troca.

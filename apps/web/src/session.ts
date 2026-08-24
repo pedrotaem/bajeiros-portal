@@ -1,8 +1,12 @@
+import { createAuthClient, type AuthClient } from '@bajeiros/auth/client'
 import { create } from 'zustand'
+import type { AppConfig } from './config'
 
-// Sessão do portal (fase 12/13). Token SÓ em memória (plano v2, 12.4) —
-// recarregar a página exige novo login; em dev o sub é estável por e-mail
-// (localStorage guarda apenas o mapeamento e-mail→sub, nunca o token).
+// Sessão do portal. Token SÓ em memória (plano v2, 12.4) — recarregar a página
+// exige novo login (no modo cognito o cookie do Managed Login torna a volta
+// silenciosa). Modo dev: sub estável por e-mail via localStorage (só o
+// mapeamento e-mail→sub, nunca o token). Modo cognito: redirect OIDC
+// (code + PKCE) via @bajeiros/auth — nada de Cognito fora daquele package.
 
 export interface ApiProblem {
   title: string
@@ -38,13 +42,18 @@ export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
 // Páginas inteiras da SPA (DF-8/DF-9): editor 3D, assistente e admin.
 export type PageId = 'editor' | 'assistant' | 'admin'
 
+// Header de auth p/ fetches feitos fora do método api() (track, streaming SSE).
+export function authHeaders(): Record<string, string> {
+  const { token } = useSession.getState()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 // DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
 export function track(page: string) {
-  const { token } = useSession.getState()
-  if (!token) return
+  if (!useSession.getState().token) return
   void fetch('/api/v1/activity/pageview', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ page }),
   }).catch(() => {})
 }
@@ -63,7 +72,8 @@ interface SessionState {
   setLanding: (v: boolean) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
-  login: (email: string, name: string) => Promise<void>
+  // dev: exige email+name (form local); cognito: ignora args e redireciona
+  login: (email?: string, name?: string) => Promise<void>
   logout: () => void
   api: <T = unknown>(path: string, init?: RequestInit) => Promise<T>
   setUser: (u: UserInfo | null) => void
@@ -81,32 +91,33 @@ function readInviteFromUrl(): string | null {
 const initialInvite = readInviteFromUrl()
 
 // Link aberto numa aba já carregada (só o hash muda, sem reload): captura também.
+// Aceita um convite estando autenticado; usado pós-login (dev e cognito) e
+// pelo listener de hashchange.
+async function acceptPendingInvite(invite: string): Promise<void> {
+  try {
+    const team = await useSession.getState().api<{ name: string }>('/api/v1/invites/accept', {
+      method: 'POST',
+      body: JSON.stringify({ token: invite }),
+    })
+    useSession.setState({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` })
+  } catch {
+    useSession.setState({
+      panel: 'teams',
+      inviteNotice:
+        'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
+    })
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
     const token = readInviteFromUrl()
     if (!token) return
-    const s = useSession.getState()
-    if (!s.user) {
+    if (!useSession.getState().user) {
       useSession.setState({ inviteToken: token, panel: 'login' })
       return
     }
-    s.api<{ name: string }>('/api/v1/invites/accept', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    })
-      .then((team) =>
-        useSession.setState({
-          panel: 'teams',
-          inviteNotice: `Você entrou na equipe ${team.name}.`,
-        }),
-      )
-      .catch(() =>
-        useSession.setState({
-          panel: 'teams',
-          inviteNotice:
-            'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
-        }),
-      )
+    void acceptPendingInvite(token)
   })
 }
 
@@ -127,6 +138,59 @@ function rememberDevSub(email: string, sub: string) {
     localStorage.setItem(DEV_SUBS_KEY, JSON.stringify(map))
   } catch {
     /* dev only */
+  }
+}
+
+// ---------- modo cognito (config chega no boot, via initSession) ----------
+
+let appConfig: AppConfig = { authMode: 'dev' }
+let authClient: AuthClient | null = null
+
+export function authMode(): AppConfig['authMode'] {
+  return appConfig.authMode
+}
+
+// Refresh único mesmo com chamadas 401 concorrentes.
+let refreshInFlight: Promise<string | null> | null = null
+function refreshOnce(): Promise<string | null> {
+  if (!authClient) return Promise.resolve(null)
+  refreshInFlight ??= authClient
+    .refresh()
+    .then((t) => t?.idToken ?? null)
+    .catch(() => null)
+    .finally(() => {
+      refreshInFlight = null
+    })
+  return refreshInFlight
+}
+
+// Chamado pelo main.tsx ANTES do createRoot: o ?code= do redirect é single-use
+// e o StrictMode re-executa effects — o callback não pode viver dentro do React.
+export async function initSession(config: AppConfig): Promise<void> {
+  appConfig = config
+  if (config.authMode !== 'cognito' || !config.cognito) return
+  authClient = createAuthClient({
+    domain: config.cognito.domain,
+    clientId: config.cognito.clientId,
+    redirectUri: window.location.origin + '/',
+    logoutUri: window.location.origin + '/',
+  })
+  if (!authClient.hasCallbackParams()) return
+
+  const result = await authClient.handleCallback()
+  if (!result) return // state/verifier ausentes ou troca falhou → landing normal
+
+  useSession.setState({ token: result.tokens.idToken, landing: false })
+  try {
+    const user = await useSession.getState().api<UserInfo>('/api/v1/me', { method: 'POST' })
+    useSession.setState({ user, panel: null })
+  } catch {
+    return // API fora do ar (ex.: staging sem backend) — segue deslogado
+  }
+  const invite = result.appState.invite ?? useSession.getState().inviteToken
+  if (invite) {
+    useSession.setState({ inviteToken: null })
+    await acceptPendingInvite(invite)
   }
 }
 
@@ -165,23 +229,41 @@ export const useSession = create<SessionState>((set, get) => ({
   setUser: (user) => set({ user }),
 
   api: async <T>(path: string, init: RequestInit = {}): Promise<T> => {
-    const { token } = get()
-    const res = await fetch(path, {
-      ...init,
-      headers: {
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(init.headers ?? {}),
-      },
-    })
+    const doFetch = (token: string | null) =>
+      fetch(path, {
+        ...init,
+        headers: {
+          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(init.headers ?? {}),
+        },
+      })
+    let res = await doFetch(get().token)
     if (res.status === 401 && get().token) {
-      set({ token: null, user: null, currentProject: null, panel: 'login' })
+      // cognito: 1 tentativa de refresh + retry antes de derrubar a sessão
+      const refreshed = await refreshOnce()
+      if (refreshed) {
+        set({ token: refreshed })
+        res = await doFetch(refreshed)
+      }
+      if (res.status === 401) {
+        set({ token: null, user: null, currentProject: null, panel: 'login' })
+      }
     }
     return parseOrThrow<T>(res)
   },
 
-  // Login de desenvolvimento (AUTH_MODE=dev). Cognito hosted/OIDC entra na fase 12 real.
   login: async (email, name) => {
+    // Modo cognito: redireciona ao Managed Login; o convite pendente viaja no
+    // appState (sessionStorage) e volta em initSession após o callback.
+    if (appConfig.authMode === 'cognito' && authClient) {
+      const invite = get().inviteToken
+      await authClient.login(invite ? { invite } : {})
+      return // a navegação sai da página
+    }
+
+    // Modo dev (AUTH_MODE=dev, só local): form e-mail+nome, sem senha.
+    if (!email || !name) throw new Error('login dev exige e-mail e nome')
     const issued = await parseOrThrow<{ token: string; claims: { sub: string } }>(
       await fetch('/api/v1/dev/token', {
         method: 'POST',
@@ -198,21 +280,14 @@ export const useSession = create<SessionState>((set, get) => ({
     const invite = get().inviteToken
     if (invite) {
       set({ inviteToken: null })
-      try {
-        const team = await get().api<{ name: string }>('/api/v1/invites/accept', {
-          method: 'POST',
-          body: JSON.stringify({ token: invite }),
-        })
-        set({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` })
-      } catch {
-        set({
-          panel: 'teams',
-          inviteNotice:
-            'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
-        })
-      }
+      await acceptPendingInvite(invite)
     }
   },
 
-  logout: () => set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' }),
+  logout: () => {
+    set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' })
+    // cognito: encerra também a sessão do Managed Login (senão o próximo
+    // "Entrar" volta logado silenciosamente pelo cookie do domínio auth)
+    if (appConfig.authMode === 'cognito' && authClient) authClient.logout()
+  },
 }))

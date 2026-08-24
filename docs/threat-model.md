@@ -26,18 +26,18 @@
 | --------------- | ---------------------------- | ------------------------------------------------------------------------- | ------------------------- |
 | Spoofing        | phishing de domínio parecido | HSTS; monitorar registros similares                                       | pendente                  |
 | Tampering       | XSS injetando script         | CSP enforce; sem `dangerouslySetInnerHTML`; frameworks escapam por padrão | parcial (CSP report-only) |
-| Info disclosure | tokens em localStorage       | tokens em memória + refresh silencioso (12.4)                             | planejado                 |
+| Info disclosure | tokens em localStorage       | tokens em memória + refresh silencioso (12.4)                             | implementado (2026-08-24) |
 
 ### API (API GW + Lambda)
 
-| Ameaça          | Exemplo                               | Mitigação                                                                                         | Status    |
-| --------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
-| Spoofing        | token forjado/reuso                   | JWT authorizer (iss/aud/exp), tokens curtos                                                       | planejado |
-| Tampering       | IDOR: acessar projeto de outro tenant | policy layer `can()` + RLS (`SET LOCAL`, role sem BYPASSRLS); teste de isolamento no CI (gate M1) | planejado |
-| Repudiation     | disputa sobre ação                    | `audit_event` append-only                                                                         | planejado |
-| Info disclosure | enumeração de e-mail em convite       | resposta idêntica exista ou não conta (C9)                                                        | planejado |
-| DoS             | flood na API                          | throttling API GW + WAF rate-based (16.1)                                                         | planejado |
-| Elevation       | member → admin                        | testes de autorização por papel no CI (14.2)                                                      | planejado |
+| Ameaça          | Exemplo                               | Mitigação                                                                                         | Status                    |
+| --------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------- |
+| Spoofing        | token forjado/reuso                   | ID token RS256 validado na app: JWKS + iss + aud + token_use=id + email_verified, validade 1h     | implementado (2026-08-24) |
+| Tampering       | IDOR: acessar projeto de outro tenant | policy layer `can()` + RLS (`SET LOCAL`, role sem BYPASSRLS); teste de isolamento no CI (gate M1) | planejado                 |
+| Repudiation     | disputa sobre ação                    | `audit_event` append-only                                                                         | planejado                 |
+| Info disclosure | enumeração de e-mail em convite       | resposta idêntica exista ou não conta (C9)                                                        | planejado                 |
+| DoS             | flood na API                          | throttling API GW + WAF rate-based (16.1)                                                         | planejado                 |
+| Elevation       | member → admin                        | testes de autorização por papel no CI (14.2)                                                      | planejado                 |
 
 ### Billing (webhooks)
 

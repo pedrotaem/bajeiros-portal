@@ -20,7 +20,7 @@ schema:
         physicalType: uuid
         required: true
         primaryKey: true
-        description: Identificador interno; espelha o `sub` do Cognito.
+        description: Identificador interno; espelha o `sub` do Cognito (UUID emitido pelo User Pool — mesmo tipo do dev issuer, sem migração).
       - name: email
         logicalType: string
         required: true
