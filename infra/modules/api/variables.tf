@@ -16,7 +16,7 @@ variable "cognito_client_id" {
 variable "aurora_engine_version" {
   description = "Aurora PostgreSQL — precisa ser >= 16.3 (auto-pause 0 ACU do Serverless v2)"
   type        = string
-  default     = "16.6"
+  default     = "16.14" # mais recente disponível em sa-east-1 em 2026-08 (16.6 saiu de catálogo)
 }
 
 variable "aurora_max_capacity" {
