@@ -12,3 +12,9 @@ AVD-AWS-0132
 # alarme CloudWatch (sem dados pessoais). Criptografar com aws/sns quebraria
 # a publicação pelo CloudWatch (exigiria CMK com key policy própria).
 AVD-AWS-0095
+
+# Aurora com chave gerenciada pela AWS (aws/rds) em vez de CMK: storage_encrypted
+# já está ativo; CMK só muda QUEM gerencia a chave e custa US$ 1/mês + complexidade
+# de key policy (Data API, Secrets Manager, snapshots). Revisar no M3 junto com
+# os demais itens de KMS (fase 11 — decisão registrada no adendo do ADR-007).
+AVD-AWS-0079
