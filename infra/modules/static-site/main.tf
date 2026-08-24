@@ -183,6 +183,24 @@ resource "aws_cloudfront_response_headers_policy" "site" {
   }
 }
 
+# SPA fallback no viewer-request (substitui o custom_error_response 403/404→200,
+# que reescreveria também os erros JSON da API em /api/*): URI sem '.' = rota da
+# SPA → /index.html. Assets e config.json têm extensão e passam direto.
+resource "aws_cloudfront_function" "spa_router" {
+  name    = "${var.name}-spa-router"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      if (!request.uri.includes('.')) {
+        request.uri = '/index.html';
+      }
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -198,6 +216,18 @@ resource "aws_cloudfront_distribution" "site" {
     origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
+  # API GW HTTP (fase 11) — same-origin /api/* p/ o SPA
+  origin {
+    domain_name = var.api_origin_domain
+    origin_id   = "api-gw"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   default_cache_behavior {
     target_origin_id           = "s3-site"
     viewer_protocol_policy     = "redirect-to-https"
@@ -206,20 +236,24 @@ resource "aws_cloudfront_distribution" "site" {
     compress                   = true
     cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
     response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_router.arn
+    }
   }
 
-  # SPA fallback
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
+  # /api/* passa direto pra API (sem cache; sem Host — API GW roteia pelo próprio host)
+  ordered_cache_behavior {
+    path_pattern               = "/api/*"
+    target_origin_id           = "api-gw"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    cache_policy_id            = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
+    origin_request_policy_id   = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader (repassa Authorization — C7)
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
   }
 
   viewer_certificate {

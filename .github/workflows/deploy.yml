@@ -28,10 +28,28 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run build
+      - run: npm run build:lambda -w @bajeiros/api
+      - name: Preparar artefatos da API # zip da Lambda + runner com as migrações
+        run: |
+          mkdir -p out/migrate/migrations
+          (cd apps/api/dist/lambda && zip -q lambda.zip index.mjs)
+          mv apps/api/dist/lambda/lambda.zip out/
+          cp apps/api/dist/lambda/migrate.bundle.mjs out/migrate/
+          cp apps/api/migrations/*.sql out/migrate/migrations/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: site-${{ github.sha }}
           path: apps/web/dist/
+          retention-days: 30
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lambda-${{ github.sha }}
+          path: out/lambda.zip
+          retention-days: 30 # rollback: republicar o zip de um SHA anterior (runbook)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: migrate-${{ github.sha }}
+          path: out/migrate/
           retention-days: 30
 
   deploy-staging:
@@ -51,10 +69,35 @@ jobs:
         with:
           name: site-${{ github.sha }}
           path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: lambda-${{ github.sha }}
+          path: lambda
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: migrate-${{ github.sha }}
+          path: migrate
       - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Migrar banco (Data API, ANTES de publicar o código novo)
+        env:
+          AWS_REGION: sa-east-1 # cluster fica em sa-east-1 (ADR-008)
+          DB_CLUSTER_ARN: ${{ vars.DB_CLUSTER_ARN }}
+          DB_MASTER_SECRET_ARN: ${{ vars.DB_MASTER_SECRET_ARN }}
+          DB_APP_SECRET_ARN: ${{ vars.DB_APP_SECRET_ARN }}
+        run: node migrate/migrate.bundle.mjs --dir migrate/migrations
+      - name: Publicar Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --zip-file fileb://lambda/lambda.zip --publish --region sa-east-1
+          aws lambda wait function-updated \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" --region sa-east-1
       - name: Gerar config.json do ambiente # build é único; config por env entra aqui
         run: |
           printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
@@ -80,6 +123,10 @@ jobs:
           echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
           curl -fsS "https://staging.bajeiros.com.br/config.json" | grep -q clientId \
             || { echo "smoke FAIL: config.json sem clientId"; exit 1; }
+          # retry generoso: 1ª chamada pode pegar cold start + resume do Aurora (~15-20s)
+          curl -fsS --retry 8 --retry-delay 10 --retry-all-errors \
+            "https://staging.bajeiros.com.br/api/v1/health" | grep -q '"ok":true' \
+            || { echo "smoke FAIL: /api/v1/health sem ok:true"; exit 1; }
 
   deploy-production:
     name: Deploy produção (gated)
@@ -96,10 +143,35 @@ jobs:
         with:
           name: site-${{ github.sha }} # mesmo artefato do staging — sem rebuild
           path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: lambda-${{ github.sha }}
+          path: lambda
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: migrate-${{ github.sha }}
+          path: migrate
       - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Migrar banco (Data API, ANTES de publicar o código novo)
+        env:
+          AWS_REGION: sa-east-1 # cluster fica em sa-east-1 (ADR-008)
+          DB_CLUSTER_ARN: ${{ vars.DB_CLUSTER_ARN }}
+          DB_MASTER_SECRET_ARN: ${{ vars.DB_MASTER_SECRET_ARN }}
+          DB_APP_SECRET_ARN: ${{ vars.DB_APP_SECRET_ARN }}
+        run: node migrate/migrate.bundle.mjs --dir migrate/migrations
+      - name: Publicar Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --zip-file fileb://lambda/lambda.zip --publish --region sa-east-1
+          aws lambda wait function-updated \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" --region sa-east-1
       - name: Gerar config.json do ambiente
         run: |
           printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
@@ -125,3 +197,7 @@ jobs:
           echo "$body" | grep -qi "bajeiros" || { echo "smoke FAIL: título não encontrado"; exit 1; }
           curl -fsS "https://bajeiros.com.br/config.json" | grep -q clientId \
             || { echo "smoke FAIL: config.json sem clientId"; exit 1; }
+          # retry generoso: 1ª chamada pode pegar cold start + resume do Aurora (~15-20s)
+          curl -fsS --retry 8 --retry-delay 10 --retry-all-errors \
+            "https://bajeiros.com.br/api/v1/health" | grep -q '"ok":true' \
+            || { echo "smoke FAIL: /api/v1/health sem ok:true"; exit 1; }

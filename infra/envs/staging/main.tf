@@ -76,6 +76,20 @@ module "site" {
   noindex            = true
   csp_enforce        = false # Report-Only até validar (C2)
   extra_connect_src  = [module.auth.auth_domain_url]
+  api_origin_domain  = module.api.api_endpoint_domain
+}
+
+# API (fase 11): Aurora 0 ACU + Data API + Lambda + API GW — tudo em sa-east-1 (ADR-008)
+module "api" {
+  source    = "../../modules/api"
+  providers = { aws = aws.sa_east_1 }
+
+  name                = "bajeiros-staging"
+  cognito_issuer      = module.auth.issuer
+  cognito_client_id   = module.auth.client_id
+  aurora_max_capacity = 1
+  # backup 7d, deletion_protection false, budget US$ 40 — defaults do módulo
+  budget_alert_emails = ["pedrotaem@gmail.com"]
 }
 
 module "auth" {
@@ -109,4 +123,9 @@ output "name_servers" {
 
 output "site" {
   value = module.site
+}
+
+output "api" {
+  description = "GitHub variables: LAMBDA_FUNCTION_NAME, DB_CLUSTER_ARN, DB_MASTER_SECRET_ARN, DB_APP_SECRET_ARN"
+  value       = module.api
 }

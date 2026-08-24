@@ -36,6 +36,11 @@ variable "extra_connect_src" {
   default     = []
 }
 
+variable "api_origin_domain" {
+  description = "Domínio do API GW HTTP (sem https://) — origin do behavior /api/* (fase 11)"
+  type        = string
+}
+
 variable "noindex" {
   description = "true adiciona X-Robots-Tag: noindex (staging)"
   type        = bool
