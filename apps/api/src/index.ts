@@ -1,8 +1,9 @@
 import { serve } from '@hono/node-server'
 import { app } from './app'
-import { assertAuthEnv, env } from './env'
+import { assertAuthEnv, assertProdEnv, env } from './env'
 
 assertAuthEnv()
+assertProdEnv()
 const port = Number(env('PORT'))
 serve({ fetch: app.fetch, port }, () => {
   console.log(

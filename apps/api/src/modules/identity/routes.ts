@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { withUser } from '../../db'
+import { withUser, fetchAllPaged } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
@@ -123,7 +123,8 @@ identity.get('/export', async (c) => {
         db.query('SELECT * FROM users WHERE id = $1', [sub]),
         db.query('SELECT * FROM consents ORDER BY occurred_at', []),
         db.query('SELECT * FROM projects ORDER BY created_at', []),
-        db.query('SELECT * FROM cage_snapshots ORDER BY created_at', []),
+        // cage_json é grande — paginado p/ caber no limite de 1 MB do Data API
+        fetchAllPaged(db, 'SELECT * FROM cage_snapshots ORDER BY created_at, id', []),
         db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
         // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
         db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
@@ -147,7 +148,7 @@ identity.get('/export', async (c) => {
       user: user.rows[0] ?? null,
       consents: consents.rows,
       projects: projects.rows,
-      cageSnapshots: snapshots.rows,
+      cageSnapshots: snapshots,
       auditEvents: events.rows,
       teamMemberships: memberships.rows,
       accessLog: accessLog.rows,

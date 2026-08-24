@@ -20,3 +20,7 @@ API Gateway (HTTP API) + Lambda (Node/TS, esbuild) + Aurora Serverless v2 Postgr
 - Custo proporcional ao uso (~0 em idle c/ Aurora 0 ACU).
 - Cold start aceitável p/ ferramenta de engenharia (não checkout de e-commerce).
 - Dependência de padrões AWS (mitigada por domínio puro em `packages/core`).
+
+## Nota (2026-08-24, fase 11)
+
+JWT é validado **na aplicação** (`apps/api/src/auth/jwt.ts`), não em um authorizer do API Gateway — desvio consciente do A2.3: um único ponto de validação nos dois modos (dev e cognito), testável no vitest; o API GW HTTP fica só com throttling. Revisar se a API ganhar consumidores fora do SPA.

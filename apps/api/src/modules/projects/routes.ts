@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { evaluate } from '@bajeiros/core/rules/b6'
 import type { Cage } from '@bajeiros/core/model/types'
-import { withUser } from '../../db'
+import { withUser, fetchAllPaged } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
@@ -193,8 +193,10 @@ projects.post('/:id/snapshots', async (c) => {
       return { conflict: last.rows[0].seq as number }
     if (last.rows[0].n >= FREE_MAX_SNAPSHOTS) return 'limit' as const
     const r = await db.query(
+      // ::jsonb explícito: determinístico nos 2 drivers (pg manda string;
+      // Data API manda com hint JSON — o cast nivela)
       `INSERT INTO cage_snapshots (project_id, seq, cage_json, rules_result, saved_by_user_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id, project_id, seq, created_at, saved_by_user_id`,
+       VALUES ($1, $2, $3::jsonb, $4::jsonb, $5) RETURNING id, project_id, seq, created_at, saved_by_user_id`,
       [projectId, parsed.data.expectedSeq + 1, parsed.data.cage, JSON.stringify(rulesResult), sub],
     )
     return r.rows[0]
@@ -223,16 +225,13 @@ projects.post('/:id/snapshots', async (c) => {
 
 projects.get('/:id/snapshots', async (c) => {
   const { sub } = c.get('auth')
-  const rows = await withUser(
-    sub,
-    async (db) =>
-      (
-        await db.query(
-          `SELECT id, seq, saved_by_user_id, created_at FROM cage_snapshots
-           WHERE project_id = $1 ORDER BY seq DESC`,
-          [c.req.param('id')],
-        )
-      ).rows,
+  const rows = await withUser(sub, async (db) =>
+    fetchAllPaged(
+      db,
+      `SELECT id, seq, saved_by_user_id, created_at FROM cage_snapshots
+       WHERE project_id = $1 ORDER BY seq DESC`,
+      [c.req.param('id')],
+    ),
   )
   return c.json(rows)
 })

@@ -1,8 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import type pg from 'pg'
-import { withUser } from '../../db'
+import { withUser, type DbClient } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import { can, outranks, isTeamRole, type TeamRole } from '../../policy'
@@ -15,7 +14,7 @@ const INVITE_TTL_DAYS = 7
 const MAX_PENDING_INVITES = 20 // anti-abuso; entitlements de verdade na fase 15
 
 // Papel do requisitante na equipe (a RLS já esconde equipes alheias — null = não-membro OU inexistente)
-async function myRole(db: pg.PoolClient, teamId: string, sub: string): Promise<TeamRole | null> {
+async function myRole(db: DbClient, teamId: string, sub: string): Promise<TeamRole | null> {
   const r = await db.query('SELECT role FROM team_members WHERE team_id = $1 AND user_id = $2', [
     teamId,
     sub,
