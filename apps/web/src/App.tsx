@@ -6,6 +6,8 @@ import { Viewport } from './components/Viewport'
 import { RulePanel } from './components/RulePanel'
 import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
+import { AccountMenu } from './components/AccountMenu'
+import { SessionPanels } from './components/SessionPanels'
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -85,7 +87,9 @@ export default function App() {
           Técnica e Segurança nem o julgamento dos Juízes Credenciados de Segurança (B6.4). Projeto
           comunitário independente, sem vínculo com a SAE ou organizadores de competição.
         </div>
+        <AccountMenu />
       </header>
+      <SessionPanels />
       <div className="main">
         {leftOpen ? (
           <aside className="sidebar left">
