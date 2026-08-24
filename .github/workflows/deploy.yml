@@ -37,6 +37,8 @@ jobs:
   deploy-staging:
     name: Deploy staging
     needs: build
+    # Gate: setar a variable DEPLOY_ENABLED=true no repo após o apply do Terraform
+    if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment:
       name: staging
