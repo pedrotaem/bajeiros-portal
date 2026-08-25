@@ -267,6 +267,7 @@ data "aws_iam_policy_document" "deploy_api" {
     actions = [
       "lambda:UpdateFunctionCode",
       "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration", # `aws lambda wait function-updated` usa esta action
     ]
     resources = [aws_lambda_function.api.arn]
   }
