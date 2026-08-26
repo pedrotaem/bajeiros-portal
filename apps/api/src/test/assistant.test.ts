@@ -20,6 +20,10 @@ beforeAll(async () => {
       res.writeHead(200, { 'content-type': 'text/event-stream' })
       res.end(
         sse([
+          {
+            event: 'citation',
+            data: { sectionId: 'B6.3.3.1', pageStart: 49, pageEnd: 49, quote: 'trecho…' },
+          },
           { event: 'delta', data: { text: 'O diâmetro mínimo ' } },
           { event: 'delta', data: { text: 'é 25,4 mm (B6.3.3.1, p. 49).' } },
           {
@@ -88,6 +92,9 @@ describe('assistente (DF-8)', () => {
     expect(text).toContain('event: delta')
     expect(text).toContain('B6.3.3.1')
     expect(text).toContain('event: done')
+    // G3: evento citation estruturado repassa cru p/ a UI
+    expect(text).toContain('event: citation')
+    expect(text).toContain('"sectionId":"B6.3.3.1"')
 
     // aguarda o insert pós-stream
     await new Promise((r2) => setTimeout(r2, 300))

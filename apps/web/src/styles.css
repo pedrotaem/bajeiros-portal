@@ -1304,6 +1304,22 @@ button.primary:hover {
   font-size: 10.5px;
   color: #8ea0b5;
 }
+.assistant-cites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.assistant-cite {
+  font-size: 10.5px;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: #9fc1e8;
+  background: rgba(90, 140, 200, 0.14);
+  border: 1px solid rgba(90, 140, 200, 0.35);
+  border-radius: 4px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
 .assistant-notice {
   padding: 14px;
   font-size: 13px;

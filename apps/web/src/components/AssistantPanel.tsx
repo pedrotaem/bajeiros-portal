@@ -4,11 +4,19 @@ import { authHeaders, useSession } from '../session'
 
 // DF-8 — Assistente de Regras: chat sobre o regulamento completo via AI Gateway.
 // Conversa vive em memória (zustand de módulo — fechar o painel preserva; recarregar
-// a página zera, mesmo padrão do token). Citações vêm inline no texto "(seção, p. N)".
+// a página zera, mesmo padrão do token). Citações chegam ESTRUTURADAS (evento SSE
+// `citation` com seção + página, G3) e viram chips sob a resposta.
+
+export interface Citation {
+  sectionId: string
+  pageStart: number
+  pageEnd: number
+}
 
 export interface ChatMsg {
   role: 'user' | 'assistant'
   content: string
+  citations?: Citation[]
 }
 
 interface AssistantStatus {
@@ -158,6 +166,18 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
         return { messages: msgs }
       })
 
+    const addCitation = (cit: Citation) =>
+      useAssistant.setState((s) => {
+        const msgs = s.messages.slice()
+        const last = msgs[msgs.length - 1]
+        const cites = last.citations ?? []
+        if (cites.some((c) => c.sectionId === cit.sectionId && c.pageStart === cit.pageStart)) {
+          return {} // deduplica (o modelo pode citar a mesma seção mais de uma vez)
+        }
+        msgs[msgs.length - 1] = { ...last, citations: [...cites, cit] }
+        return { messages: msgs }
+      })
+
     try {
       const res = await fetch('/api/v1/assistant/chat', {
         method: 'POST',
@@ -196,6 +216,12 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
           try {
             const d = JSON.parse(data)
             if (event === 'delta') patchLast((prev) => prev + (d.text ?? ''))
+            else if (event === 'citation' && d.sectionId)
+              addCitation({
+                sectionId: d.sectionId,
+                pageStart: d.pageStart ?? 0,
+                pageEnd: d.pageEnd ?? d.pageStart ?? 0,
+              })
             else if (event === 'error') setErr(d.detail ?? d.title ?? 'Falha na resposta.')
             else if (event === 'done')
               setStatus((s) => (s ? { ...s, usedToday: s.usedToday + 1 } : s))
@@ -302,6 +328,16 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
               )
             ) : (
               <span className="assistant-typing">…</span>
+            )}
+            {m.citations && m.citations.length > 0 && (
+              <div className="assistant-cites">
+                {m.citations.map((c) => (
+                  <span key={`${c.sectionId}-${c.pageStart}`} className="assistant-cite">
+                    {c.sectionId} · p.{' '}
+                    {c.pageEnd > c.pageStart ? `${c.pageStart}–${c.pageEnd}` : c.pageStart}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         ))}

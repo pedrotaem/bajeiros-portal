@@ -79,6 +79,18 @@ module "site" {
   api_origin_domain  = module.api.api_endpoint_domain
 }
 
+# G3/DF-8: Function URL do AI Gateway (stack do repo bajeiros-ai-gateway, mesma
+# conta, key própria no mesmo bucket de state). Aplicar o gateway ANTES deste env.
+data "terraform_remote_state" "ai_gateway" {
+  backend = "s3"
+  config = {
+    bucket  = "bajeiros-tfstate-staging"
+    key     = "ai-gateway/terraform.tfstate"
+    region  = "us-east-1"
+    profile = "bajeiros-staging"
+  }
+}
+
 # API (fase 11): Aurora 0 ACU + Data API + Lambda + API GW — tudo em sa-east-1 (ADR-008)
 module "api" {
   source    = "../../modules/api"
@@ -90,6 +102,7 @@ module "api" {
   aurora_max_capacity = 1
   # backup 7d, deletion_protection false, budget US$ 40 — defaults do módulo
   budget_alert_emails = ["pedrotaem@gmail.com"]
+  gateway_url         = data.terraform_remote_state.ai_gateway.outputs.gateway.function_url
 }
 
 module "auth" {

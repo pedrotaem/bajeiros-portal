@@ -8,6 +8,7 @@ import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import { optionalAuth, type OptionalAuthEnv } from '../../auth/middleware'
 import { accessLog } from '../../access-log'
+import { gatewayFetch } from './gateway-fetch'
 
 // DF-8 — Assistente de Regras: proxy SSE p/ o Bajeiros AI Gateway.
 // Portal é dono de: auth (JWT OPCIONAL — anônimo pode experimentar), aviso de
@@ -185,7 +186,7 @@ assistant.post('/chat', async (c) => {
 
   let upstream: Response
   try {
-    upstream = await fetch(`${env('GATEWAY_URL')}/v1/chat`, {
+    upstream = await gatewayFetch('/v1/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({

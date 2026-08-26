@@ -7,6 +7,7 @@ const def = {
   COGNITO_CLIENT_ID: '',
   PORT: '8787',
   GATEWAY_URL: 'http://localhost:8788',
+  GATEWAY_AUTH: '', // 'iam' em prod: assina SigV4 na Function URL do gateway (G3)
   ASSISTANT_RATE_SALT: 'dev-salt-nao-usar-em-prod',
   // fase 11 — driver RDS Data API (Lambda). Defaults mantêm dev/test em pg.
   DB_MODE: 'pg',

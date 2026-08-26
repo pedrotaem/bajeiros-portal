@@ -205,7 +205,9 @@ resource "aws_lambda_function" "api" {
       DB_SECRET_ARN       = aws_secretsmanager_secret.app_db.arn
       DB_NAME             = "bajeiros"
       ASSISTANT_RATE_SALT = random_password.assistant_rate_salt.result
-      GATEWAY_URL         = "" # assistente (DF-8) fora da fase 11 → 502 gracioso
+      # G3/DF-8: Function URL do AI Gateway (vazio = 502 gracioso no /chat)
+      GATEWAY_URL  = trimsuffix(var.gateway_url, "/")
+      GATEWAY_AUTH = var.gateway_url == "" ? "" : "iam" # SigV4 (Function URL AWS_IAM)
     }
   }
 
