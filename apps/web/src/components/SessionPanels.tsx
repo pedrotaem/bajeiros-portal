@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { authMode, useSession, ApiError, type UserInfo } from '../session'
 import { useStore } from '../store'
-import { TeamsPanel } from './TeamsPanel'
 import type { Cage } from '@bajeiros/core/model/types'
 
 // Modais de sessão: login (dev), perfil/privacidade (LGPD), projetos/versões.
+// Equipe saiu daqui no DF-10: virou página inteira (TeamPage).
 export function SessionPanels() {
   const panel = useSession((s) => s.panel)
   if (!panel) return null
@@ -14,7 +14,6 @@ export function SessionPanels() {
         {panel === 'login' && <LoginPanel />}
         {panel === 'profile' && <ProfilePanel />}
         {panel === 'projects' && <ProjectsPanel />}
-        {panel === 'teams' && <TeamsPanel Head={Head} />}
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import { SessionPanels } from './components/SessionPanels'
 import { Landing } from './components/Landing'
 import { AssistantPanel } from './components/AssistantPanel'
 import { AdminPanel } from './components/AdminPanel'
+import { TeamPage } from './components/TeamPage'
 import { useSession, track } from './session'
 
 // Cabeçalhos de página inteira — o assistente volta ao INÍCIO (landing: o portal é
@@ -102,9 +103,9 @@ export default function App() {
     if (sessionUser) track(showLanding ? 'landing' : 'editor')
   }, [showLanding, sessionUser])
 
-  // admin exige sessão — logout volta ao editor (assistente aceita anônimo)
+  // admin e equipe exigem sessão — logout volta ao editor (assistente aceita anônimo)
   useEffect(() => {
-    if (!sessionUser && page === 'admin') setPage('editor')
+    if (!sessionUser && (page === 'admin' || page === 'team')) setPage('editor')
   }, [sessionUser, page, setPage])
 
   useEffect(() => {
@@ -149,6 +150,13 @@ export default function App() {
         <div className="page-body">
           <div className="page-inner">
             <AdminPanel Head={PageHeadToEditor} />
+          </div>
+        </div>
+      )}
+      {page === 'team' && (
+        <div className="page-body">
+          <div className="page-inner">
+            <TeamPage Head={PageHeadToEditor} />
           </div>
         </div>
       )}

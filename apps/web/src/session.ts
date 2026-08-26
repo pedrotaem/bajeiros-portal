@@ -37,10 +37,11 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | 'teams' | null
+export type PanelId = 'login' | 'profile' | 'projects' | null
 
-// Páginas inteiras da SPA (DF-8/DF-9): editor 3D, assistente e admin.
-export type PageId = 'editor' | 'assistant' | 'admin'
+// Páginas inteiras da SPA: editor 3D, assistente, admin (DF-8/DF-9) e a gestão
+// de equipe (DF-10 — deixou de ser modal: organograma e estrutura pedem tela).
+export type PageId = 'editor' | 'assistant' | 'admin' | 'team'
 
 // Header de auth p/ fetches feitos fora do método api() (track, streaming SSE).
 export function authHeaders(): Record<string, string> {
@@ -93,17 +94,28 @@ const initialInvite = readInviteFromUrl()
 
 // Link aberto numa aba já carregada (só o hash muda, sem reload): captura também.
 // Aceita um convite estando autenticado; usado pós-login (dev e cognito) e
-// pelo listener de hashchange.
+// pelo listener de hashchange. DF-10: aceitar não entra na equipe — o pedido vai
+// para a capitania confirmar, e a pessoa cai na página de equipe já sabendo disso.
 async function acceptPendingInvite(invite: string): Promise<void> {
   try {
-    const team = await useSession.getState().api<{ name: string }>('/api/v1/invites/accept', {
-      method: 'POST',
-      body: JSON.stringify({ token: invite }),
+    const r = await useSession
+      .getState()
+      .api<{ teamName: string; outcome: 'pending' | 'member' }>('/api/v1/invites/accept', {
+        method: 'POST',
+        body: JSON.stringify({ token: invite }),
+      })
+    useSession.setState({
+      page: 'team',
+      landing: false,
+      inviteNotice:
+        r.outcome === 'member'
+          ? `Você já faz parte da equipe ${r.teamName}.`
+          : `Pedido enviado à equipe ${r.teamName}. A entrada é confirmada por quem capitaneia a equipe.`,
     })
-    useSession.setState({ panel: 'teams', inviteNotice: `Você entrou na equipe ${team.name}.` })
   } catch {
     useSession.setState({
-      panel: 'teams',
+      page: 'team',
+      landing: false,
       inviteNotice:
         'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
     })

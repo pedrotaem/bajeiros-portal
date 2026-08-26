@@ -118,24 +118,36 @@ identity.delete('/', async (c) => {
 identity.get('/export', async (c) => {
   const { sub } = c.get('auth')
   const data = await withUser(sub, async (db) => {
-    const [user, consents, projects, snapshots, events, accessLog, assistantLog, memberships] =
-      await Promise.all([
-        db.query('SELECT * FROM users WHERE id = $1', [sub]),
-        db.query('SELECT * FROM consents ORDER BY occurred_at', []),
-        db.query('SELECT * FROM projects ORDER BY created_at', []),
-        // cage_json é grande — paginado p/ caber no limite de 1 MB do Data API
-        fetchAllPaged(db, 'SELECT * FROM cage_snapshots ORDER BY created_at, id', []),
-        db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
-        // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
-        db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
-        db.query('SELECT * FROM assistant_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
-        db.query(
-          `SELECT t.id, t.name, t.university, m.role, m.joined_at
+    const [
+      user,
+      consents,
+      projects,
+      snapshots,
+      events,
+      accessLog,
+      assistantLog,
+      memberships,
+      joinRequests,
+    ] = await Promise.all([
+      db.query('SELECT * FROM users WHERE id = $1', [sub]),
+      db.query('SELECT * FROM consents ORDER BY occurred_at', []),
+      db.query('SELECT * FROM projects ORDER BY created_at', []),
+      // cage_json é grande — paginado p/ caber no limite de 1 MB do Data API
+      fetchAllPaged(db, 'SELECT * FROM cage_snapshots ORDER BY created_at, id', []),
+      db.query('SELECT * FROM audit_events ORDER BY occurred_at', []),
+      // DF-9: RLS mostra só as próprias linhas (admin exporta as SUAS aqui, não as dos outros)
+      db.query('SELECT * FROM access_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
+      db.query('SELECT * FROM assistant_log WHERE user_id = $1 ORDER BY occurred_at', [sub]),
+      // DF-10: função no organograma e situação (trainee/efetivo) também são dados da pessoa
+      db.query(
+        `SELECT t.id, t.name, t.university, m.role, m.status, m.position_id, m.joined_at
          FROM team_members m JOIN teams t ON t.id = m.team_id
          WHERE m.user_id = $1 ORDER BY m.joined_at`,
-          [sub],
-        ),
-      ])
+        [sub],
+      ),
+      // solicitações de entrada ainda pendentes (SECURITY DEFINER: a RLS mostra as próprias)
+      db.query('SELECT * FROM my_join_requests()', []),
+    ])
     await audit(db, {
       actorUserId: sub,
       action: 'user.export',
@@ -151,6 +163,7 @@ identity.get('/export', async (c) => {
       cageSnapshots: snapshots,
       auditEvents: events.rows,
       teamMemberships: memberships.rows,
+      teamJoinRequests: joinRequests.rows,
       accessLog: accessLog.rows,
       assistantLog: assistantLog.rows,
     }
