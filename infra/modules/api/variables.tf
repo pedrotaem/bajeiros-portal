@@ -59,3 +59,9 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "gateway_url" {
+  description = "Function URL do AI Gateway (G3/DF-8). Vazio = assistente degrada gracioso. Não-vazio liga GATEWAY_AUTH=iam (SigV4)."
+  type        = string
+  default     = ""
+}
