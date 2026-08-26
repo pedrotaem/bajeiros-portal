@@ -4,10 +4,12 @@ import { app } from '../app'
 import { authed, makeUser, type TestUser } from './helpers'
 
 // Autorização por papel + isolamento de equipe = GATE DO M2 (plano v2, 18.3).
+// DF-10: aceitar convite passou a criar SOLICITAÇÃO — quem entra na equipe é
+// confirmado pela capitania (capitã/capitão + até 2 co-capitães).
 describe('Equipes — RBAC por papel, convites sem enumeração, transferência', () => {
-  let ana: TestUser // fundadora (owner)
-  let beto: TestUser // convidado → admin
-  let caio: TestUser // convidado → member
+  let ana: TestUser // fundadora (capitã = owner)
+  let beto: TestUser // convidado → co-capitão (admin)
+  let caio: TestUser // convidado → membro
   let dora: TestUser // de fora (isolamento)
   let teamId: string
   let projectId: string
@@ -51,7 +53,27 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     )
   }
 
-  it('criador vira owner', async () => {
+  async function pendingRequestId(by: TestUser, approver: TestUser) {
+    const list = await (
+      await app.request(`/api/v1/teams/${teamId}/join-requests`, authed(approver))
+    ).json()
+    return list.find((r: { userId: string }) => r.userId === by.sub)?.id as string | undefined
+  }
+
+  // entra de verdade: convite → aceite (vira solicitação) → confirmação da capitania
+  async function joinTeam(by: TestUser, approver: TestUser = ana, status?: string) {
+    const inv = await invite(approver, by.email)
+    expect((await accept(by, inv.body.token)).status).toBe(200)
+    const requestId = await pendingRequestId(by, approver)
+    expect(requestId).toBeTruthy()
+    const r = await app.request(
+      `/api/v1/teams/${teamId}/join-requests/${requestId}/approve`,
+      authed(approver, { method: 'POST', body: json(status ? { status } : {}) }),
+    )
+    expect(r.status).toBe(204)
+  }
+
+  it('criador vira capitã (owner)', async () => {
     const list = await (await app.request('/api/v1/teams', authed(ana))).json()
     expect(list).toHaveLength(1)
     expect(list[0].myRole).toBe('owner')
@@ -80,12 +102,37 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     const { body } = await invite(ana, beto.email)
     expect((await accept(dora, body.token)).status).toBe(404)
     // o convite continua válido p/ o e-mail certo
-    expect((await accept(beto, body.token)).status).toBe(200)
+    const r = await accept(beto, body.token)
+    expect(r.status).toBe(200)
+    expect((await r.json()).outcome).toBe('pending')
+  })
+
+  it('aceitar convite NÃO entra na equipe: fica aguardando a capitania', async () => {
+    // beto aceitou no teste anterior e ainda não foi confirmado
+    expect((await app.request(`/api/v1/teams/${teamId}`, authed(beto))).status).toBe(404)
+    const mine = await (await app.request('/api/v1/teams/join-requests/mine', authed(beto))).json()
+    expect(mine.map((r: { teamId: string }) => r.teamId)).toContain(teamId)
+    const fila = await (
+      await app.request(`/api/v1/teams/${teamId}/join-requests`, authed(ana))
+    ).json()
+    expect(fila.map((r: { userId: string }) => r.userId)).toContain(beto.sub)
+  })
+
+  it('capitania confirma a entrada; a solicitação some da fila', async () => {
+    const requestId = await pendingRequestId(beto, ana)
+    const r = await app.request(
+      `/api/v1/teams/${teamId}/join-requests/${requestId}/approve`,
+      authed(ana, { method: 'POST', body: json({ status: 'trainee' }) }),
+    )
+    expect(r.status).toBe(204)
+    const detail = await (await app.request(`/api/v1/teams/${teamId}`, authed(ana))).json()
+    expect(detail.members.find((m: { userId: string }) => m.userId === beto.sub).status).toBe(
+      'trainee',
+    )
+    expect(detail.joinRequests).toEqual([])
   })
 
   it('token consumido ou inventado → 404', async () => {
-    const { body } = await invite(ana, beto.email)
-    await accept(beto, body.token) // beto já é membro: consome de novo? não — já consumiu acima
     expect((await accept(beto, 'token-que-nao-existe-com-tamanho-ok')).status).toBe(404)
   })
 
@@ -96,8 +143,7 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
       [body.id],
     )
     expect((await accept(caio, body.token)).status).toBe(404)
-    const nova = await invite(ana, caio.email)
-    expect((await accept(caio, nova.body.token)).status).toBe(200)
+    await joinTeam(caio)
   })
 
   it('detalhe traz membros (via SECURITY DEFINER) p/ quem é membro', async () => {
@@ -105,20 +151,23 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     expect(detail.members.map((m: { userId: string }) => m.userId).sort()).toEqual(
       [ana.sub, beto.sub, caio.sub].sort(),
     )
-    // member não vê convites pendentes
+    // member não vê convites pendentes nem a fila de entrada
     expect(detail.pendingInvites).toEqual([])
+    expect(detail.joinRequests).toEqual([])
   })
 
-  it('member não convida, não revoga, não altera equipe', async () => {
+  it('member não convida, não revoga, não altera equipe, não confirma entrada', async () => {
     expect((await invite(caio, 'x@y.dev')).status).toBe(403)
     const patch = await app.request(
       `/api/v1/teams/${teamId}`,
       authed(caio, { method: 'PATCH', body: json({ name: 'golpe' }) }),
     )
     expect(patch.status).toBe(403)
+    const fila = await app.request(`/api/v1/teams/${teamId}/join-requests`, authed(caio))
+    expect(fila.status).toBe(403)
   })
 
-  it('owner promove a admin; admin convida e revoga, mas não mexe em papéis', async () => {
+  it('capitã promove a co-capitão; co-capitão convida e revoga, mas não mexe em papéis', async () => {
     const promote = await app.request(
       `/api/v1/teams/${teamId}/members/${beto.sub}`,
       authed(ana, { method: 'PATCH', body: json({ role: 'admin' }) }),
@@ -149,7 +198,7 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     expect((await accept(dora, inv.body.token)).status).toBe(404)
   })
 
-  it('admin não remove owner; remove member', async () => {
+  it('co-capitão não remove capitã; remove membro', async () => {
     const rmOwner = await app.request(
       `/api/v1/teams/${teamId}/members/${ana.sub}`,
       authed(beto, { method: 'DELETE' }),
@@ -162,7 +211,7 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     expect(rmMember.status).toBe(204)
   })
 
-  it('última pessoa owner não sai nem se rebaixa', async () => {
+  it('última pessoa na capitania não sai nem se rebaixa', async () => {
     const leave = await app.request(
       `/api/v1/teams/${teamId}/members/${ana.sub}`,
       authed(ana, { method: 'DELETE' }),
@@ -241,7 +290,7 @@ describe('Equipes — RBAC por papel, convites sem enumeração, transferência'
     expect(data.teamMemberships.map((t: { id: string }) => t.id)).toContain(teamId)
   })
 
-  it('admin sai da equipe por conta própria', async () => {
+  it('co-capitão sai da equipe por conta própria', async () => {
     const r = await app.request(
       `/api/v1/teams/${teamId}/members/${beto.sub}`,
       authed(beto, { method: 'DELETE' }),

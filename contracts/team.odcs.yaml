@@ -2,13 +2,13 @@ apiVersion: v3.0.2
 kind: DataContract
 id: urn:bajeiros:contract:team
 name: team
-version: 1.0.0
+version: 1.1.0
 status: draft
 domain: collaboration
 dataProduct: bajeiros-portal
 description:
   purpose: Equipe de universidade; unidade de tenancy compartilhada (RLS por team_id).
-  usage: Compartilhamento de projetos, RBAC (owner/admin/member), convites.
+  usage: Compartilhamento de projetos, RBAC (owner/admin/member), capitania (1 capitão, até 2 co-capitães), convites com confirmação de entrada pela capitania, funções do organograma e ciclo de vida do membro.
 schema:
   - name: team
     logicalType: object
@@ -59,6 +59,15 @@ schema:
         logicalType: date
         physicalType: timestamptz
         required: true
+      - name: position_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Função no organograma (team_positions da mesma equipe); nulo = sem função.
+      - name: status
+        logicalType: string
+        required: true
+        description: trainee | efetivo (ciclo de vida do membro; padrão efetivo).
   - name: team_invite
     logicalType: object
     physicalType: table
@@ -87,6 +96,77 @@ schema:
         logicalType: string
         required: true
         description: Hash do token de convite (nunca o token em claro).
+      - name: expires_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: team_position
+    logicalType: object
+    physicalType: table
+    physicalName: team_positions
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: parent_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Função-mãe na árvore; nulo só na raiz (máx. 40 funções, 5 níveis).
+      - name: kind
+        logicalType: string
+        required: true
+        description: captain | cocaptain | lead | custom — nós de capitania não movem nem excluem.
+      - name: name
+        logicalType: string
+        required: true
+      - name: description
+        logicalType: string
+        required: false
+        description: Responsabilidades da função (até 280 caracteres).
+      - name: sort_order
+        logicalType: integer
+        required: true
+        description: Ordem entre funções irmãs no organograma.
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: team_join_request
+    logicalType: object
+    physicalType: table
+    physicalName: team_join_requests
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        classification: pii
+        description: Quem aceitou o convite e aguarda confirmação da capitania (uma por equipe).
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: expira em 30 dias; some ao confirmar ou recusar
+      - name: requested_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
       - name: expires_at
         logicalType: date
         physicalType: timestamptz

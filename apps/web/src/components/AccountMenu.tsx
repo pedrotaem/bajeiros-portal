@@ -82,7 +82,10 @@ export function AccountMenu() {
       >
         Assistente
       </button>
-      <button className="account-btn" onClick={() => setPanel('teams')}>
+      <button
+        className={page === 'team' ? 'account-btn page-active' : 'account-btn'}
+        onClick={() => setPage(page === 'team' ? 'editor' : 'team')}
+      >
         Equipes
       </button>
       {user.isAdmin && (

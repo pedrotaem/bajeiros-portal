@@ -60,3 +60,9 @@ graph LR
 - **DF-8 — Assistente de Regras:** chat de IA em linguagem natural sobre o regulamento
   completo (não só B6), com citações seção+página, via **Bajeiros AI Gateway** (repo
   separado, spec própria); revisado em `docs/revisao-assistente-ia.md`.
+- **DF-9 — Administração:** página de operação (usuários, equipes, atividade e uso do
+  chat de IA) sobre `users.is_admin`, com log de acesso e log do assistente.
+- **DF-10 — Gestão de equipe:** capitania (1 capitã/capitão + até 2 co-capitães) que
+  confirma entradas, organograma de funções customizável com responsabilidades
+  descritas, visualização em árvore e página inteira no lugar do modal; requisitos de
+  maturidade derivados de `Pesquisa de Mercado/praticas-elite.md`.
