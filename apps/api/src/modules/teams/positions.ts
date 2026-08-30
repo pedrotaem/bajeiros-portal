@@ -5,6 +5,7 @@ import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import { can } from '../../policy'
 import { lockTeam, myRole } from './shared'
+import { publishOrgSummary } from '../evolution/engine'
 import type { AuthEnv } from '../../auth/middleware'
 
 // DF-10 — organograma: árvore de funções customizável por equipe, com descrição
@@ -174,6 +175,8 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
         ip: clientIp(c.req.raw.headers),
         metadata: { teamId },
       })
+      // DF-13 GES-1.1/2.1 leem o organograma: toda mutação republica o resumo
+      await publishOrgSummary(db, teamId, sub)
       return toNode(r.rows[0])
     })
 
@@ -250,6 +253,7 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
         ip: clientIp(c.req.raw.headers),
         metadata: { teamId },
       })
+      await publishOrgSummary(db, teamId, sub)
       return toNode(r.rows[0])
     })
 
@@ -312,6 +316,8 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
         ip: clientIp(c.req.raw.headers),
         metadata: { teamId },
       })
+      // DF-13 GES-1.1/2.1 leem o organograma: toda mutação republica o resumo
+      await publishOrgSummary(db, teamId, sub)
       return 'ok' as const
     })
 
@@ -349,6 +355,7 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
           ip: clientIp(c.req.raw.headers),
           metadata: { created },
         })
+        await publishOrgSummary(db, teamId, sub)
       }
       return { created, positions: await loadPositions(db, teamId) }
     })

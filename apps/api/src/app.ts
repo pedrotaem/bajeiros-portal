@@ -8,6 +8,7 @@ import { projects } from './modules/projects/routes'
 import { teams, invites } from './modules/teams/routes'
 import { admin } from './modules/admin/routes'
 import { assistant } from './modules/assistant/routes'
+import { evolution, evolutionRoot } from './modules/evolution/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -25,6 +26,10 @@ app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
 app.route('/api/v1/me', identity)
 app.route('/api/v1/projects', projects)
 app.route('/api/v1/teams', teams)
+// DF-13: rotas por equipe em módulo próprio, montadas no MESMO prefixo (o Hono
+// casa as duas árvores) — a evolução não incha o módulo de gestão de equipe
+app.route('/api/v1/teams', evolution)
+app.route('/api/v1/evolution', evolutionRoot)
 app.route('/api/v1/invites', invites)
 app.route('/api/v1/activity', activity)
 app.route('/api/v1/admin', admin)
