@@ -1,0 +1,11 @@
+{
+  "total": 322,
+  "exceptions": {
+    "apps/web/src/App.tsx": 5,
+    "apps/web/src/components/Geraldao.tsx": 1,
+    "apps/web/src/components/Inspector.tsx": 3,
+    "apps/web/src/components/Manikin.tsx": 2,
+    "apps/web/src/components/Viewport.tsx": 23,
+    "apps/web/src/styles.css": 288
+  }
+}

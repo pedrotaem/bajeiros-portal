@@ -12,10 +12,13 @@
     "build": "npm run build -w @bajeiros/web",
     "test": "npm run test -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run check-tokens && npm run check-icons",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "contracts:check": "node scripts/check-contracts.mjs"
+    "contracts:check": "node scripts/check-contracts.mjs",
+    "tokens:build": "node scripts/build-tokens.mjs",
+    "check-tokens": "node scripts/check-tokens.mjs",
+    "check-icons": "node scripts/check-icons.mjs"
   },
   "engines": {
     "node": ">=24"

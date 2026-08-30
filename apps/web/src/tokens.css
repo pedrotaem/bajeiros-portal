@@ -1,0 +1,278 @@
+/* GERADO por scripts/build-tokens.mjs a partir de apps/web/src/tokens.ts.
+ * NÃO EDITE À MÃO: `npm run tokens:build` reescreve, e o teste de paridade
+ * (apps/web/src/tokens.test.ts) falha se este arquivo divergir do módulo TS. */
+
+:root {
+  --bj-color-scheme: dark;
+  --bj-bg-canvas: #211c16;
+  --bj-bg-base: #28231d;
+  --bj-bg-raised: #2f2a24;
+  --bj-bg-overlay: #37312b;
+  --bj-bg-sunken: #1a1510;
+  --bj-bg-inset: #140f0a;
+  --bj-fg-primary: #f1efeb;
+  --bj-fg-secondary: #c2bdb7;
+  --bj-fg-muted: #98938d;
+  --bj-fg-faint: #7f7a74;
+  --bj-fg-inverse: #19120d;
+  --bj-disabled-fg: #6e6860;
+  --bj-border: rgb(255 255 255 / 10%);
+  --bj-border-strong: rgb(255 255 255 / 36%);
+  --bj-border-stronger: rgb(255 255 255 / 55%);
+  --bj-brand: #c89123;
+  --bj-brand-strong: #e0a72e;
+  --bj-brand-dim: #b58f54;
+  --bj-brand-bg: #2e2109;
+  --bj-brand-border: #887040;
+  --bj-on-brand: #1a1206;
+  --bj-accent: #4fb8d8;
+  --bj-accent-bg: #0e2a35;
+  --bj-accent-border: #4d7a8a;
+  --bj-on-accent: #08161c;
+  --bj-pass: #6fb060;
+  --bj-pass-bg: #16240f;
+  --bj-pass-border: #64795d;
+  --bj-on-pass: #0d1409;
+  --bj-fail: #e56e4d;
+  --bj-fail-bg: #3a1610;
+  --bj-fail-border: #97685d;
+  --bj-on-fail: #1b0d08;
+  --bj-warn: #e07a24;
+  --bj-warn-bg: #331e07;
+  --bj-warn-border: #8e6d4d;
+  --bj-on-warn: #1c1004;
+  --bj-manual: #8ba3bc;
+  --bj-manual-bg: #182029;
+  --bj-manual-border: #667584;
+  --bj-on-manual: #0e1319;
+  --bj-info: #b8ada0;
+  --bj-info-bg: #26211b;
+  --bj-info-border: #78736c;
+  --bj-on-info: #17130e;
+  --bj-hover: rgb(255 255 255 / 5.5%);
+  --bj-active: rgb(255 255 255 / 10%);
+  --bj-selected: rgb(200 145 35 / 14%);
+  --bj-scrim: rgb(10 6 3 / 72%);
+  --bj-focus-ring-color: #4fb8d8;
+  --bj-shadow-sm: 0 1px 2px 0 rgb(10 6 3 / 40%), 0 2px 8px 0 rgb(0 0 0 / 24%);
+  --bj-shadow-md: 0 2px 4px 0 rgb(10 6 3 / 44%), 0 8px 24px 0 rgb(0 0 0 / 34%);
+  --bj-shadow-lg: 0 4px 8px 0 rgb(10 6 3 / 48%), 0 24px 56px 0 rgb(0 0 0 / 46%);
+  --bj-radius-sm: 4px;
+  --bj-radius: 8px;
+  --bj-radius-lg: 12px;
+  --bj-radius-pill: 999px;
+  --bj-focus-ring-offset: 2px;
+  --bj-space-1: 4px;
+  --bj-space-2: 8px;
+  --bj-space-3: 12px;
+  --bj-space-4: 16px;
+  --bj-space-5: 24px;
+  --bj-space-6: 32px;
+  --bj-space-7: 48px;
+  --bj-space-8: 64px;
+  --bj-font-display: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --bj-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bj-font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  --bj-text-xs: 11px;
+  --bj-text-sm: 12px;
+  --bj-text-base: 14px;
+  --bj-text-lg: 16px;
+  --bj-text-xl: 18px;
+  --bj-text-2xl: 22px;
+  --bj-text-3xl: 30px;
+  --bj-leading-tight: 1.2;
+  --bj-leading-normal: 1.55;
+  --bj-weight-regular: 400;
+  --bj-weight-medium: 500;
+  --bj-weight-bold: 700;
+  --bj-tracking-wide: 0.04em;
+  --bj-ease: cubic-bezier(0.2, 0, 0, 1);
+  --bj-dur-fast: 120ms;
+  --bj-dur-base: 200ms;
+  --bj-rail-w: 224px;
+  --bj-rail-w-compact: 56px;
+  --bj-topbar-h: 48px;
+  --bj-panel-w: 360px;
+  --bj-panel-w-sm: 320px;
+  --bj-panel-w-min: 280px;
+  --bj-viewport-min-w: 360px;
+  --bj-modal-w: 560px;
+  --bj-modal-w-lg: 880px;
+  --bj-page-w: 1200px;
+  --bj-prose-w: 860px;
+  --bj-control-h-sm: 28px;
+  --bj-control-h: 32px;
+  --bj-control-h-lg: 40px;
+  --bj-target-min: 32px;
+  --bj-z-base: 0;
+  --bj-z-sticky: 10;
+  --bj-z-3d-label: 40;
+  --bj-z-viewport-chrome: 50;
+  --bj-z-dropdown: 60;
+  --bj-z-overlay: 100;
+  --bj-z-modal: 110;
+  --bj-z-toast: 120;
+  --bj-z-landing: 200;
+}
+
+/* cena 3D — sem variante clara (design-system §9.1) */
+:root {
+  --bj-3d-bg: #140f0a;
+  --bj-3d-grid: #6c5e51;
+  --bj-3d-member: #e2d6c4;
+  --bj-3d-member-secondary: #928780;
+  --bj-3d-selected: #ffbb54;
+  --bj-3d-fail: #e56e4d;
+  --bj-3d-removable: #b2aadb;
+  --bj-3d-anchor-ok: #3186d4;
+  --bj-3d-anchor-bad: #e56e4d;
+  --bj-3d-node: #6c788b;
+  --bj-3d-node-named: #d5effd;
+  --bj-3d-pilot: #6bb5ab;
+  --bj-3d-datum: #4fb8d8;
+  --bj-3d-label-fg: #ece7dd;
+  --bj-3d-label-bg: #241f19;
+}
+
+:root[data-theme='light'] {
+  --bj-color-scheme: light;
+  --bj-bg-canvas: #f4e9d9;
+  --bj-bg-base: #faf2e6;
+  --bj-bg-raised: #fdf8f0;
+  --bj-bg-overlay: #fffdfb;
+  --bj-bg-sunken: #eadecc;
+  --bj-bg-inset: #e1d3be;
+  --bj-fg-primary: #251c15;
+  --bj-fg-secondary: #52473f;
+  --bj-fg-muted: #70655c;
+  --bj-fg-faint: #7f766e;
+  --bj-fg-inverse: #faf2e6;
+  --bj-disabled-fg: #9a8f84;
+  --bj-border: rgb(37 28 21 / 12%);
+  --bj-border-strong: rgb(37 28 21 / 51%);
+  --bj-border-stronger: rgb(37 28 21 / 68%);
+  --bj-brand: #805c12;
+  --bj-brand-strong: #684a0f;
+  --bj-brand-dim: #7e643c;
+  --bj-brand-bg: #f1dcac;
+  --bj-brand-border: #957a42;
+  --bj-on-brand: #fbf5ea;
+  --bj-accent: #15637a;
+  --bj-accent-bg: #d8ecf3;
+  --bj-accent-border: #658b98;
+  --bj-on-accent: #f4fbfd;
+  --bj-pass: #3d6a2c;
+  --bj-pass-bg: #e3efd7;
+  --bj-pass-border: #728f62;
+  --bj-on-pass: #f6faf1;
+  --bj-fail: #a3341c;
+  --bj-fail-bg: #fadfd5;
+  --bj-fail-border: #ad7564;
+  --bj-on-fail: #fdf3ef;
+  --bj-warn: #93450f;
+  --bj-warn-bg: #fae2c9;
+  --bj-warn-border: #a57c4e;
+  --bj-on-warn: #fdf5ec;
+  --bj-manual: #3a5169;
+  --bj-manual-bg: #dfe7f0;
+  --bj-manual-border: #758696;
+  --bj-on-manual: #f4f7fb;
+  --bj-info: #5d5347;
+  --bj-info-bg: #ece2d2;
+  --bj-info-border: #8c806f;
+  --bj-on-info: #faf6ef;
+  --bj-hover: rgb(37 28 21 / 5%);
+  --bj-active: rgb(37 28 21 / 10%);
+  --bj-selected: rgb(128 92 18 / 14%);
+  --bj-scrim: rgb(37 28 21 / 40%);
+  --bj-focus-ring-color: #15637a;
+  --bj-shadow-sm: 0 1px 2px 0 rgb(74 52 18 / 10%), 0 2px 8px 0 rgb(74 52 18 / 8%);
+  --bj-shadow-md: 0 2px 4px 0 rgb(74 52 18 / 12%), 0 8px 24px 0 rgb(74 52 18 / 12%);
+  --bj-shadow-lg: 0 4px 8px 0 rgb(74 52 18 / 14%), 0 24px 56px 0 rgb(74 52 18 / 18%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bj-color-scheme: light;
+    --bj-bg-canvas: #f4e9d9;
+    --bj-bg-base: #faf2e6;
+    --bj-bg-raised: #fdf8f0;
+    --bj-bg-overlay: #fffdfb;
+    --bj-bg-sunken: #eadecc;
+    --bj-bg-inset: #e1d3be;
+    --bj-fg-primary: #251c15;
+    --bj-fg-secondary: #52473f;
+    --bj-fg-muted: #70655c;
+    --bj-fg-faint: #7f766e;
+    --bj-fg-inverse: #faf2e6;
+    --bj-disabled-fg: #9a8f84;
+    --bj-border: rgb(37 28 21 / 12%);
+    --bj-border-strong: rgb(37 28 21 / 51%);
+    --bj-border-stronger: rgb(37 28 21 / 68%);
+    --bj-brand: #805c12;
+    --bj-brand-strong: #684a0f;
+    --bj-brand-dim: #7e643c;
+    --bj-brand-bg: #f1dcac;
+    --bj-brand-border: #957a42;
+    --bj-on-brand: #fbf5ea;
+    --bj-accent: #15637a;
+    --bj-accent-bg: #d8ecf3;
+    --bj-accent-border: #658b98;
+    --bj-on-accent: #f4fbfd;
+    --bj-pass: #3d6a2c;
+    --bj-pass-bg: #e3efd7;
+    --bj-pass-border: #728f62;
+    --bj-on-pass: #f6faf1;
+    --bj-fail: #a3341c;
+    --bj-fail-bg: #fadfd5;
+    --bj-fail-border: #ad7564;
+    --bj-on-fail: #fdf3ef;
+    --bj-warn: #93450f;
+    --bj-warn-bg: #fae2c9;
+    --bj-warn-border: #a57c4e;
+    --bj-on-warn: #fdf5ec;
+    --bj-manual: #3a5169;
+    --bj-manual-bg: #dfe7f0;
+    --bj-manual-border: #758696;
+    --bj-on-manual: #f4f7fb;
+    --bj-info: #5d5347;
+    --bj-info-bg: #ece2d2;
+    --bj-info-border: #8c806f;
+    --bj-on-info: #faf6ef;
+    --bj-hover: rgb(37 28 21 / 5%);
+    --bj-active: rgb(37 28 21 / 10%);
+    --bj-selected: rgb(128 92 18 / 14%);
+    --bj-scrim: rgb(37 28 21 / 40%);
+    --bj-focus-ring-color: #15637a;
+    --bj-shadow-sm: 0 1px 2px 0 rgb(74 52 18 / 10%), 0 2px 8px 0 rgb(74 52 18 / 8%);
+    --bj-shadow-md: 0 2px 4px 0 rgb(74 52 18 / 12%), 0 8px 24px 0 rgb(74 52 18 / 12%);
+    --bj-shadow-lg: 0 4px 8px 0 rgb(74 52 18 / 14%), 0 24px 56px 0 rgb(74 52 18 / 18%);
+  }
+}
+
+[data-density='compact'] {
+  --bj-row-h: 28px;
+  --bj-pad-y: var(--bj-space-1);
+  --bj-pad-x: var(--bj-space-2);
+  --bj-gap: var(--bj-space-2);
+}
+
+[data-density='comfortable'] {
+  --bj-row-h: 36px;
+  --bj-pad-y: var(--bj-space-2);
+  --bj-pad-x: var(--bj-space-3);
+  --bj-gap: var(--bj-space-3);
+}
+
+[data-scale='presentation'] {
+  --bj-text-xs: 13px;
+  --bj-text-sm: 14px;
+  --bj-text-base: 16px;
+  --bj-text-lg: 18px;
+  --bj-text-xl: 22px;
+  --bj-text-2xl: 28px;
+  --bj-text-3xl: 38px;
+  --bj-control-h-sm: 32px;
+  --bj-control-h: 36px;
+  --bj-target-min: 40px;
+}
