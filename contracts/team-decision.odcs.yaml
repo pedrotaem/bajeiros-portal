@@ -1,0 +1,85 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team-decision
+name: team_decision
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Diário de decisões da equipe (DF-14 E1) — "escolhemos X e não Y, porque Z".
+  usage: Registro numerado por equipe ("nº 96") que vira vocabulário interno. Alimenta a área
+    `conhecimento` do DF-13 (CON-1.1, CON-2.1, CON-3.2) e a atividade do Início.
+schema:
+  - name: team_decision
+    logicalType: object
+    physicalType: table
+    physicalName: team_decisions
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: seq
+        logicalType: integer
+        required: true
+        description: Numeração por equipe, atribuída com a linha da equipe travada.
+      - name: title
+        logicalType: string
+        required: true
+        description: Máximo de 120 caracteres.
+      - name: area
+        logicalType: string
+        required: true
+        description: Áreas do DF-13 mais `geral`.
+      - name: why
+        logicalType: string
+        required: true
+        description: O porquê da escolha, máximo de 2000 caracteres.
+      - name: links
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Até 8 links (projeto, versão, regra B6, guia, decisão ou URL).
+      - name: supersedes_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Decisão substituída; a antiga sai das listagens padrão.
+      - name: author_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Autoria; anonimizada na exclusão de conta (a UI mostra "ex-membro").
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; autoria anonimizada na exclusão da conta do titular
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+      - name: deleted_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        description: Soft delete da capitania, auditado — o diário é memória, não mural.
+customProperties:
+  - property: ownership
+    value: conteúdo da equipe; base legal da permanência pós-exclusão em revisão jurídica (DF-14 §8.3)
+  - property: caps
+    value: 2000 decisões por equipe
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

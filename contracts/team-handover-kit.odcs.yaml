@@ -1,0 +1,91 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team-handover-kit
+name: team_handover_kit
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Kit de passagem (DF-14 E3) — checklist estruturado para cada saída anunciada.
+  usage: A data do kit É o registro da saída anunciada; não existe outro cadastro de formaturas
+    no portal. Kit concluído gera `kit.completed` (DF-13 CON-4.1).
+schema:
+  - name: team_handover_kit
+    logicalType: object
+    physicalType: table
+    physicalName: team_handover_kits
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: member_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem sai; anonimizado na exclusão de conta — o kit fica com a equipe.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: member_name
+        logicalType: string
+        required: true
+        classification: pii
+        description: Snapshot do nome na abertura — sobrevive à saída e à exclusão da conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe (registro de passagem de responsabilidade)
+      - name: position_label
+        logicalType: string
+        required: false
+        description: Cargo no organograma no momento da abertura (snapshot).
+      - name: due_date
+        logicalType: date
+        required: false
+        description: Data prevista de saída; vencida sem conclusão derruba CON-4.1.
+      - name: checklist
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Itens {id, label, done, note, guideId} — template no código, editável por kit.
+      - name: status
+        logicalType: string
+        required: true
+        description: aberto | em_andamento | concluido
+      - name: created_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: completed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+customProperties:
+  - property: minimization
+    value: kits NUNCA armazenam credenciais ou senhas (aviso fixo na UI)
+  - property: caps
+    value: 50 kits por equipe
+team:
+  - username: pedrotaem@gmail.com
+    role: owner
