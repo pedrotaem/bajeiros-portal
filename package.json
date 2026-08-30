@@ -24,11 +24,11 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "eslint": "^10.9.0",
+    "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.9.6",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.68.0",
     "yaml": "^2.9.0"
   }
 }
