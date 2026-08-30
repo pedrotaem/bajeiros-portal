@@ -8,13 +8,13 @@ import { RulePanel } from './components/RulePanel'
 import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
 import { SessionPanels } from './components/SessionPanels'
-import { Landing } from './components/Landing'
 import { AssistantPanel } from './components/AssistantPanel'
 import { AdminPanel } from './components/AdminPanel'
 import { TeamPage } from './components/TeamPage'
 import { HomePage } from './components/HomePage'
 import { CommunityPage } from './components/CommunityPage'
 import { ToolsHub } from './components/ToolsHub'
+import { PrecisaDeConta, PublicHome } from './components/PublicHome'
 import { About } from './components/About'
 import { Shell } from './components/Shell'
 import { useSession, track, type PageId } from './session'
@@ -31,9 +31,6 @@ const TITULOS: Record<PageId, string> = {
   admin: 'Administração',
   sobre: 'Sobre o portal',
 }
-
-/** Páginas que exigem sessão — sem ela, o destino é o Início. */
-const PRECISA_LOGIN: PageId[] = ['inicio', 'equipe', 'comunidade', 'admin']
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -120,8 +117,6 @@ export default function App() {
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
 
-  const showLanding = useSession((s) => s.landing)
-  const setShowLanding = useSession((s) => s.setLanding)
   const sessionUser = useSession((s) => s.user)
   const page = useSession((s) => s.page)
   const setPage = useSession((s) => s.setPage)
@@ -129,12 +124,12 @@ export default function App() {
 
   // DF-9: pageview (só p/ logado; anônimo não é rastreado)
   useEffect(() => {
-    if (sessionUser) track(showLanding ? 'landing' : `page:${page}`)
-  }, [showLanding, sessionUser, page])
+    if (sessionUser) track(`page:${page}`)
+  }, [sessionUser, page])
 
-  // Deslogado só alcança as ferramentas (o assistente aceita anônimo, 2/dia).
+  // A administração é a única que some de vez sem sessão — ela nem aparece no rail.
   useEffect(() => {
-    if (!sessionUser && PRECISA_LOGIN.includes(page)) setPage('ferramentas')
+    if (!sessionUser && page === 'admin') setPage('inicio')
   }, [sessionUser, page, setPage])
 
   useEffect(() => {
@@ -151,25 +146,24 @@ export default function App() {
   const pendingFails = wizardActive ? allFails.filter((r) => r.presence).length : 0
   const failed = allFails.length - pendingFails
 
-  // Landing é a home PÚBLICA: deslogado a vê como página (DF-12 §3.2).
-  if (showLanding && !sessionUser) {
-    return (
-      <>
-        <Landing onClose={() => setShowLanding(false)} />
-        <SessionPanels />
-      </>
-    )
-  }
-
   return (
     <Shell title={TITULOS[page]}>
       <SessionPanels />
       {sessionUser && <AvisoDeMudanca />}
 
-      {page === 'inicio' && <HomePage />}
-      {page === 'equipe' && <TeamPage />}
+      {/* Sem conta NINGUÉM é redirecionado em silêncio: o Início tem versão pública e
+          os destinos que dependem de equipe explicam o que falta (C-16). Mandar de
+          volta para Ferramentas sem dizer nada era o defeito relatado. */}
+      {page === 'inicio' && (sessionUser ? <HomePage /> : <PublicHome />)}
+      {page === 'equipe' &&
+        (sessionUser ? <TeamPage /> : <PrecisaDeConta destino="O espaço da equipe" />)}
       {page === 'ferramentas' && <ToolsHub teamId={activeTeamId} />}
-      {page === 'comunidade' && <CommunityPage teamId={activeTeamId} />}
+      {page === 'comunidade' &&
+        (sessionUser ? (
+          <CommunityPage teamId={activeTeamId} />
+        ) : (
+          <PrecisaDeConta destino="A Comunidade" />
+        ))}
       {page === 'sobre' && <About />}
       {page === 'assistant' && (
         <div className="page-body">

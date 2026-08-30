@@ -6,8 +6,8 @@ import { useSession } from '../session'
  * rodapé do rail — não é item do rail, porque o glifo `info` é exclusivo de status
  * (DS §8.7/CT-3) e o inventário de 24 formas já fechou.
  *
- * A landing deslogada continua sendo a home pública; esta página é o mesmo conteúdo
- * para quem já está dentro.
+ * O Início público (PublicHome) já traz a apresentação e o aviso legal resumido;
+ * esta página é a versão longa, alcançável logado ou não.
  */
 export function About() {
   const setPage = useSession((s) => s.setPage)

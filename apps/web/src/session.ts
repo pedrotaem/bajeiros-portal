@@ -92,8 +92,6 @@ interface SessionState {
   teamTab: TeamTab
   communityTab: CommunityTab
   activeTeamId: string | null
-  /** Deslogado vê a landing como PÁGINA; logado entra em `inicio` (DF-12 §3.2). */
-  landing: boolean
   inviteToken: string | null
   inviteNotice: string | null
   authNotice: string | null // falha do pós-login cognito (ex.: 409 de e-mail), exibida no LoginPanel
@@ -104,7 +102,6 @@ interface SessionState {
   setActiveTeam: (id: string | null) => void
   /** Abre a equipe já na aba certa — usado pelos CTAs de passo do Início (DF-16). */
   goToTeam: (tab?: TeamTab) => void
-  setLanding: (v: boolean) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
   // dev: exige email+name (form local); cognito: ignora args e redireciona
@@ -140,7 +137,6 @@ async function acceptPendingInvite(invite: string): Promise<void> {
     useSession.setState({
       page: 'equipe',
       teamTab: 'pessoas',
-      landing: false,
       inviteNotice:
         r.outcome === 'member'
           ? `Você já faz parte da equipe ${r.teamName}.`
@@ -150,7 +146,6 @@ async function acceptPendingInvite(invite: string): Promise<void> {
     useSession.setState({
       page: 'equipe',
       teamTab: 'pessoas',
-      landing: false,
       inviteNotice:
         'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
     })
@@ -226,9 +221,9 @@ export async function initSession(config: AppConfig): Promise<void> {
   if (!authClient.hasCallbackParams()) return
 
   const result = await authClient.handleCallback()
-  if (!result) return // state/verifier ausentes ou troca falhou → landing normal
+  if (!result) return // state/verifier ausentes ou troca falhou → segue deslogado no Início público
 
-  useSession.setState({ token: result.tokens.idToken, landing: false, page: 'inicio' })
+  useSession.setState({ token: result.tokens.idToken, page: 'inicio' })
   try {
     const user = await useSession.getState().api<UserInfo>('/api/v1/me', { method: 'POST' })
     useSession.setState({ user, panel: null })
@@ -282,7 +277,8 @@ export const useSession = create<SessionState>((set, get) => ({
   teamTab: 'evolucao',
   communityTab: 'resultados',
   activeTeamId: readActiveTeam(),
-  landing: !initialInvite, // landing é a home pública; convite pula direto p/ login
+  // A home é o Início do shell, logado ou não (a apresentação pública mora nele).
+  // Convite pendente pula direto para o login.
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
@@ -315,9 +311,8 @@ export const useSession = create<SessionState>((set, get) => ({
   },
   goToTeam: (tab) => {
     track(`page:equipe`)
-    set(tab ? { page: 'equipe', teamTab: tab, landing: false } : { page: 'equipe', landing: false })
+    set(tab ? { page: 'equipe', teamTab: tab } : { page: 'equipe' })
   },
-  setLanding: (landing) => set({ landing }),
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
 
@@ -369,7 +364,7 @@ export const useSession = create<SessionState>((set, get) => ({
     set({ token: issued.token })
     const user = await get().api<UserInfo>('/api/v1/me', { method: 'POST' })
     // pós-login cai no Início, não no editor (DF-12 AC-DF12.1)
-    set({ user, panel: null, landing: false, page: 'inicio' })
+    set({ user, panel: null, page: 'inicio' })
 
     // convite pendente na URL? aceita agora, já autenticado
     const invite = get().inviteToken
@@ -380,15 +375,8 @@ export const useSession = create<SessionState>((set, get) => ({
   },
 
   logout: () => {
-    // logout volta à landing (a home pública), não ao editor
-    set({
-      token: null,
-      user: null,
-      currentProject: null,
-      panel: null,
-      page: 'inicio',
-      landing: true,
-    })
+    // logout volta ao Início público, não ao editor
+    set({ token: null, user: null, currentProject: null, panel: null, page: 'inicio' })
     // cognito: encerra também a sessão do Managed Login (senão o próximo
     // "Entrar" volta logado silenciosamente pelo cookie do domínio auth)
     if (appConfig.authMode === 'cognito' && authClient) authClient.logout()
