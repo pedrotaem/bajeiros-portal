@@ -95,8 +95,24 @@ aprovado no canvas
 
 | Ordem | Spec                                          | Depende de             | Racional da posição                                     |
 | ----- | --------------------------------------------- | ---------------------- | ------------------------------------------------------- |
-| 1     | [DF-13](drafts/df13-evolucao-maturidade.md)   | DF-10                  | Motor e evidências primeiro — tudo o mais consome daqui |
-| 2     | [DF-14](drafts/df14-conhecimento.md)          | DF-10                  | Produtor da área `conhecimento`; anti-rotatividade      |
-| 3     | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                 |
-| 4     | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                 |
-| 5     | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark     |
+| 1 ✅  | [DF-13](drafts/df13-evolucao-maturidade.md)   | DF-10                  | Motor e evidências primeiro — tudo o mais consome daqui |
+| 2 ✅  | [DF-14](drafts/df14-conhecimento.md)          | DF-10                  | Produtor da área `conhecimento`; anti-rotatividade      |
+| 3 ✅  | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                 |
+| 4 ✅  | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                 |
+| 5 ✅  | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark     |
+
+**Estado (2026-08-30): as cinco specs implementadas de ponta a ponta** — motor puro,
+banco, API, produtores de evidência e todas as superfícies, sobre a fase 0 do plano de
+design (tokens, guardas, iconografia). O que continua **pendente** e é decisão de
+gente, não de código:
+
+- **ADR-010 segue `proposto`** — vira `aceito` na revisão do product owner.
+- **Catálogo de 51 critérios não foi calibrado com equipe real.** É a lista mais barata
+  de mudar agora e a mais cara depois; o gate de piloto (2–3 equipes, ≥ 3 semanas) entre
+  EV-M2 e o GA existe exatamente para isso.
+- **Vocabulário fail/manual** — INFRAÇÃO/PRESENCIAL (design-system §11.3, o que o código
+  usa) × NÃO CONFORME / VERIFICAÇÃO PRESENCIAL (estudo §9.4 + canvas). Mudar é editar
+  `apps/web/src/icons/statusIcon.tsx`, nunca telas.
+- **Base legal do conteúdo pós-exclusão** (DF-14 §8.3) — revisão jurídica antes do GA.
+- **Acervo do DF-15 não foi ingerido** em nenhum ambiente: o script roda em dry-run por
+  padrão e o `--apply` é ato deliberado, com o diff conferido no PR.

@@ -6,6 +6,28 @@
 **Numeração canônica:** as 13 fases abaixo (0 a 12, uma fase = um PR) são a única numeração de PRs do redesign; o estudo, o design system e o ADR citam estes números.
 **Premissa de execução:** uma pessoa, incremental, **sem congelar o produto**. Cada fase = 1 PR mergeável e deployável isoladamente. Nenhuma fase deixa a interface em estado misto entre PRs.
 
+## Estado da execução (2026-08-30)
+
+**Fase 0 implementada** (marco RD0): `tokens.ts` como fonte de verdade, `tokens.css`
+gerado e commitado com teste de paridade, guarda de hex com catraca, teste de contraste
+(386 razões dos contratos de §2.6), teste de daltonismo nascendo em `it.fails` conforme
+o passo 0.5, as 21 formas do inventário copiadas de §8.10, `check-icons`,
+`/THIRD-PARTY-NOTICES.md` e a galeria em `?galeria=1`. Diff de zero pixel, como previsto.
+
+**Fase 6 (rail) entregue junto com o DF-12**, pela amarração declarada no plano da
+evolução: o conteúdo de produto da fase 6 É o DF-12. As três vagas restantes do
+inventário foram consumidas por `house`, `wrench` e `trophy`, baixadas do mesmo commit
+do doador — o inventário fecha em 24/24.
+
+**Catraca de hex:** 322 → **317**. Os cinco que saíram são os da legenda do viewport em
+`App.tsx`. Restam `styles.css` (288) e os inline de `Viewport.tsx` (23), `Inspector.tsx`
+(3), `Manikin.tsx` (2) e `Geraldao.tsx` (1) — o alvo das fases 1 a 5 e 10.
+
+As fases 1–5 e 7–12 **não** foram executadas: elas redesenham superfícies existentes
+(editor, checklist, cena 3D, modais, admin, landing), e nada do lote da evolução depende
+delas. As telas novas já nascem tokenizadas, o que REDUZ a dívida que essas fases vão
+pagar.
+
 ## Tabela-resumo das fases
 
 | Fase | Superfície                            | Branch                       | Esforço | Marco | Gate resumido                                                                                    |

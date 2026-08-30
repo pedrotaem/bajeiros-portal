@@ -25,6 +25,37 @@ novo), o que **reduz** a dívida que o plano de design está pagando, em vez de 
    DF-12. O gate da fase 6 (câmera preservada, reflow a 200%) vale integralmente. As fases 2–5 e
    7–12 do plano de design seguem no próprio ritmo, sem dependência daqui (exceto onde marcado).
 
+## Estado da execução (2026-08-30)
+
+**EV-0 a EV-8 implementadas**, em commits separados por fase, sobre a fase 0 do plano de
+design (que entrou junto por ser pré-requisito duro de toda UI nova). O que a tabela
+abaixo descreve está no código; o que falta é a parte que não é código:
+
+| Fase | Estado | Onde                                                                      |
+| ---- | ------ | ------------------------------------------------------------------------- |
+| EV-0 | ✅     | `packages/evolution` — catálogo v1.0.0, `computeLevels()`, 44 testes      |
+| EV-1 | ✅     | migração `0005`, módulo `evolution`, produtores em `projects` e `teams`   |
+| EV-2 | ✅     | migração `0006`, módulo `knowledge`, `knowledge.summary`                  |
+| EV-3 | ✅     | `Shell.tsx` + rail + hub + "Sobre" + equipe com 4 abas                    |
+| EV-4 | ✅     | `EvolutionTab.tsx`                                                        |
+| EV-5 | ✅     | `KnowledgeTab.tsx`                                                        |
+| EV-6 | ✅     | `GET /me/home` + `HomePage.tsx`                                           |
+| EV-7 | ✅     | migração `0007`, módulo `community`, ingestão em dry-run, `CommunityPage` |
+| EV-8 | ✅     | benchmark por prova com piso de coorte e "transformar em meta"            |
+
+**Pendências que continuam abertas** (nenhuma é implementação):
+
+1. **Gate de piloto** com 2–3 equipes reais por ≥ 3 semanas — o catálogo v1 só congela
+   depois dele. É o mitigador do risco nº 1 da feature (P-1.1, calibração de gabinete).
+2. **ADR-010 em `proposto`** — a revisão do product owner o promove a `aceito`.
+3. **Recálculo diário**: o corpo existe (`POST /admin/evolution/recompute`); falta o
+   gatilho de infraestrutura (EventBridge → Lambda). Enquanto isso, o `GET` da evolução
+   recompute por equipe, o que cobre quem abre a tela mas não quem não abre.
+4. **Ingestão do acervo** (DF-15): rodada só em dry-run. O `--apply` exige `--admin` e a
+   conferência do diff no PR.
+5. **Vocabulário fail/manual** (DF-12 RF-4.2) e **base legal do conteúdo pós-exclusão**
+   (DF-14 §8.3) seguem como decisões de gente.
+
 ## Tabela-resumo das fases
 
 | Fase | Entrega                                             | Branch                   | Esforço | Marco | Gate resumido                                                                       |
