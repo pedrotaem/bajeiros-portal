@@ -62,10 +62,12 @@ export function HomePage() {
     activeTeamId,
   ])
 
-  // a equipe ativa é a que o Início resolveu; guarda para as outras telas
+  // Guarda a equipe que o Início RESOLVEU sozinho — e só isso. Sincronizar de volta
+  // sempre que os ids diferem faria o efeito rodar antes de o refetch terminar e
+  // desfazer a escolha do seletor no mesmo tick: trocar de equipe viraria no-op.
   useEffect(() => {
     const id = home.data?.team?.id
-    if (id && id !== activeTeamId) setActiveTeam(id)
+    if (id && !activeTeamId) setActiveTeam(id)
   }, [home.data?.team?.id, activeTeamId, setActiveTeam])
 
   const ir = (destino: { page: string; tab?: string }) => {

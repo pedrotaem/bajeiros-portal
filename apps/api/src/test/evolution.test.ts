@@ -148,6 +148,25 @@ describe('DF-13 — evolução da equipe (API)', () => {
     expect(passos.some((s) => s.title === 'Designar o projeto da temporada')).toBe(true)
   })
 
+  it('a primeira computação não narra queda que nunca aconteceu', async () => {
+    // area que nasce em 0 nao tem "voltou para o nivel 0": sem linha anterior, 0 -> 0
+    // nao e mudanca. Sem esta guarda a atividade da equipe nova abria com 5 quedas.
+    const feed = await (
+      await app.request(`/api/v1/teams/${teamId}/activity?limit=50`, authed(cap))
+    ).json()
+    const nulas = feed.filter(
+      (e: { kind: string; payload: { from: number; to: number } }) =>
+        e.kind === 'level.changed' && e.payload.from === e.payload.to,
+    )
+    expect(nulas).toEqual([])
+    // a subida real (gestao 0 -> 1, do organograma padrao) continua sendo narrada
+    const subida = feed.find(
+      (e: { kind: string; payload: { area: string } }) =>
+        e.kind === 'level.changed' && e.payload.area === 'gestao',
+    )
+    expect(subida?.payload).toMatchObject({ from: 0, to: 1 })
+  })
+
   it('AC-DF13.6 — critério oculto não aparece na resposta', async () => {
     const evo = await evolutionOf(cap)
     expect(criterionOf(evo, 'EST-4.1')).toBeUndefined()

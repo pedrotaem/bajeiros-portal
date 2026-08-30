@@ -172,6 +172,10 @@ export function TeamPage(): JSX.Element {
   const [mine, setMine] = useState<MyJoinRequest[]>([])
   const [team, setTeam] = useState<TeamDetail | null>(null)
   const [subPessoas, setSubPessoas] = useState<SubPessoas>('lista')
+  // "trocar de equipe" precisa de um estado explícito: sem ele o efeito de
+  // auto-abertura reabre a mesma equipe no mesmo tick e o botão vira no-op para
+  // quem tem uma equipe só — exatamente o caso mais comum.
+  const [listando, setListando] = useState(false)
   const [newName, setNewName] = useState('')
   const [newUniversity, setNewUniversity] = useState('')
   const [err, fail, clear] = useErr()
@@ -195,6 +199,7 @@ export function TeamPage(): JSX.Element {
       clear()
       try {
         setTeam(await api<TeamDetail>(`/api/v1/teams/${id}`))
+        setListando(false)
       } catch (e) {
         fail(e)
       }
@@ -207,24 +212,25 @@ export function TeamPage(): JSX.Element {
     if (team) void openTeam(team.id)
   }, [team, openTeam])
 
-  // Abre sozinha a equipe ativa (DF-12 RF-2.3): o espaco da equipe e um DESTINO do
-  // rail, nao uma lista para escolher toda vez.
+  // Abre sozinha a equipe ativa (DF-12 RF-2.3): o espaço da equipe é um DESTINO do
+  // rail, não uma lista para escolher toda vez.
   useEffect(() => {
-    if (team || !teams?.length) return
+    if (team || listando || !teams?.length) return
     const alvo = teams.find((t) => t.id === activeTeamId) ?? teams[0]
     void openTeam(alvo.id)
     if (alvo.id !== activeTeamId) setActiveTeam(alvo.id)
-  }, [teams, team, activeTeamId, openTeam, setActiveTeam])
+  }, [teams, team, listando, activeTeamId, openTeam, setActiveTeam])
 
   const trocarEquipe = (id: string) => {
     setActiveTeam(id)
+    setListando(false)
     setTeam(null)
     void openTeam(id)
   }
 
   const back = () => {
     setTeam(null)
-    setActiveTeam(null)
+    setListando(true)
     reloadList()
   }
 
@@ -239,6 +245,9 @@ export function TeamPage(): JSX.Element {
       setNewName('')
       setNewUniversity('')
       reloadList()
+      // equipe recem-criada vira a ATIVA: sem isto o Inicio continuaria mostrando a
+      // equipe anterior e a pessoa acharia que a criacao nao pegou
+      setActiveTeam(t.id)
       void openTeam(t.id)
     } catch (e2) {
       fail(e2)
@@ -282,7 +291,7 @@ export function TeamPage(): JSX.Element {
           <span className="bj-chip bj-chip-neutro">{team.members.length} pessoas</span>
           <span className="bj-chip bj-chip-neutro">você é {ROLE_LABELS[team.myRole]}</span>
           <button type="button" className="bj-link" onClick={back}>
-            trocar de equipe
+            todas as equipes
           </button>
         </header>
 

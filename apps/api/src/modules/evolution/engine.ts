@@ -162,7 +162,11 @@ export async function recomputeTeam(
       [teamId, area.area, area.level, result.catalogVersion],
     )
 
-    if (prev?.level === area.level) continue // só a versão do catálogo mudou
+    // Nível igual ao anterior: só a versão do catálogo mudou, não é notícia.
+    // `prev` ausente com nível 0 é a PRIMEIRA computação da equipe — narrar isso
+    // como "voltou para o nível 0" enche a atividade de queda que nunca aconteceu.
+    const de = prev?.level ?? 0
+    if (de === area.level) continue
     // Queda é sinal, não erro: o evento diz O QUE derrubou (DF-13 §3.5, P-1.3).
     await recordEvidence(db, {
       teamId,
@@ -170,7 +174,7 @@ export async function recomputeTeam(
       kind: 'level.changed',
       payload: {
         area: area.area,
-        from: prev?.level ?? 0,
+        from: de,
         to: area.level,
         catalogVersion: result.catalogVersion,
         because: area.pending.slice(0, 3).map((p) => ({ id: p.id, reason: p.reason })),
