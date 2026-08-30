@@ -23,10 +23,16 @@ do doador — o inventário fecha em 24/24.
 `App.tsx`. Restam `styles.css` (288) e os inline de `Viewport.tsx` (23), `Inspector.tsx`
 (3), `Manikin.tsx` (2) e `Geraldao.tsx` (1) — o alvo das fases 1 a 5 e 10.
 
-As fases 1–5 e 7–12 **não** foram executadas: elas redesenham superfícies existentes
-(editor, checklist, cena 3D, modais, admin, landing), e nada do lote da evolução depende
-delas. As telas novas já nascem tokenizadas, o que REDUZ a dívida que essas fases vão
-pagar.
+As fases 1–5, 7, 8 e 10–12 **não** foram executadas: elas redesenham superfícies
+existentes (editor, checklist, cena 3D, modais, admin), e nada do lote da evolução
+depende delas. As telas novas já nascem tokenizadas, o que REDUZ a dívida que essas
+fases vão pagar.
+
+**A fase 9 mudou de alvo** e está parcialmente feita: a landing como overlay foi
+aposentada (a home pública passou a ser o Início dentro do shell) e quatro dos seis
+passos fecharam junto. Sobraram dois, ambos registrados na fase: remover as ~30 regras
+`.landing-*` mortas de `styles.css` e resolver a promessa de persistência, que **migrou**
+para o Início público em vez de sumir.
 
 ## Tabela-resumo das fases
 
@@ -41,7 +47,7 @@ pagar.
 | 6    | Rail de navegação e layout do shell   | `feat/df11-rail`             | M       |       | Canvas e câmera preservados; reflow a 200% sem perda de conteúdo.                                |
 | 7    | Equipes e organograma                 | `feat/df11-equipes`          | G       |       | Abas com semântica ARIA; seleção do organograma não depende de tinta.                            |
 | 8    | Admin e Assistente                    | `feat/df11-admin-assistente` | M       |       | Duplicatas `.admin-*`/`.team-*` colapsadas; estados de carregamento e erro modelados.            |
-| 9    | Landing                               | `feat/df11-landing`          | P       | RD2   | Disclaimer permanente visível; landing deixa de ser `role="dialog"`.                             |
+| 9    | Início público e resto da landing     | `feat/df11-landing`          | P       | RD2   | CSS morto da landing fora; promessa de persistência resolvida; `check-tokens` sem CSS na lista.  |
 | 10   | Viewport 3D — separação de canais     | `feat/df11-3d-canais`        | G       |       | Status e identidade em canais distintos; seleção aditiva e não dimensional.                      |
 | 11   | Escala de espaço, raio, tipografia    | `feat/df11-escala`           | G       | RD3   | Zero valor cru de espaçamento/raio/fonte; webfonts auto-hospedadas sob CSP atual.                |
 | 12   | Tema claro                            | `feat/df11-tema-claro`       | G       |       | **Condicionado** — só entra se as condições do §4 forem satisfeitas.                             |
@@ -250,24 +256,31 @@ Esforço **M**. Duas páginas de tabela e chat, com pouco layout próprio depois
 - **Aceite:** erro de listagem no Admin mostra erro **e** botão de retry, nunca "Carregando..." simultâneo; um único monoespaçado em toda a UI; `check-tokens` sem exceções de `.admin-*`/`.assistant-*`.
 - **Risco:** baixo. O maior é 8.1 vazar regressão para Equipes, já mergeada. Mitigação: capturas de Equipes **e** Admin lado a lado no PR.
 
-### Fase 9 — Landing
+### Fase 9 — Início público e o que sobrou da landing
 
 Esforço **P**. Fecha o marco **RD2**.
 
-| #   | Passo            | Detalhe                                                                                                                                                                                                                                                                                                                         |
-| --- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 9.1 | Cor e gradientes | `.landing-*` para tokens. Os gradientes com alfa derivado (`rgba(243,167,18,.09)`, `rgba(216,222,229,.035)`, `rgba(23,28,34,.92)`) passam a `rgb(… / …)` a partir dos canais dos tokens.                                                                                                                                        |
-| 9.2 | Não é diálogo    | `Landing.tsx:67` usa `role="dialog"` numa superfície de página inteira, sem `aria-modal` e sem foco gerenciado — quebra a estrutura de landmarks na primeira tela. Vira `<main>` + `<h1>`.                                                                                                                                      |
-| 9.3 | Disclaimer       | O disclaimer é obrigação permanente declarada em `specs/spec.md` §1 e `README.md`. Hoje é `#6b7683` a 11px (3,71:1). Passa a `--bj-fg-muted` no mínimo `--bj-text-sm`. Critério de aceite próprio.                                                                                                                              |
-| 9.4 | Movimento        | Estender `prefers-reduced-motion` para `.landing-cta` (transform), `.landing-cta-arrow` e `.landing-account`, hoje fora dos dois blocos existentes.                                                                                                                                                                             |
-| 9.5 | Promessa falsa   | "seus dados ficam só neste navegador até você salvar na nuvem" (`Landing.tsx:144`) é falso: `store.ts:83` é `create()` sem `persist`. **Ou** persistir a gaiola com `persist` + `partialize`, **ou** corrigir o texto. Decidir no PR; a primeira opção custa ~meio dia e elimina a maior fonte de perda de trabalho do produto. |
+**O alvo mudou (2026-08-30).** Esta fase nasceu para redesenhar `Landing.tsx`, e esse
+componente não existe mais: a landing era um overlay FORA do shell e, como o token vive
+só em memória, todo reload deslogava e devolvia a pessoa para ela — o Início novo era
+inalcançável ao abrir a página. A apresentação passou a ser o **Início público**
+(`PublicHome.tsx`), dentro do shell, já tokenizado e com o rail visível. Quatro dos seis
+passos originais morreram com o arquivo; os dois que sobraram são dívida real e
+continuam aqui.
 
-| 9.6 | Os 4 SVG saem da Landing | `IconCage`, `IconUser`, `IconShield` e `IconChat` são funções locais não exportadas dentro de `Landing.tsx` e **saem por substituição, não por redesenho** (DS §8.8 e §8.10): nenhum tem `stroke-linecap`/`stroke-linejoin`, nenhum tem `focusable="false"`, todos usam `aria-hidden` sem valor, `IconCage` tem `opacity=".55"` — peso visual que some em impressão e em `forced-colors` — e o `!` do `IconShield` é um traço de comprimento 0,01 que **não renderiza hoje** sem cap redondo. `IconShield` vira `lucide/shield` (path único, sem miolo); `IconChat` vira `lucide/message-square` e renomeia para `IconMessage` (nome pelo que é). **`IconUser` é o item nº 1 da fila:** ele é o desenho literal do busto reservado ao status `manual`, ou seja "Entrar ou criar conta" e "PRESENCIAL" desenham a mesma coisa — violação de CT-3 em produção. Vira `IconAccount` = `lucide/circle-user`, **copiado, sem redesenho**: a rasterização a 16px lado a lado confirmou que ele já se separa do `IconPerson` por topologia (disco fechado × busto aberto), e a moldura de avatar que se planejava desenhar não é necessária. **`IconCage` não é migrado — é removido**: o conceito morreu (DS §8.6) e o CTA fica com o rótulo escrito. Junto saem os três tamanhos fora da escala, que são correção de CSS: 17px → 16 (`styles.css:942-946`), 15px → 20 (`:1035-1039`), 34px → 24 (`:1082-1085`). O `→` de 26px do `.landing-cta-arrow` vira `IconArrow` (`lucide/arrow-right`) de 16px, mantendo a animação de hover. |
+| #   | Passo                     | Estado | Detalhe                                                                                                                                                                                                                                                                                                                                                                       |
+| --- | ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9.1 | CSS morto da landing      | aberto | `styles.css` L895–1109 continua com ~30 regras `.landing-*` que **nenhum componente usa**. Removê-las é a maior fatia fácil da catraca de hex e não pode ser feita por `sed`: conferir uma a uma que nenhuma classe sobreviveu em TSX antes de apagar.                                                                                                                        |
+| 9.2 | `role="dialog"` na página | feito  | Saiu junto com o componente. A primeira tela agora é `<main id="conteudo">` + `<h1>` na topbar do shell (DF-12 RF-1.3).                                                                                                                                                                                                                                                       |
+| 9.3 | Disclaimer                | feito  | Obrigação permanente do `specs/spec.md` §1: hoje vive na topbar de **todas** as páginas, em `--bj-fg-secondary` a `--bj-text-sm` (não `fg-muted`, e não 11px). O bloco longo de aviso legal aparece no Início público e em "Sobre o portal".                                                                                                                                  |
+| 9.4 | Movimento                 | feito  | Os CTAs animados da landing não existem mais; o que restou de transição no shell novo está sob `prefers-reduced-motion` (skeleton) ou é `transform` de chevron, de 120 ms.                                                                                                                                                                                                    |
+| 9.5 | Promessa falsa            | aberto | **A dívida MIGROU, não sumiu.** "o projeto fica só neste navegador até você salvar na nuvem" está agora em `PublicHome.tsx`, e `store.ts:83` continua `create()` sem `persist` — recarregar perde a gaiola. **Ou** persistir com `persist` + `partialize`, **ou** corrigir o texto. A primeira opção custa ~meio dia e elimina a maior fonte de perda de trabalho do produto. |
+| 9.6 | Os 4 SVG da landing       | feito  | `IconCage`, `IconUser`, `IconShield` e `IconChat` saíram com o arquivo. A violação de CT-3 que era o item nº 1 da fila — "Entrar ou criar conta" desenhando o mesmo busto do status PRESENCIAL — **está resolvida**: o bloco de conta do rail usa `IconAccount` (`lucide/circle-user`) e `IconPerson` voltou a ser exclusivo de status.                                       |
 
-- **Arquivos:** `apps/web/src/components/Landing.tsx`, `apps/web/src/icons/**` (9.6), `styles.css` (L897–1109), `store.ts` (9.5, se persistir).
-- **Tokens:** `bg-canvas`/`base`, `brand`/`brand-bg`, `fg-*`, `shadow-md`, `radius-lg`, `space-*`.
+- **Arquivos:** `apps/web/src/styles.css` (L895–1109, remoção), `apps/web/src/store.ts` (9.5, se persistir), `apps/web/src/components/PublicHome.tsx` (9.5, se corrigir o texto).
+- **Tokens:** nenhum novo — o Início público já nasceu tokenizado.
 - **Testes:** nenhum. Se 9.5 optar por `persist`, acrescentar teste de serialização da gaiola.
-- **Aceite:** disclaimer legível e presente; `role="dialog"` removido; texto da landing verdadeiro em relação ao comportamento; **`check-tokens` com lista de exceções vazia para CSS** — RD2.
+- **Aceite:** zero regra `.landing-*` em `styles.css`; texto do Início público verdadeiro em relação ao comportamento; **`check-tokens` com lista de exceções vazia para CSS** — RD2.
 - **Risco:** baixo. 9.5 é a única decisão de produto embutida; se demorar, cortar para "corrigir o texto" e registrar a persistência como dívida.
 
 ### Fase 10 — Viewport 3D: separação de canais
