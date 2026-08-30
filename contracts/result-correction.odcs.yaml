@@ -1,0 +1,76 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:result-correction
+name: result_correction
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Solicitações de correção do acervo (DF-15 §3.2) — o portal nunca edita em silêncio.
+  usage: >-
+    Qualquer usuário autenticado abre a solicitação com a fonte; o admin aplica ou recusa,
+    e a mudança fica registrada em audit_events junto com o valor novo.
+schema:
+  - name: result_correction
+    logicalType: object
+    physicalType: table
+    physicalName: result_corrections
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: requested_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem pediu a correção; anonimizado na exclusão da conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 12 meses após a resolução
+      - name: target
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: O que se pede corrigir (competição, equipe do acervo, campo).
+      - name: proposal
+        logicalType: string
+        required: true
+        description: Proposta de correção, máximo de 1000 caracteres.
+      - name: source_url
+        logicalType: string
+        required: false
+        description: Fonte da correção — sem fonte, o portal não muda número.
+      - name: status
+        logicalType: string
+        required: true
+        description: aberta | aplicada | recusada
+      - name: resolved_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 12 meses após a resolução
+      - name: resolved_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: trust
+    value: correção com trilha em audit_events; credibilidade do dado é o ativo central (P-1.1)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

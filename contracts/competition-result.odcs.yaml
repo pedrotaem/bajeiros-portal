@@ -1,0 +1,59 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:competition-result
+name: competition_result
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Classificação por competição (DF-15 E1) com pontuação por prova.
+  usage: >-
+    Tabela de resultados, série histórica do perfil e mediana por prova da coorte.
+    O rol de provas varia por edição, então `points` é jsonb — o schema não engessa.
+schema:
+  - name: competition_result
+    logicalType: object
+    physicalType: table
+    physicalName: competition_results
+    properties:
+      - name: competition_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: community_team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: position
+        logicalType: integer
+        required: false
+      - name: points_total
+        logicalType: number
+        required: false
+      - name: points
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: >-
+          Pontos por prova com nome normalizado em pt-BR. A chave `_fonte` guarda o
+          nome original da fonte para auditoria — é trilha, não conteúdo de tela.
+      - name: source_url
+        logicalType: string
+        required: false
+      - name: ingested_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: trust
+    value: fonte por linha; admin é o único aplicador de correção; nada muda em silêncio
+  - property: benchmarkFloor
+    value: mediana por prova só aparece com 8+ equipes na coorte (mesmo piso do DF-13)
+  - property: entity
+    value: dados de ente coletivo — a ingestão descarta campo de pessoa física (AC-DF15.8)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

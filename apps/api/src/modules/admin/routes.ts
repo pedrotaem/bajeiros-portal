@@ -6,6 +6,7 @@ import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
 import { recomputeTeam } from '../evolution/engine'
+import { communityAdmin } from '../community/routes'
 
 // DF-9 — área administrativa. Autorização: users.is_admin (promoção só manual no
 // banco; nenhuma rota concede). RLS: policies *_admin_read (0003) fazem o SELECT
@@ -290,3 +291,6 @@ admin.post('/evolution/recompute', async (c) => {
   })
   return c.json({ ...result, elapsedMs: Date.now() - started })
 })
+
+// DF-15 — curadoria do acervo (claims, correções, coortes). Herda o requireAdmin.
+admin.route('/community', communityAdmin)
