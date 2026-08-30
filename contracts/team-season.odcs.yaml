@@ -1,0 +1,54 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team-season
+name: team_season
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Temporada da equipe (DF-13 E5) — rótulo, projeto designado e marcos datados.
+  usage: Faixa de temporada na tela Evolução, contagem regressiva no Início (DF-16) e recorte
+    do que o validador avalia (§3.4 — só o projeto da temporada gera evidência).
+schema:
+  - name: team_season
+    logicalType: object
+    physicalType: table
+    physicalName: team_season
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: label
+        logicalType: string
+        required: true
+        description: Rótulo curto da temporada ("2027"), ≤ 20 caracteres.
+      - name: season_project_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Projeto da equipe cujo último snapshot alimenta os critérios automáticos.
+      - name: milestones
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: '[{title, date}] — máximo 12; a contagem regressiva usa o próximo futuro.'
+      - name: competition_ids
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Referências ao calendário do DF-15 (validadas quando o módulo existir).
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: pii
+    value: nenhum campo pessoal — a temporada é da equipe
+  - property: cardinality
+    value: 1 temporada corrente por equipe; histórico entra na v2 (DF-13 §11.5)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

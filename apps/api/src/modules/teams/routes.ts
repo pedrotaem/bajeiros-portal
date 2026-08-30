@@ -7,6 +7,7 @@ import { audit, clientIp } from '../../audit'
 import { can, isTeamRole, outranks, roleLabel, MAX_COCAPTAINS, type TeamRole } from '../../policy'
 import { countRole, hashToken, lockTeam, myRole, teamMembers, toTeam } from './shared'
 import { loadPositions, registerPositionRoutes, seedPositions } from './positions'
+import { publishOrgSummary } from '../evolution/engine'
 import type { AuthEnv } from '../../auth/middleware'
 
 export const teams = new Hono<AuthEnv>()
@@ -93,6 +94,9 @@ teams.post('/', async (c) => {
     ])
     // DF-10: equipe nasce com o organograma padrão de equipe de elite
     await seedPositions(db, id)
+    // DF-13: a primeira evidência da equipe nasce junto — sem ela a tela de
+    // evolução abriria em branco antes de qualquer ação
+    await publishOrgSummary(db, id, sub)
     await audit(db, {
       actorUserId: sub,
       action: 'team.create',
@@ -399,6 +403,7 @@ teams.post('/:id/join-requests/:requestId/approve', async (c) => {
       ip: clientIp(c.req.raw.headers),
       metadata: { targetUserId: target, status: parsed.data.status ?? 'efetivo' },
     })
+    await publishOrgSummary(db, teamId, sub)
     return 'ok' as const
   })
 
@@ -502,6 +507,9 @@ teams.delete('/:id/members/:userId', async (c) => {
       ip: clientIp(c.req.raw.headers),
       metadata: { targetUserId: targetId },
     })
+    // quem saiu não é mais membro: a RLS recusaria a evidência e derrubaria a
+    // própria saída por exceção. Só publica quando o ator continua na equipe.
+    if (targetId !== sub) await publishOrgSummary(db, teamId, sub)
     return 'ok' as const
   })
   if (result === 'notfound') return problem(c, 404, 'Membro não encontrado')
@@ -622,6 +630,7 @@ teams.patch('/:id/members/:userId', async (c) => {
         },
       })
     }
+    await publishOrgSummary(db, teamId, sub)
     return 'ok' as const
   })
 
@@ -711,6 +720,7 @@ teams.post('/:id/transfer-captaincy', async (c) => {
       ip: clientIp(c.req.raw.headers),
       metadata: { targetUserId: toUserId, previousCaptainRole: demoted },
     })
+    await publishOrgSummary(db, teamId, sub)
     return { newCaptainUserId: toUserId, previousCaptainRole: demoted }
   })
 

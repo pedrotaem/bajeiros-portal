@@ -1,0 +1,112 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team-guide
+name: team_guide
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Guias da equipe (DF-14 E2) — procedimentos vivos com dono, incluindo a trilha de novatos.
+  usage: >-
+    Guia sem atualização há mais de 6 meses aparece como VERIFICAR e derruba CON-4.2.
+    A trilha (kind `trilha`, uma por equipe) é a integração de novatos (CON-2.2 e CON-3.1).
+schema:
+  - name: team_guide
+    logicalType: object
+    physicalType: table
+    physicalName: team_guides
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: kind
+        logicalType: string
+        required: true
+        description: guia | trilha | checklist — fixo depois de criado.
+      - name: title
+        logicalType: string
+        required: true
+      - name: body_md
+        logicalType: string
+        required: true
+        description: Markdown restrito (máximo 20000), renderizado sem HTML bruto.
+      - name: tags
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Etiquetas do guia; a etiqueta "solda" satisfaz FAB-3.1.
+      - name: owner_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Responsável por manter o guia; guia órfão reprova CON-4.2.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: author_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+        description: Base do envelhecimento; "revisei, está válido" atualiza sem editar o corpo.
+      - name: deleted_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+  - name: guide_completion
+    logicalType: object
+    physicalType: table
+    physicalName: guide_completions
+    properties:
+      - name: guide_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+        classification: pii
+        description: Quem concluiu a trilha; só o próprio marca.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; removido com a conta do titular
+      - name: completed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: caps
+    value: 200 guias por equipe; 1 trilha ativa
+  - property: staleness
+    value: 182 dias sem atualização = VERIFICAR (CON-4.2)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

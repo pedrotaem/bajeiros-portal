@@ -73,7 +73,7 @@ function when(ts: string | null): string {
   return new Date(ts).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-export function AdminPanel({ Head }: { Head: (p: { title: string }) => JSX.Element }) {
+export function AdminPanel() {
   const api = useSession((s) => s.api)
   const [tab, setTab] = useState<Tab>('overview')
   const [err, setErr] = useState<string | null>(null)
@@ -88,7 +88,6 @@ export function AdminPanel({ Head }: { Head: (p: { title: string }) => JSX.Eleme
 
   return (
     <div className="admin-panel">
-      <Head title="Administração" />
       <div className="admin-tabs">
         {(
           [

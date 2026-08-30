@@ -1,0 +1,146 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:evolution-evidence
+name: evolution_evidence
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Fluxo append-only de evidências de maturidade da equipe (DF-13 RF-2.x).
+  usage: Alimenta o motor `@bajeiros/evolution` (níveis por área) e o feed de atividade do
+    Início (DF-16). Nada aqui é aceito do cliente quando é crítico — `validation.summary`
+    sai do `evaluate()` que roda na API.
+schema:
+  - name: evolution_evidence
+    logicalType: object
+    physicalType: table
+    physicalName: evolution_evidence
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: source
+        logicalType: string
+        required: true
+        description: projects | teams | knowledge | evolution | community | web
+      - name: kind
+        logicalType: string
+        required: true
+        description: validation.summary | org.summary | knowledge.summary | level.changed | …
+      - name: payload
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: Formato por kind, tipado em packages/evolution/src/evidence.ts.
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+      - name: snapshot_seq
+        logicalType: integer
+        required: false
+      - name: ref_kind
+        logicalType: string
+        required: false
+      - name: ref_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+      - name: actor_user_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem produziu a evidência; anonimizado (SET NULL) na exclusão de conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: evolution_declaration
+    logicalType: object
+    physicalType: table
+    physicalName: evolution_declarations
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: criterion_id
+        logicalType: string
+        required: true
+        primaryKey: true
+        description: ID do catálogo (EST-2.2, GES-3.2…), versionado em packages/evolution.
+      - name: note
+        logicalType: string
+        required: false
+        description: Nota da capitania, ≤ 500 caracteres.
+      - name: link_kind
+        logicalType: string
+        required: false
+        description: decision | guide | project | url
+      - name: link_ref
+        logicalType: string
+        required: false
+      - name: declared_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: declared_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: evolution_level
+    logicalType: object
+    physicalType: table
+    physicalName: evolution_levels
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: area
+        logicalType: string
+        required: true
+        primaryKey: true
+        description: estrutura | dinamica | documentacao | fabricacao | gestao | conhecimento
+      - name: level
+        logicalType: integer
+        required: true
+        description: 0–5; 0 = nem o nível 1 fechou.
+      - name: catalog_version
+        logicalType: string
+        required: true
+      - name: computed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: immutability
+    value: evolution_evidence é append-only (GRANT sem UPDATE/DELETE)
+  - property: historyOfDeclarations
+    value: audit_events (evolution.declare / evolution.revoke) — a tabela guarda só o vigente
+  - property: noPublicRanking
+    value: maturidade de terceiros nunca é listada; só mediana de coorte com piso de 8 (ADR-010)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

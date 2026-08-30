@@ -128,6 +128,13 @@ identity.get('/export', async (c) => {
       assistantLog,
       memberships,
       joinRequests,
+      declarations,
+      steps,
+      evidence,
+      decisions,
+      guides,
+      trailCompletions,
+      kits,
     ] = await Promise.all([
       db.query('SELECT * FROM users WHERE id = $1', [sub]),
       db.query('SELECT * FROM consents ORDER BY occurred_at', []),
@@ -147,6 +154,31 @@ identity.get('/export', async (c) => {
       ),
       // solicitações de entrada ainda pendentes (SECURITY DEFINER: a RLS mostra as próprias)
       db.query('SELECT * FROM my_join_requests()', []),
+      // DF-13: o que o titular declarou, carrega e produziu na evolução da equipe
+      db.query('SELECT * FROM evolution_declarations WHERE declared_by = $1 ORDER BY declared_at', [
+        sub,
+      ]),
+      db.query(
+        `SELECT * FROM evolution_steps
+         WHERE owner_user_id = $1 OR created_by = $1 OR done_by = $1
+         ORDER BY created_at`,
+        [sub],
+      ),
+      db.query('SELECT * FROM evolution_evidence WHERE actor_user_id = $1 ORDER BY created_at', [
+        sub,
+      ]),
+      // DF-14: conteúdo autoral do titular. O texto é da EQUIPE e permanece na
+      // exclusão da conta (autoria vira "ex-membro"); o export mostra o que é seu.
+      db.query('SELECT * FROM team_decisions WHERE author_id = $1 ORDER BY created_at', [sub]),
+      db.query(
+        'SELECT * FROM team_guides WHERE author_id = $1 OR owner_id = $1 ORDER BY created_at',
+        [sub],
+      ),
+      db.query('SELECT * FROM guide_completions WHERE user_id = $1 ORDER BY completed_at', [sub]),
+      db.query(
+        'SELECT * FROM team_handover_kits WHERE member_id = $1 OR created_by = $1 ORDER BY created_at',
+        [sub],
+      ),
     ])
     await audit(db, {
       actorUserId: sub,
@@ -166,6 +198,13 @@ identity.get('/export', async (c) => {
       teamJoinRequests: joinRequests.rows,
       accessLog: accessLog.rows,
       assistantLog: assistantLog.rows,
+      evolutionDeclarations: declarations.rows,
+      evolutionSteps: steps.rows,
+      evolutionEvidence: evidence.rows,
+      teamDecisions: decisions.rows,
+      teamGuides: guides.rows,
+      guideCompletions: trailCompletions.rows,
+      handoverKits: kits.rows,
     }
   })
   return c.json(data)

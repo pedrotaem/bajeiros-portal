@@ -2,42 +2,34 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useStore } from './store'
 import { evaluate, removalImpact } from '@bajeiros/core/rules/b6'
 import { estimateMass } from '@bajeiros/core/model/mass'
+import { viewport3d } from './tokens'
 import { Viewport } from './components/Viewport'
 import { RulePanel } from './components/RulePanel'
 import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
-import { AccountMenu } from './components/AccountMenu'
 import { SessionPanels } from './components/SessionPanels'
-import { Landing } from './components/Landing'
 import { AssistantPanel } from './components/AssistantPanel'
 import { AdminPanel } from './components/AdminPanel'
 import { TeamPage } from './components/TeamPage'
-import { useSession, track } from './session'
+import { HomePage } from './components/HomePage'
+import { CommunityPage } from './components/CommunityPage'
+import { ToolsHub } from './components/ToolsHub'
+import { PrecisaDeConta, PublicHome } from './components/PublicHome'
+import { About } from './components/About'
+import { Shell } from './components/Shell'
+import { useSession, track, type PageId } from './session'
+import './shell.css'
 
-// Cabeçalhos de página inteira — o assistente volta ao INÍCIO (landing: o portal é
-// maior que o validador B6); o admin, ferramenta de operação, volta ao editor.
-function PageHeadToLanding({ title }: { title: string }) {
-  const setLanding = useSession((s) => s.setLanding)
-  return (
-    <div className="page-head">
-      <span>{title}</span>
-      <button className="account-btn" onClick={() => setLanding(true)}>
-        ← Voltar ao início
-      </button>
-    </div>
-  )
-}
-
-function PageHeadToEditor({ title }: { title: string }) {
-  const setPage = useSession((s) => s.setPage)
-  return (
-    <div className="page-head">
-      <span>{title}</span>
-      <button className="account-btn" onClick={() => setPage('editor')}>
-        ← Voltar ao editor
-      </button>
-    </div>
-  )
+/** Título da topbar por destino (DF-12 RF-1.3: um `<h1>` por página). */
+const TITULOS: Record<PageId, string> = {
+  inicio: 'Início',
+  equipe: 'Equipe',
+  ferramentas: 'Ferramentas',
+  comunidade: 'Comunidade',
+  editor: 'Validador de gaiola',
+  assistant: 'Assistente do regulamento',
+  admin: 'Administração',
+  sobre: 'Sobre o portal',
 }
 
 function ViewportToggles() {
@@ -51,7 +43,7 @@ function ViewportToggles() {
     <>
       <button
         className={showGeraldao ? 'toggle active' : 'toggle'}
-        title="Gabarito de habitáculo do regulamento (B6.2.4.3) — visualização apenas"
+        title="Gabarito de habitáculo (Geraldão) do regulamento (B6.2.4.3) — visualização apenas"
         onClick={() => setShowGeraldao(!showGeraldao)}
       >
         Geraldão
@@ -74,6 +66,39 @@ function ViewportToggles() {
   )
 }
 
+/**
+ * Aviso único de transição (DF-12 P-1.3): quem já usava o portal procura o Editor no
+ * lugar antigo. Uma linha, uma vez, e nunca mais.
+ */
+const AVISO_KEY = 'bajeiros:aviso-rail'
+
+function AvisoDeMudanca() {
+  const [visivel, setVisivel] = useState(() => {
+    try {
+      return localStorage.getItem(AVISO_KEY) !== 'visto'
+    } catch {
+      return false
+    }
+  })
+  if (!visivel) return null
+  const fechar = () => {
+    try {
+      localStorage.setItem(AVISO_KEY, 'visto')
+    } catch {
+      /* storage bloqueado: o aviso reaparece, o que é preferível a quebrar */
+    }
+    setVisivel(false)
+  }
+  return (
+    <div className="bj-aviso-transicao" role="status">
+      <span>O Editor agora vive em Ferramentas. A Equipe ganhou Evolução e Conhecimento.</span>
+      <button type="button" className="bj-btn bj-btn-sm" onClick={fechar}>
+        Entendi
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
   const cage = useStore((s) => s.cage)
   const selectedMember = useStore((s) => s.selectedMember)
@@ -91,21 +116,20 @@ export default function App() {
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
-  // Landing é a página inicial (estado no store — assistente/admin navegam p/ ela)
-  const showLanding = useSession((s) => s.landing)
-  const setShowLanding = useSession((s) => s.setLanding)
 
-  // DF-9: pageview (só p/ logado; anônimo não é rastreado)
   const sessionUser = useSession((s) => s.user)
   const page = useSession((s) => s.page)
   const setPage = useSession((s) => s.setPage)
-  useEffect(() => {
-    if (sessionUser) track(showLanding ? 'landing' : 'editor')
-  }, [showLanding, sessionUser])
+  const activeTeamId = useSession((s) => s.activeTeamId)
 
-  // admin e equipe exigem sessão — logout volta ao editor (assistente aceita anônimo)
+  // DF-9: pageview (só p/ logado; anônimo não é rastreado)
   useEffect(() => {
-    if (!sessionUser && (page === 'admin' || page === 'team')) setPage('editor')
+    if (sessionUser) track(`page:${page}`)
+  }, [sessionUser, page])
+
+  // A administração é a única que some de vez sem sessão — ela nem aparece no rail.
+  useEffect(() => {
+    if (!sessionUser && page === 'admin') setPage('inicio')
   }, [sessionUser, page, setPage])
 
   useEffect(() => {
@@ -123,43 +147,41 @@ export default function App() {
   const failed = allFails.length - pendingFails
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-name">Bajeiros</span>
-          <span className="brand-sub">Validador de Gaiola · B6 · RATBSB emenda 7 · protótipo</span>
-        </div>
-        <div className="disclaimer">
-          Ferramenta educacional — não substitui a inspeção oficial (B6.4). Sem vínculo com a SAE.{' '}
-          <button className="disclaimer-link" onClick={() => setShowLanding(true)}>
-            Sobre o portal
-          </button>
-        </div>
-        <AccountMenu />
-      </header>
-      {showLanding && <Landing onClose={() => setShowLanding(false)} />}
+    <Shell title={TITULOS[page]}>
       <SessionPanels />
+      {sessionUser && <AvisoDeMudanca />}
+
+      {/* Sem conta NINGUÉM é redirecionado em silêncio: o Início tem versão pública e
+          os destinos que dependem de equipe explicam o que falta (C-16). Mandar de
+          volta para Ferramentas sem dizer nada era o defeito relatado. */}
+      {page === 'inicio' && (sessionUser ? <HomePage /> : <PublicHome />)}
+      {page === 'equipe' &&
+        (sessionUser ? <TeamPage /> : <PrecisaDeConta destino="O espaço da equipe" />)}
+      {page === 'ferramentas' && <ToolsHub teamId={activeTeamId} />}
+      {page === 'comunidade' &&
+        (sessionUser ? (
+          <CommunityPage teamId={activeTeamId} />
+        ) : (
+          <PrecisaDeConta destino="A Comunidade" />
+        ))}
+      {page === 'sobre' && <About />}
       {page === 'assistant' && (
         <div className="page-body">
           <div className="page-inner page-narrow">
-            <AssistantPanel Head={PageHeadToLanding} />
+            <AssistantPanel />
           </div>
         </div>
       )}
       {page === 'admin' && (
         <div className="page-body">
           <div className="page-inner">
-            <AdminPanel Head={PageHeadToEditor} />
+            <AdminPanel />
           </div>
         </div>
       )}
-      {page === 'team' && (
-        <div className="page-body">
-          <div className="page-inner">
-            <TeamPage Head={PageHeadToEditor} />
-          </div>
-        </div>
-      )}
+
+      {/* O editor NUNCA desmonta (ADR-009 dec. 4): esconder é `display: none`, e é o
+          que preserva câmera e cena WebGL ao ir a Equipe e voltar (AC-DF12.3). */}
       <div className="main" style={page !== 'editor' ? { display: 'none' } : undefined}>
         {leftOpen ? (
           <aside className="sidebar left">
@@ -196,7 +218,9 @@ export default function App() {
             onClick={() => setLeftOpen(true)}
           >
             <span className={`status-dot ${failed ? 'bad' : 'good'}`} />
-            <span className="vertical-label">Checklist B6</span>
+            <span className="vertical-label">
+              Checklist B6 {failed ? `· ${failed} infrações` : '· sem infração'}
+            </span>
           </button>
         )}
         <div className="viewport-wrap">
@@ -206,19 +230,19 @@ export default function App() {
           </div>
           <div className="legend">
             <span>
-              <i style={{ background: '#b8c4d0' }} /> primário
+              <i style={{ background: viewport3d.member }} /> primário
             </span>
             <span>
-              <i style={{ background: '#5c6b7a' }} /> secundário
+              <i style={{ background: viewport3d['member-secondary'] }} /> secundário
             </span>
             <span>
-              <i style={{ background: '#e5484d' }} /> infração
+              <i style={{ background: viewport3d.fail }} /> infração
             </span>
             <span>
-              <i style={{ background: '#e6a817' }} /> atenção
+              <i style={{ background: viewport3d.selected }} /> atenção
             </span>
             <span>
-              <i style={{ background: '#fb923c' }} /> ancoragem
+              <i style={{ background: viewport3d['anchor-ok'] }} /> ancoragem
             </span>
           </div>
         </div>
@@ -246,6 +270,6 @@ export default function App() {
           </button>
         )}
       </div>
-    </div>
+    </Shell>
   )
 }

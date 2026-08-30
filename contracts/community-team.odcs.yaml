@@ -1,0 +1,107 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:community-team
+name: community_team
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Registro canônico das equipes do Brasil (DF-15 E2) e o vínculo com o portal.
+  usage: >-
+    Perfil público entre usuários autenticados. O vínculo (claim) dá o "VOCÊ" na tabela
+    de resultados e habilita a coorte da própria equipe — nunca a de terceiros.
+schema:
+  - name: community_team
+    logicalType: object
+    physicalType: table
+    physicalName: community_teams
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: display_name
+        logicalType: string
+        required: true
+      - name: university
+        logicalType: string
+        required: false
+      - name: city
+        logicalType: string
+        required: false
+      - name: uf
+        logicalType: string
+        required: false
+      - name: region
+        logicalType: string
+        required: false
+      - name: links
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Links públicos da equipe (site, redes) — nunca contato de pessoa.
+      - name: claimed_by_team_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Equipe do portal vinculada; 1:1 dos dois lados, aprovado por admin.
+  - name: community_claim
+    logicalType: object
+    physicalType: table
+    physicalName: community_claims
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: community_team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: evidence
+        logicalType: string
+        required: false
+        description: Evidência do vínculo (e-mail institucional, site) avaliada pelo admin.
+      - name: status
+        logicalType: string
+        required: true
+        description: aberta | aprovada | recusada
+      - name: requested_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 12 meses após a resolução
+      - name: resolved_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: 12 meses após a resolução
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: cohortVisibility
+    value: coorte mostrada só para a própria equipe; perfil de terceiro nunca é rotulado
+  - property: entity
+    value: dados de ente coletivo — sem pessoa física (invariante da ingestão, AC-DF15.8)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

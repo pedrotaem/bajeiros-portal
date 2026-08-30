@@ -1,0 +1,62 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:competition
+name: competition
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Calendário de competições (DF-15 E1) — a série histórica que o portal publica.
+  usage: >-
+    Alimenta a tela Resultados, a faixa de temporada do DF-13 e o benchmark por prova.
+    Semeado pelo script de ingestão, curado pelo admin.
+schema:
+  - name: competition
+    logicalType: object
+    physicalType: table
+    physicalName: competitions
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: season
+        logicalType: integer
+        required: true
+      - name: kind
+        logicalType: string
+        required: true
+        description: nacional | regional
+      - name: region
+        logicalType: string
+        required: false
+        description: NULL nas nacionais; parte da chave natural (NULLS NOT DISTINCT).
+      - name: name
+        logicalType: string
+        required: true
+        description: Nome de exibição sem marca — "Nacional 2026", "Regional Sudeste 2025".
+      - name: starts_on
+        logicalType: date
+        required: false
+      - name: ends_on
+        logicalType: date
+        required: false
+      - name: location
+        logicalType: string
+        required: false
+      - name: source_url
+        logicalType: string
+        required: false
+        description: Fonte pública citada por linha — nada é publicado sem origem.
+customProperties:
+  - property: pii
+    value: nenhum campo pessoal; a ingestão descarta campos de pessoa física na origem
+  - property: brand
+    value: proibido usar a identidade da organização em nome, tela ou payload (spec.md §1)
+  - property: idempotency
+    value: chave natural (season, kind, region) — rodar a ingestão 2x não duplica
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

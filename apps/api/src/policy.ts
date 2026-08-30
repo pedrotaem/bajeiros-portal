@@ -18,6 +18,10 @@ export type TeamAction =
   | 'member.assign' // atribuir função do organograma / status trainee-efetivo (DF-10)
   | 'position.manage' // criar, mover, descrever e excluir funções (DF-10)
   | 'project.transfer' // trazer projeto pessoal p/ a equipe
+  | 'evolution.declare' // declarar/revogar critério de maturidade (DF-13)
+  | 'evolution.season' // configurar a temporada: rótulo, projeto, marcos (DF-13)
+  | 'step.manage' // dono, ordem e descarte da fila de próximos passos (DF-13)
+  | 'knowledge.moderate' // excluir decisão/guia, reatribuir dono de guia (DF-14)
 
 const PERMISSIONS: Record<TeamRole, ReadonlySet<TeamAction>> = {
   owner: new Set<TeamAction>([
@@ -31,6 +35,10 @@ const PERMISSIONS: Record<TeamRole, ReadonlySet<TeamAction>> = {
     'member.assign',
     'position.manage',
     'project.transfer',
+    'evolution.declare',
+    'evolution.season',
+    'step.manage',
+    'knowledge.moderate',
   ]),
   // co-capitã(o) faz a gestão do dia a dia (confirma entrada, organiza o
   // organograma), mas não mexe em papel de acesso nem na capitania
@@ -44,7 +52,13 @@ const PERMISSIONS: Record<TeamRole, ReadonlySet<TeamAction>> = {
     'member.assign',
     'position.manage',
     'project.transfer',
+    'evolution.declare',
+    'evolution.season',
+    'step.manage',
+    'knowledge.moderate',
   ]),
+  // membro registra conhecimento e cria passo manual (rotas próprias, sem gate de
+  // papel); o que exige capitania é declarar critério, mexer na fila alheia e moderar
   member: new Set<TeamAction>(['project.transfer']),
 }
 

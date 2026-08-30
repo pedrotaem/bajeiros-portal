@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { evaluate } from '@bajeiros/core/rules/b6'
+import { estimateMass } from '@bajeiros/core/model/mass'
 import type { Cage } from '@bajeiros/core/model/types'
 import { withUser, fetchAllPaged } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
+import { recomputeTeam, recordEvidence, seasonTeamOf, validationSummary } from '../evolution/engine'
 
 export const projects = new Hono<AuthEnv>()
 
@@ -176,10 +178,18 @@ projects.post('/:id/snapshots', async (c) => {
 
   // validação server-side com o MESMO motor B6 do browser (@bajeiros/core)
   let rulesResult
+  let massKg: number | null = null
   try {
     rulesResult = evaluate(parsed.data.cage as unknown as Cage)
   } catch {
     return problem(c, 422, 'Gaiola inválida', 'O JSON não é um Cage válido para o motor B6.')
+  }
+  // massa é contexto da evidência (DF-13), não gate de salvamento: se falhar, salva
+  // do mesmo jeito e a atividade fica sem o número
+  try {
+    massKg = estimateMass(parsed.data.cage as unknown as Cage).totalKg
+  } catch {
+    massKg = null
   }
 
   const result = await withUser(sub, async (db) => {
@@ -199,6 +209,28 @@ projects.post('/:id/snapshots', async (c) => {
        VALUES ($1, $2, $3::jsonb, $4::jsonb, $5) RETURNING id, project_id, seq, created_at, saved_by_user_id`,
       [projectId, parsed.data.expectedSeq + 1, parsed.data.cage, JSON.stringify(rulesResult), sub],
     )
+
+    // DF-13 RF-2.1 — o salvar do projeto DA TEMPORADA vira evidência. O resumo é
+    // computado aqui, do mesmo `evaluate()` que já rodou: nunca aceito do cliente
+    // (P-2.1). Projeto pessoal ou projeto da equipe que não é o designado não gera
+    // evidência nem mexe em nível (AC-DF13.3).
+    const teamId = await seasonTeamOf(db, projectId)
+    if (teamId) {
+      const seq = parsed.data.expectedSeq + 1
+      await recordEvidence(db, {
+        teamId,
+        source: 'projects',
+        kind: 'validation.summary',
+        payload: validationSummary(projectId, seq, rulesResult, massKg) as unknown as Record<
+          string,
+          unknown
+        >,
+        projectId,
+        snapshotSeq: seq,
+        actorUserId: sub,
+      })
+      await recomputeTeam(db, teamId, { actorUserId: sub })
+    }
     return r.rows[0]
   })
 

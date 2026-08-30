@@ -15,6 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-rds-data": "^3.1118.0",
     "@bajeiros/core": "*",
+    "@bajeiros/evolution": "*",
     "@hono/node-server": "^2.1.1",
     "aws4fetch": "^1.0.20",
     "hono": "^4.13.5",

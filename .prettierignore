@@ -3,3 +3,5 @@ node_modules/
 coverage/
 package-lock.json
 infra/
+# gerado por scripts/build-tokens.mjs — formatar aqui quebra a paridade CSS x TS
+apps/web/src/tokens.css

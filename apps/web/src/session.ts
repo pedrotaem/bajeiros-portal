@@ -39,9 +39,33 @@ export interface CurrentProject {
 
 export type PanelId = 'login' | 'profile' | 'projects' | null
 
-// Páginas inteiras da SPA: editor 3D, assistente, admin (DF-8/DF-9) e a gestão
-// de equipe (DF-10 — deixou de ser modal: organograma e estrutura pedem tela).
-export type PageId = 'editor' | 'assistant' | 'admin' | 'team'
+// Destinos da SPA (DF-12 §3.2). O rail é EVOLUÇÃO-cêntrico: o primeiro destino é o
+// dia da equipe, não a ferramenta. `editor` e `assistant` continuam páginas próprias,
+// abertas pelo hub — no rail, quem acende é **Ferramentas**.
+//
+// Restrição intocada (ADR-009, decisão 4): NÃO existe router. O editor fica sempre
+// montado com `display: none` quando outra página está ativa; desmontá-lo perderia a
+// câmera, porque não há estado de câmera no store para restaurar.
+export type PageId =
+  'inicio' | 'equipe' | 'ferramentas' | 'comunidade' | 'editor' | 'assistant' | 'admin' | 'sobre'
+
+/** Abas do espaço da equipe (DF-12 O2). Sub-estado no store, nunca `useState` local. */
+export type TeamTab = 'evolucao' | 'pessoas' | 'conhecimento' | 'projetos'
+export type CommunityTab = 'resultados' | 'equipes'
+
+/** Ferramentas acesas quando o item Ferramentas está ativo (DF-12 RF-1.2/AC-DF12.4). */
+export const TOOL_PAGES: PageId[] = ['ferramentas', 'editor', 'assistant']
+
+/** Equipe ativa entre sessões — dado não sensível (DF-12 RF-2.3). */
+const ACTIVE_TEAM_KEY = 'bajeiros:equipe-ativa'
+
+function readActiveTeam(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_TEAM_KEY)
+  } catch {
+    return null
+  }
+}
 
 // Header de auth p/ fetches feitos fora do método api() (track, streaming SSE).
 export function authHeaders(): Record<string, string> {
@@ -65,13 +89,19 @@ interface SessionState {
   currentProject: CurrentProject | null
   panel: PanelId
   page: PageId
-  landing: boolean
+  teamTab: TeamTab
+  communityTab: CommunityTab
+  activeTeamId: string | null
   inviteToken: string | null
   inviteNotice: string | null
   authNotice: string | null // falha do pós-login cognito (ex.: 409 de e-mail), exibida no LoginPanel
   setPanel: (p: PanelId) => void
   setPage: (p: PageId) => void
-  setLanding: (v: boolean) => void
+  setTeamTab: (t: TeamTab) => void
+  setCommunityTab: (t: CommunityTab) => void
+  setActiveTeam: (id: string | null) => void
+  /** Abre a equipe já na aba certa — usado pelos CTAs de passo do Início (DF-16). */
+  goToTeam: (tab?: TeamTab) => void
   setCurrentProject: (p: CurrentProject | null) => void
   clearInviteNotice: () => void
   // dev: exige email+name (form local); cognito: ignora args e redireciona
@@ -105,8 +135,8 @@ async function acceptPendingInvite(invite: string): Promise<void> {
         body: JSON.stringify({ token: invite }),
       })
     useSession.setState({
-      page: 'team',
-      landing: false,
+      page: 'equipe',
+      teamTab: 'pessoas',
       inviteNotice:
         r.outcome === 'member'
           ? `Você já faz parte da equipe ${r.teamName}.`
@@ -114,8 +144,8 @@ async function acceptPendingInvite(invite: string): Promise<void> {
     })
   } catch {
     useSession.setState({
-      page: 'team',
-      landing: false,
+      page: 'equipe',
+      teamTab: 'pessoas',
       inviteNotice:
         'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
     })
@@ -191,9 +221,9 @@ export async function initSession(config: AppConfig): Promise<void> {
   if (!authClient.hasCallbackParams()) return
 
   const result = await authClient.handleCallback()
-  if (!result) return // state/verifier ausentes ou troca falhou → landing normal
+  if (!result) return // state/verifier ausentes ou troca falhou → segue deslogado no Início público
 
-  useSession.setState({ token: result.tokens.idToken, landing: false })
+  useSession.setState({ token: result.tokens.idToken, page: 'inicio' })
   try {
     const user = await useSession.getState().api<UserInfo>('/api/v1/me', { method: 'POST' })
     useSession.setState({ user, panel: null })
@@ -243,8 +273,12 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   currentProject: null,
-  page: 'editor',
-  landing: !initialInvite, // landing é a página inicial; convite pula direto p/ login
+  page: 'inicio',
+  teamTab: 'evolucao',
+  communityTab: 'resultados',
+  activeTeamId: readActiveTeam(),
+  // A home é o Início do shell, logado ou não (a apresentação pública mora nele).
+  // Convite pendente pula direto para o login.
   panel: initialInvite ? 'login' : null,
   inviteToken: initialInvite,
   inviteNotice: null,
@@ -258,7 +292,27 @@ export const useSession = create<SessionState>((set, get) => ({
     track(`page:${page}`)
     set({ page })
   },
-  setLanding: (landing) => set({ landing }),
+  setTeamTab: (teamTab) => {
+    track(`tab:equipe:${teamTab}`)
+    set({ teamTab })
+  },
+  setCommunityTab: (communityTab) => {
+    track(`tab:comunidade:${communityTab}`)
+    set({ communityTab })
+  },
+  setActiveTeam: (activeTeamId) => {
+    try {
+      if (activeTeamId) localStorage.setItem(ACTIVE_TEAM_KEY, activeTeamId)
+      else localStorage.removeItem(ACTIVE_TEAM_KEY)
+    } catch {
+      /* máquina de oficina com storage bloqueado: a equipe ativa vale só a sessão */
+    }
+    set({ activeTeamId })
+  },
+  goToTeam: (tab) => {
+    track(`page:equipe`)
+    set(tab ? { page: 'equipe', teamTab: tab } : { page: 'equipe' })
+  },
   setCurrentProject: (currentProject) => set({ currentProject }),
   setUser: (user) => set({ user }),
 
@@ -309,7 +363,8 @@ export const useSession = create<SessionState>((set, get) => ({
     rememberDevSub(email, issued.claims.sub)
     set({ token: issued.token })
     const user = await get().api<UserInfo>('/api/v1/me', { method: 'POST' })
-    set({ user, panel: null })
+    // pós-login cai no Início, não no editor (DF-12 AC-DF12.1)
+    set({ user, panel: null, page: 'inicio' })
 
     // convite pendente na URL? aceita agora, já autenticado
     const invite = get().inviteToken
@@ -320,7 +375,8 @@ export const useSession = create<SessionState>((set, get) => ({
   },
 
   logout: () => {
-    set({ token: null, user: null, currentProject: null, panel: null, page: 'editor' })
+    // logout volta ao Início público, não ao editor
+    set({ token: null, user: null, currentProject: null, panel: null, page: 'inicio' })
     // cognito: encerra também a sessão do Managed Login (senão o próximo
     // "Entrar" volta logado silenciosamente pelo cookie do domínio auth)
     if (appConfig.authMode === 'cognito' && authClient) authClient.logout()

@@ -5,6 +5,8 @@ import { withUser } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
+import { recomputeTeam } from '../evolution/engine'
+import { communityAdmin } from '../community/routes'
 
 // DF-9 — área administrativa. Autorização: users.is_admin (promoção só manual no
 // banco; nenhuma rota concede). RLS: policies *_admin_read (0003) fazem o SELECT
@@ -254,3 +256,41 @@ admin.get('/assistant', async (c) => {
     })),
   )
 })
+
+// ---------- recálculo periódico da evolução (DF-13 RF-2.3) ----------
+
+// Critérios com janela temporal (CON-3.2, CON-4.2) e com prazo (CON-4.1) expiram
+// SEM evidência nova — escrita não é o único gatilho de mudança de nível. Esta rota
+// é o corpo do agendador diário; o gatilho de infraestrutura (EventBridge → Lambda)
+// é follow-up do EV-1, e enquanto ele não existe o GET da evolução recomputa por
+// equipe, o que cobre quem abre a tela.
+admin.post('/evolution/recompute', async (c) => {
+  const { sub } = c.get('auth')
+  const started = Date.now()
+  const result = await withUser(sub, async (db) => {
+    const teams = (await db.query('SELECT evolution_active_teams(90) AS team_id', [])).rows
+    let changed = 0
+    for (const row of teams) {
+      const teamId = row.team_id as string
+      const before = (
+        await db.query('SELECT area, level FROM evolution_levels WHERE team_id = $1', [teamId])
+      ).rows
+      const evo = await recomputeTeam(db, teamId, { actorUserId: null })
+      const prev = new Map(before.map((r) => [r.area as string, Number(r.level)]))
+      if (evo.areas.some((a) => prev.get(a.area) !== a.level)) changed++
+    }
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.evolution.recompute',
+      resourceType: 'admin',
+      resourceId: 'evolution',
+      ip: clientIp(c.req.raw.headers),
+      metadata: { teams: teams.length, changed },
+    })
+    return { teams: teams.length, changed }
+  })
+  return c.json({ ...result, elapsedMs: Date.now() - started })
+})
+
+// DF-15 — curadoria do acervo (claims, correções, coortes). Herda o requireAdmin.
+admin.route('/community', communityAdmin)
