@@ -1,7 +1,15 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useSession, ApiError } from '../session'
+import { useSession, ApiError, type TeamTab } from '../session'
 import { OrgChart, type OrgMember, type OrgPosition } from './OrgChart'
+import { EvolutionTab } from './EvolutionTab'
+import { KnowledgeTab } from './KnowledgeTab'
+import { ProjectsTab } from './ProjectsTab'
 
+// DF-12 §3.3 — o espaço da equipe passa a ter QUATRO abas: Evolução · Pessoas ·
+// Conhecimento · Projetos. Nada do DF-10 foi removido, só reorganizado: "Visão
+// geral" morreu porque a leitura de lacunas virou evidência da Evolução, e
+// Membros + Organograma + Estrutura + Entradas colapsaram em Pessoas.
+//
 // DF-10 E4 — página inteira de gestão da equipe (substitui o modal TeamsPanel).
 // Papel de acesso e função do organograma são coisas separadas de propósito: o papel
 // (owner/admin/member) é o que a RLS entende; a função é um nó de team_positions.
@@ -9,7 +17,7 @@ import { OrgChart, type OrgMember, type OrgPosition } from './OrgChart'
 
 type Role = 'owner' | 'admin' | 'member'
 type Situacao = 'trainee' | 'efetivo'
-type Tab = 'overview' | 'members' | 'org' | 'structure' | 'entries'
+type SubPessoas = 'lista' | 'organograma' | 'estrutura' | 'entradas'
 type Api = ReturnType<typeof useSession.getState>['api']
 
 interface TeamRow {
@@ -79,12 +87,19 @@ const ROLE_LABELS: Record<Role, string> = {
 
 const RANK: Record<Role, number> = { owner: 3, admin: 2, member: 1 }
 
-const TABS: [Tab, string][] = [
-  ['overview', 'Visão geral'],
-  ['members', 'Membros'],
-  ['org', 'Organograma'],
-  ['structure', 'Estrutura'],
-  ['entries', 'Entradas'],
+const TABS: [TeamTab, string][] = [
+  ['evolucao', 'Evolução'],
+  ['pessoas', 'Pessoas'],
+  ['conhecimento', 'Conhecimento'],
+  ['projetos', 'Projetos'],
+]
+
+// Vocabulário normativo (DF-12 RF-4.1): "Entradas" → "Convites e pedidos".
+const SUB_PESSOAS: [SubPessoas, string][] = [
+  ['lista', 'Lista'],
+  ['organograma', 'Organograma'],
+  ['estrutura', 'Editar cargos'],
+  ['entradas', 'Convites e pedidos'],
 ]
 
 const MAX_POSITIONS = 40
@@ -142,15 +157,21 @@ function useErr(): [string | null, (e: unknown) => void, () => void] {
   ]
 }
 
-export function TeamPage({ Head }: { Head: (p: { title: string }) => JSX.Element }): JSX.Element {
+export function TeamPage(): JSX.Element {
   const api = useSession((s) => s.api)
   const meId = useSession((s) => s.user?.id ?? '')
   const inviteNotice = useSession((s) => s.inviteNotice)
   const clearInviteNotice = useSession((s) => s.clearInviteNotice)
+  // sub-estados de navegacao vivem no store central, nunca em useState local
+  // (DF-12 P-1.4: e o que cria estado-navegacao orfao)
+  const tab = useSession((s) => s.teamTab)
+  const setTab = useSession((s) => s.setTeamTab)
+  const activeTeamId = useSession((s) => s.activeTeamId)
+  const setActiveTeam = useSession((s) => s.setActiveTeam)
   const [teams, setTeams] = useState<TeamRow[] | null>(null)
   const [mine, setMine] = useState<MyJoinRequest[]>([])
   const [team, setTeam] = useState<TeamDetail | null>(null)
-  const [tab, setTab] = useState<Tab>('overview')
+  const [subPessoas, setSubPessoas] = useState<SubPessoas>('lista')
   const [newName, setNewName] = useState('')
   const [newUniversity, setNewUniversity] = useState('')
   const [err, fail, clear] = useErr()
@@ -186,9 +207,24 @@ export function TeamPage({ Head }: { Head: (p: { title: string }) => JSX.Element
     if (team) void openTeam(team.id)
   }, [team, openTeam])
 
+  // Abre sozinha a equipe ativa (DF-12 RF-2.3): o espaco da equipe e um DESTINO do
+  // rail, nao uma lista para escolher toda vez.
+  useEffect(() => {
+    if (team || !teams?.length) return
+    const alvo = teams.find((t) => t.id === activeTeamId) ?? teams[0]
+    void openTeam(alvo.id)
+    if (alvo.id !== activeTeamId) setActiveTeam(alvo.id)
+  }, [teams, team, activeTeamId, openTeam, setActiveTeam])
+
+  const trocarEquipe = (id: string) => {
+    setActiveTeam(id)
+    setTeam(null)
+    void openTeam(id)
+  }
+
   const back = () => {
     setTeam(null)
-    setTab('overview')
+    setActiveTeam(null)
     reloadList()
   }
 
@@ -223,63 +259,113 @@ export function TeamPage({ Head }: { Head: (p: { title: string }) => JSX.Element
   if (team) {
     const canManage = team.myRole !== 'member'
     return (
-      <div className="team-page">
-        <Head title={`Equipe — ${team.name}`} />
-        <div className="team-subhead">
-          <button className="account-btn" onClick={back}>
-            ← Todas as equipes
-          </button>
-          <span className="admin-dim">
-            {team.university ?? 'universidade não informada'} · você é {ROLE_LABELS[team.myRole]}
+      <div className="bj-page team-page">
+        <header className="bj-eq-head">
+          <h2 className="bj-eq-nome">{team.name}</h2>
+          {(teams?.length ?? 0) > 1 && (
+            <select
+              className="bj-eq-seletor"
+              value={team.id}
+              onChange={(e) => trocarEquipe(e.target.value)}
+              aria-label="Equipe ativa"
+            >
+              {(teams ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <span className="bj-chip bj-chip-neutro">
+            {team.university ?? 'instituição não informada'}
           </span>
-        </div>
-        <div className="team-tabs">
+          <span className="bj-chip bj-chip-neutro">{team.members.length} pessoas</span>
+          <span className="bj-chip bj-chip-neutro">você é {ROLE_LABELS[team.myRole]}</span>
+          <button type="button" className="bj-link" onClick={back}>
+            trocar de equipe
+          </button>
+        </header>
+
+        <div className="bj-abas" role="tablist" aria-label="Seções da equipe">
           {TABS.map(([id, label]) => (
             <button
               key={id}
-              className={tab === id ? 'toggle active' : 'toggle'}
+              role="tab"
+              className="bj-aba"
+              aria-selected={tab === id}
               onClick={() => {
                 clear()
                 setTab(id)
               }}
             >
               {label}
-              {id === 'entries' && team.joinRequests.length > 0 && (
-                <span className="team-badge">{team.joinRequests.length}</span>
+              {id === 'pessoas' && team.joinRequests.length > 0 && (
+                <span className="bj-aba-badge">{team.joinRequests.length}</span>
               )}
             </button>
           ))}
         </div>
-        {err && <p className="modal-err team-err">{err}</p>}
+
+        {err && <p className="bj-erro">{err}</p>}
+
         <div className="team-tab-body">
-          {tab === 'overview' && (
-            // key por equipe: o refetch pós-mutação não pode zerar o que a pessoa digitou,
-            // mas trocar de equipe precisa remontar o formulário com os dados novos
-            <OverviewTab
-              key={team.id}
-              api={api}
-              fail={fail}
-              team={team}
-              meId={meId}
-              refresh={refresh}
-            />
-          )}
-          {tab === 'members' && (
-            <MembersTab
-              api={api}
-              fail={fail}
-              team={team}
-              meId={meId}
-              refresh={refresh}
-              onLeave={back}
-            />
-          )}
-          {tab === 'org' && <OrgTab team={team} />}
-          {tab === 'structure' && (
-            <StructureTab api={api} fail={fail} team={team} refresh={refresh} />
-          )}
-          {tab === 'entries' && (
-            <EntriesTab api={api} fail={fail} team={team} canManage={canManage} refresh={refresh} />
+          {tab === 'evolucao' && <EvolutionTab teamId={team.id} canManage={canManage} />}
+          {tab === 'conhecimento' && <KnowledgeTab teamId={team.id} canManage={canManage} />}
+          {tab === 'projetos' && <ProjectsTab teamId={team.id} canManage={canManage} />}
+          {tab === 'pessoas' && (
+            <>
+              {/* organograma e edição da árvore são a MESMA superfície (estudo §9.4):
+                  ver é de todos, editar continua exigindo position.manage */}
+              <div className="bj-abas" role="tablist" aria-label="Visões de pessoas">
+                {SUB_PESSOAS.filter(([id]) => id !== 'estrutura' || canManage).map(
+                  ([id, label]) => (
+                    <button
+                      key={id}
+                      role="tab"
+                      className="bj-aba"
+                      aria-selected={subPessoas === id}
+                      onClick={() => (clear(), setSubPessoas(id))}
+                    >
+                      {label}
+                      {id === 'entradas' && team.joinRequests.length > 0 && (
+                        <span className="bj-aba-badge">{team.joinRequests.length}</span>
+                      )}
+                    </button>
+                  ),
+                )}
+              </div>
+              {subPessoas === 'lista' && (
+                <MembersTab
+                  api={api}
+                  fail={fail}
+                  team={team}
+                  meId={meId}
+                  refresh={refresh}
+                  onLeave={back}
+                />
+              )}
+              {subPessoas === 'organograma' && <OrgTab team={team} />}
+              {subPessoas === 'estrutura' && (
+                <StructureTab api={api} fail={fail} team={team} refresh={refresh} />
+              )}
+              {subPessoas === 'entradas' && (
+                <EntriesTab
+                  api={api}
+                  fail={fail}
+                  team={team}
+                  canManage={canManage}
+                  refresh={refresh}
+                />
+              )}
+              <OverviewTab
+                key={team.id}
+                api={api}
+                fail={fail}
+                team={team}
+                meId={meId}
+                refresh={refresh}
+              />
+            </>
           )}
         </div>
       </div>
@@ -287,8 +373,7 @@ export function TeamPage({ Head }: { Head: (p: { title: string }) => JSX.Element
   }
 
   return (
-    <div className="team-page">
-      <Head title="Equipes" />
+    <div className="bj-page team-page">
       <div className="team-tab-body">
         {inviteNotice && (
           <p className="modal-note" onClick={clearInviteNotice}>

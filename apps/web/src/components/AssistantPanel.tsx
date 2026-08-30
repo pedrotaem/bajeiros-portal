@@ -93,7 +93,9 @@ function Rich({ text }: { text: string }) {
   )
 }
 
-export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.Element }) {
+// O título da página vive na topbar do shell (DF-12 RF-1.4) — o painel não desenha
+// mais cabeçalho próprio.
+export function AssistantPanel() {
   const { token, api, setPanel } = useSession()
   const { messages, streaming, prefill, context } = useAssistant()
   const [status, setStatus] = useState<AssistantStatus | null>(null)
@@ -248,7 +250,6 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
   if (err && !status) {
     return (
       <div className="assistant-panel">
-        <Head title="Assistente de Regras" />
         <p className="modal-err">{err}</p>
       </div>
     )
@@ -256,7 +257,6 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
   if (!status) {
     return (
       <div className="assistant-panel">
-        <Head title="Assistente de Regras" />
         <p className="assistant-hint">Carregando…</p>
       </div>
     )
@@ -265,7 +265,6 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
   if (!status.noticeAccepted) {
     return (
       <div className="assistant-panel">
-        <Head title="Assistente de Regras" />
         <div className="assistant-notice">
           <p>
             O assistente responde dúvidas sobre o <b>regulamento completo</b> (RATBSB), com a
@@ -310,7 +309,6 @@ export function AssistantPanel({ Head }: { Head: (p: { title: string }) => JSX.E
 
   return (
     <div className="assistant-panel">
-      <Head title="Assistente de Regras" />
       <div className="assistant-thread" ref={scrollRef}>
         {messages.length === 0 && (
           <p className="assistant-hint">

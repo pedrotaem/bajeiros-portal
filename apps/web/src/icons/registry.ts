@@ -162,6 +162,29 @@ export const ICONS: readonly IconEntry[] = [
     license: 'ISC',
     meaning: 'segurança',
   },
+
+  // destinos do rail (DF-12) — as 3 vagas restantes; o inventário fecha em 24
+  {
+    name: 'IconHouse',
+    upstream: 'house.svg',
+    role: 'navegacao',
+    license: 'ISC',
+    meaning: 'início',
+  },
+  {
+    name: 'IconWrench',
+    upstream: 'wrench.svg',
+    role: 'navegacao',
+    license: 'ISC',
+    meaning: 'ferramentas',
+  },
+  {
+    name: 'IconTrophy',
+    upstream: 'trophy.svg',
+    role: 'navegacao',
+    license: 'ISC',
+    meaning: 'comunidade',
+  },
 ]
 
 /** Glifos herdados do Feather (MIT) — o aviso de terceiros os lista nominalmente. */
