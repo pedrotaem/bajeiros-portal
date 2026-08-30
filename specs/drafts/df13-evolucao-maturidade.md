@@ -20,7 +20,7 @@
 
 ## 1. Contexto e motivação
 
-O portal já mede coisas valiosas — 40 verificações automáticas da gaiola, massa, ancoragens,
+O portal já mede coisas valiosas — ~40 verificações automáticas da gaiola, massa, ancoragens,
 organograma com vagas — mas cada medição morre na tela da própria ferramenta. Não existe resposta
 para as perguntas que a capitania faz de verdade: **onde estamos fracos? o que fazemos agora? o que
 já conquistamos que não pode se perder quando a turma se formar?**
@@ -104,7 +104,7 @@ não satisfeitos, com aviso na tela ("designe o projeto da temporada").
 
 - O nível recomputa a cada evidência ou declaração. **Queda é possível e é sinal**: salvar uma
   versão com não conformidades derruba EST de 3 para 2 — e gera evento explicativo na atividade
-  ("Estrutura voltou ao nível 2 — v15 introduziu 2 não conformidades").
+  ("Estrutura voltou ao nível 2 — v15 introduziu 2 infrações").
 - O catálogo de critérios vive em módulo TS puro versionado (`packages/evolution`,
   `catalogVersion` semântico). Mudar catálogo pode mudar níveis: toda publicação de versão nova
   recalcula tudo e registra o delta por equipe com a explicação ("o critério X entrou no nível 3").
@@ -113,7 +113,7 @@ não satisfeitos, com aviso na tela ("designe o projeto da temporada").
 ## 4. Catálogo de critérios v1
 
 Formato: `ID · [auto|declarado|oculto] · critério · fonte`. Cumulativo por nível. Os números de
-piso (ex.: "≥ 10 decisões") são pisos de existência, não metas — anti-gaming em §7 (P-5.x).
+piso (ex.: "≥ 10 decisões") são pisos de existência, não metas — anti-gaming em §8 (P-5.x).
 
 ### `estrutura` — Estrutura & segurança
 
@@ -122,8 +122,8 @@ piso (ex.: "≥ 10 decisões") são pisos de existência, não metas — anti-ga
 | 1     | EST-1.1 | auto      | Projeto de gaiola da equipe salvo na nuvem (≥ 1 versão)             | `projects`                 |
 | 2     | EST-2.1 | auto      | Gaiola completa: zero pendências de presença na última versão salva | `validation.summary`       |
 | 2     | EST-2.2 | declarado | Seções e materiais conferidos com o que a equipe pretende fabricar  | capitania                  |
-| 3     | EST-3.1 | auto      | Zero NÃO CONFORME automático na última versão salva                 | `validation.summary`       |
-| 3     | EST-3.2 | declarado | Itens de VERIFICAÇÃO PRESENCIAL revisados em reunião (com registro) | capitania + link a decisão |
+| 3     | EST-3.1 | auto      | Zero infrações automáticas (`fail`) na última versão salva          | `validation.summary`       |
+| 3     | EST-3.2 | declarado | Itens presenciais (`manual`) revisados em reunião (com registro)    | capitania + link a decisão |
 | 4     | EST-4.1 | oculto    | Ficha da gaiola (Anexo B) gerada a partir do projeto validado       | ferramenta futura          |
 | 4     | EST-4.2 | declarado | Revisão do projeto da gaiola por outro membro, registrada           | capitania + link a decisão |
 | 4     | EST-4.3 | declarado | Análise estrutural (FEA) do chassi realizada e arquivada            | capitania + link           |
@@ -132,17 +132,17 @@ piso (ex.: "≥ 10 decisões") são pisos de existência, não metas — anti-ga
 
 ### `dinamica` — Dinâmica & powertrain
 
-| Nível | ID      | Tipo      | Critério                                                                 | Fonte                |
-| ----- | ------- | --------- | ------------------------------------------------------------------------ | -------------------- |
-| 1     | DIN-1.1 | auto      | Funções de Suspensão/Direção e Trem de Força com ocupante no organograma | DF-10 `org.summary`  |
-| 2     | DIN-2.1 | auto      | 20 ancoragens de suspensão apoiadas (SUSP.1 sem falha) na última versão  | `validation.summary` |
-| 2     | DIN-2.2 | auto      | Ancoragem da direção apoiada (STEER.1) quando declarada no projeto       | `validation.summary` |
-| 3     | DIN-3.1 | declarado | Geometria de suspensão documentada (memória de cálculo arquivada)        | capitania + link     |
-| 3     | DIN-3.2 | declarado | Setup de transmissão/CVT registrado por condição de uso                  | capitania + link     |
-| 4     | DIN-4.1 | declarado | Teste de bancada de ≥ 1 subsistema com resultado registrado              | capitania + link     |
-| 4     | DIN-4.2 | declarado | Coleta de dados em pista (aquisição/telemetria) realizada ≥ 1 vez        | capitania + link     |
-| 5     | DIN-5.1 | declarado | Aquisição de dados recorrente com análise pós-teste registrada           | capitania + link     |
-| 5     | DIN-5.2 | declarado | Validação cruzada simulação × ensaio para ≥ 1 sistema                    | capitania + link     |
+| Nível | ID      | Tipo      | Critério                                                                      | Fonte                |
+| ----- | ------- | --------- | ----------------------------------------------------------------------------- | -------------------- |
+| 1     | DIN-1.1 | declarado | Responsáveis de suspensão/direção e de trem de força definidos no organograma | capitania            |
+| 2     | DIN-2.1 | auto      | 20 ancoragens de suspensão apoiadas (SUSP.1 sem falha) na última versão       | `validation.summary` |
+| 2     | DIN-2.2 | auto      | Ancoragem da direção apoiada (STEER.1) quando declarada no projeto            | `validation.summary` |
+| 3     | DIN-3.1 | declarado | Geometria de suspensão documentada (memória de cálculo arquivada)             | capitania + link     |
+| 3     | DIN-3.2 | declarado | Setup de transmissão/CVT registrado por condição de uso                       | capitania + link     |
+| 4     | DIN-4.1 | declarado | Teste de bancada de ≥ 1 subsistema com resultado registrado                   | capitania + link     |
+| 4     | DIN-4.2 | declarado | Coleta de dados em pista (aquisição/telemetria) realizada ≥ 1 vez             | capitania + link     |
+| 5     | DIN-5.1 | declarado | Aquisição de dados recorrente com análise pós-teste registrada                | capitania + link     |
+| 5     | DIN-5.2 | declarado | Validação cruzada simulação × ensaio para ≥ 1 sistema                         | capitania + link     |
 
 ### `documentacao` — Documentação & relatórios
 
@@ -184,24 +184,25 @@ piso (ex.: "≥ 10 decisões") são pisos de existência, não metas — anti-ga
 
 ### `conhecimento` — Conhecimento & continuidade
 
-| Nível | ID      | Tipo      | Critério                                                               | Fonte                    |
-| ----- | ------- | --------- | ---------------------------------------------------------------------- | ------------------------ |
-| 1     | CON-1.1 | auto      | ≥ 1 decisão registrada no diário                                       | DF-14 `decision.created` |
-| 2     | CON-2.1 | auto      | ≥ 10 decisões e ≥ 2 guias publicados                                   | DF-14                    |
-| 2     | CON-2.2 | auto      | Trilha de integração de novatos publicada (guia `kind: trilha`)        | DF-14                    |
-| 3     | CON-3.1 | auto      | Último novato aprovado concluiu a trilha de integração                 | DF-14 `trail.completed`  |
-| 3     | CON-3.2 | auto      | Decisões registradas em ≥ 3 áreas distintas nos últimos 6 meses        | DF-14                    |
-| 4     | CON-4.1 | auto      | Kit de passagem concluído para toda saída anunciada (sem kit pendente) | DF-14 `kit.completed`    |
-| 4     | CON-4.2 | auto      | Nenhum guia órfão: todos com dono e atualização < 6 meses              | DF-14                    |
-| 5     | CON-5.1 | declarado | Ritual de lições aprendidas pós-competição realizado, com registro     | capitania + link         |
-| 5     | CON-5.2 | declarado | Memória de gerações mantida (histórico de funções/alumni — DF-10 v2)   | capitania                |
+| Nível | ID      | Tipo      | Critério                                                                    | Fonte                              |
+| ----- | ------- | --------- | --------------------------------------------------------------------------- | ---------------------------------- |
+| 1     | CON-1.1 | auto      | ≥ 1 decisão registrada no diário                                            | DF-14 `decision.created`           |
+| 2     | CON-2.1 | auto      | ≥ 10 decisões e ≥ 2 guias publicados                                        | DF-14                              |
+| 2     | CON-2.2 | auto      | Trilha de integração de novatos publicada (guia `kind: trilha`)             | DF-14                              |
+| 3     | CON-3.1 | auto      | Último novato aprovado concluiu a trilha de integração                      | DF-14 `trail.completed`            |
+| 3     | CON-3.2 | auto      | Decisões registradas em ≥ 3 áreas distintas nos últimos 6 meses             | DF-14                              |
+| 4     | CON-4.1 | auto      | ≥ 1 kit de passagem concluído e nenhum kit aberto com data de saída vencida | DF-14 `kit.opened`/`kit.completed` |
+| 4     | CON-4.2 | auto      | Nenhum guia órfão: todos com dono e atualização < 6 meses                   | DF-14                              |
+| 5     | CON-5.1 | declarado | Ritual de lições aprendidas pós-competição realizado, com registro          | capitania + link                   |
+| 5     | CON-5.2 | declarado | Memória de gerações mantida (histórico de funções/alumni — DF-10 v2)        | capitania                          |
 
 ## 5. Requisitos funcionais
 
 ### E1 — Motor de maturidade (`packages/evolution`)
 
 - RF-1.1 Pacote TS **puro** (mesmo padrão do motor B6): catálogo v1 (§4) + `computeLevels(
-evidences, declarations, catalogVersion)` determinístico, sem IO, 100% testável.
+evidences, declarations, now, catalogVersion)` determinístico, sem IO, 100% testável — `now` é
+  injetado (necessário para os critérios com janela temporal CON-3.2/CON-4.2 e prazo CON-4.1).
 - RF-1.2 Critério oculto fora do denominador; catálogo exporta `catalogVersion` e changelog.
 - RF-1.3 Strings de UI (nomes de área, escada de níveis) canônicas no pacote — mesma regra do
   vocabulário de status (design-system §11.3).
@@ -210,18 +211,24 @@ evidences, declarations, catalogVersion)` determinístico, sem IO, 100% testáve
 
 - RF-2.1 Tabela `evolution_evidence` (append-only). Produtores v1:
   - `projects`: ao salvar snapshot do projeto da temporada, a API grava `validation.summary`
-    (contagens CONFORME/NÃO CONFORME/VERIFICAR/PRESENCIAL, pendências de presença, massa kg,
+    (contagens `pass`/`fail`/`warn`/`manual`, pendências de presença, massa kg,
     `snapshotSeq`) — computado no servidor pelo `evaluate()` existente, nunca aceito do cliente.
   - `teams` (DF-10): mutações de organograma/membros gravam `org.summary` (líderes ocupados,
     vagas, contagem, trainees).
   - `evolution`: `season.configured`, `criterion.declared`, `level.changed`.
   - `web → api`: `template.generated` quando o usuário baixa gabarito de corte do projeto da
     temporada (declarativo por natureza; aceito — ver modelo de confiança §3.3).
-  - DF-14: `decision.created`, `guide.published`, `trail.completed`, `kit.completed`.
+  - DF-14: `decision.created`, `guide.published`, `trail.completed`, `kit.opened {dueDate}`,
+    `kit.completed`.
+  - `community` (DF-15): `competition.result {position, total}` na ingestão, para a equipe
+    vinculada (contexto na atividade; **não** afeta nível — maturidade ≠ resultado, ADR-010).
 - RF-2.2 Toda evidência referencia a origem (`project_id`+`snapshot_seq`, `ref_kind`+`ref_id`) e o
   ator quando houver (`actor_user_id`).
 - RF-2.3 Gravação de evidência dispara recomputação dos níveis da equipe na mesma transação;
-  mudança de nível grava `level.changed {area, from, to, catalogVersion}`.
+  mudança de nível grava `level.changed {area, from, to, catalogVersion}`. Como escrita não é o
+  único gatilho possível de mudança, um **recálculo periódico** (1×/dia, por equipe com evolução
+  ativa — mesmo agendador do cache de benchmark) cobre os critérios com janela temporal
+  (CON-3.2, CON-4.2) e com prazo (CON-4.1), que expiram sem evidência nova.
 
 ### E3 — Declarações
 
@@ -282,7 +289,7 @@ evidences, declarations, catalogVersion)` determinístico, sem IO, 100% testáve
 CREATE TABLE evolution_evidence (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id       uuid NOT NULL REFERENCES teams (id) ON DELETE CASCADE,
-  source        text NOT NULL,   -- 'projects' | 'teams' | 'knowledge' | 'evolution' | 'web'
+  source        text NOT NULL,   -- 'projects' | 'teams' | 'knowledge' | 'evolution' | 'community' | 'web'
   kind          text NOT NULL,   -- 'validation.summary' | 'org.summary' | ...
   payload       jsonb NOT NULL DEFAULT '{}'::jsonb,
   project_id    uuid REFERENCES projects (id) ON DELETE SET NULL,
@@ -325,7 +332,7 @@ CREATE TABLE evolution_steps (
   status        text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done', 'dismissed')),
   created_by    uuid REFERENCES users (id) ON DELETE SET NULL,
   created_at    timestamptz NOT NULL DEFAULT now(),
-  done_by       uuid,
+  done_by       uuid REFERENCES users (id) ON DELETE SET NULL,
   done_at       timestamptz,
   UNIQUE (team_id, criterion_id)
 );
@@ -370,19 +377,19 @@ Auditoria: `evolution.declare/revoke`, `evolution.season.update`, `evolution.ste
 
 ## 8. Pontos de falha e mitigação
 
-| ID    | Ponto de falha                                                                  | Mitigação                                                                                                        |
-| ----- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| P-1.1 | Catálogo mal calibrado vira burocracia (risco nº 1, apontado no próprio canvas) | v1 enxuta (51 critérios), revisão por temporada, piloto com 2–3 equipes reais antes de abrir (plano, fase EV-M2) |
-| P-1.2 | Nível flutua durante edição e frustra                                           | Avaliação só sobre **versão salva** do projeto da temporada (§3.4); queda gera evento explicativo                |
-| P-1.3 | Mudança de catálogo derruba nível sem aviso                                     | `catalogVersion` + recomputação com delta explicado na atividade; agrupar mudanças por temporada                 |
-| P-2.1 | Evidência forjada pelo cliente                                                  | Tudo que é crítico é server-side (`evaluate()` na API); o resto é declarativo por design (§3.3)                  |
-| P-2.2 | Recomputação a cada evidência pesa no Aurora 0 ACU                              | Recomputar só a equipe afetada, na mesma transação; benchmark agregado com cache diário                          |
-| P-3.1 | Fila auto-gerada duplica passos                                                 | `UNIQUE (team_id, criterion_id)` + upsert idempotente                                                            |
-| P-3.2 | Fila vira lista infinita de cobrança                                            | Só critérios do **próximo** nível geram passo; exibição limitada (7/3); descarte auditado                        |
-| P-4.1 | Equipe sem projeto designado "zera" Estrutura sem entender                      | Aviso persistente na área + passo automático "Designar o projeto da temporada"                                   |
-| P-5.1 | Gaming de contadores (10 decisões vazias p/ subir CON)                          | Pisos baixos (existência, não volume), capitania revoga, sem ranking público — o ganho de trapacear é zero       |
-| P-5.2 | Benchmark constrange equipes fracas                                             | Mediana anônima da coorte, piso de 8 equipes, nunca lista nominal (RF-7.3)                                       |
-| P-6.1 | RLS: evidência gravada por membro em equipe alheia                              | Escrita só pela app após checagem de membership (padrão existente); testes RLS dedicados                         |
+| ID    | Ponto de falha                                                                  | Mitigação                                                                                                                     |
+| ----- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| P-1.1 | Catálogo mal calibrado vira burocracia (risco nº 1, apontado no próprio canvas) | v1 enxuta (51 critérios), revisão por temporada, piloto com 2–3 equipes reais antes de abrir (plano, gate entre EV-M2 e o GA) |
+| P-1.2 | Nível flutua durante edição e frustra                                           | Avaliação só sobre **versão salva** do projeto da temporada (§3.4); queda gera evento explicativo                             |
+| P-1.3 | Mudança de catálogo derruba nível sem aviso                                     | `catalogVersion` + recomputação com delta explicado na atividade; agrupar mudanças por temporada                              |
+| P-2.1 | Evidência forjada pelo cliente                                                  | Tudo que é crítico é server-side (`evaluate()` na API); o resto é declarativo por design (§3.3)                               |
+| P-2.2 | Recomputação a cada evidência pesa no Aurora 0 ACU                              | Recomputar só a equipe afetada, na mesma transação; benchmark agregado com cache diário                                       |
+| P-3.1 | Fila auto-gerada duplica passos                                                 | `UNIQUE (team_id, criterion_id)` + upsert idempotente                                                                         |
+| P-3.2 | Fila vira lista infinita de cobrança                                            | Só critérios do **próximo** nível geram passo; exibição limitada (7/3); descarte auditado                                     |
+| P-4.1 | Equipe sem projeto designado "zera" Estrutura sem entender                      | Aviso persistente na área + passo automático "Designar o projeto da temporada"                                                |
+| P-5.1 | Gaming de contadores (10 decisões vazias p/ subir CON)                          | Pisos baixos (existência, não volume), capitania revoga, sem ranking público — o ganho de trapacear é zero                    |
+| P-5.2 | Benchmark constrange equipes fracas                                             | Mediana anônima da coorte, piso de 8 equipes, nunca lista nominal (RF-7.3)                                                    |
+| P-6.1 | RLS: evidência gravada por membro em equipe alheia                              | Escrita só pela app após checagem de membership (padrão existente); testes RLS dedicados                                      |
 
 ## 9. Governança do catálogo
 
@@ -395,18 +402,18 @@ Auditoria: `evolution.declare/revoke`, `evolution.season.update`, `evolution.ste
 
 ## 10. Critérios de aceite
 
-| #          | Critério                                                                                             |
-| ---------- | ---------------------------------------------------------------------------------------------------- |
-| AC-DF13.1  | Motor puro: fixtures de evidências/declarações → níveis esperados (todas as 6 áreas, casos de borda) |
-| AC-DF13.2  | Salvar snapshot do projeto da temporada com 0 NC sobe EST para 3 sem reload; com NC, cai com evento  |
-| AC-DF13.3  | Snapshot de projeto que NÃO é o da temporada não gera evidência nem muda nível                       |
-| AC-DF13.4  | Declarar critério exige owner/admin; membro comum recebe 403; declaração aparece auditada            |
-| AC-DF13.5  | Critério pendente do próximo nível gera exatamente 1 passo; satisfazer o critério conclui o passo    |
-| AC-DF13.6  | Critério `oculto` não aparece na UI nem conta no denominador                                         |
-| AC-DF13.7  | Temporada configurada → GES-3.1 satisfeito; contagem regressiva correta no Início                    |
-| AC-DF13.8  | Benchmark oculto com coorte < 8; visível e correto com ≥ 8 (fixture)                                 |
-| AC-DF13.9  | Export LGPD inclui declarações/passos/evidências do titular; exclusão de conta anonimiza o ator      |
-| AC-DF13.10 | RLS: membro de outra equipe não lê nem escreve evidência/declaração/passo (teste dedicado)           |
+| #          | Critério                                                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-DF13.1  | Motor puro: fixtures de evidências/declarações → níveis esperados (todas as 6 áreas, casos de borda)                                              |
+| AC-DF13.2  | Com EST-2.2/3.2 declarados, salvar o projeto da temporada sem infração automática sobe EST para 3; salvar com infração derruba para 2, com evento |
+| AC-DF13.3  | Snapshot de projeto que NÃO é o da temporada não gera evidência nem muda nível                                                                    |
+| AC-DF13.4  | Declarar critério exige owner/admin; membro comum recebe 403; declaração aparece auditada                                                         |
+| AC-DF13.5  | Critério pendente do próximo nível gera exatamente 1 passo; satisfazer o critério conclui o passo                                                 |
+| AC-DF13.6  | Critério `oculto` não aparece na UI nem conta no denominador                                                                                      |
+| AC-DF13.7  | Temporada configurada → GES-3.1 satisfeito; contagem regressiva correta no Início                                                                 |
+| AC-DF13.8  | Benchmark oculto com coorte < 8; visível e correto com ≥ 8 (fixture)                                                                              |
+| AC-DF13.9  | Export LGPD inclui declarações/passos/evidências do titular; exclusão de conta anonimiza o ator                                                   |
+| AC-DF13.10 | RLS: membro de outra equipe não lê nem escreve evidência/declaração/passo (teste dedicado)                                                        |
 
 ## 11. Riscos e questões em aberto
 

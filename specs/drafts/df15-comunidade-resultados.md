@@ -106,7 +106,8 @@ fonte; admin aplica com registro (`audit_events`). O portal nunca edita silencio
 - RF-4.1 `team_season.competition_ids` referencia competições do calendário; a faixa de
   temporada deriva "próxima competição" e datas daqui.
 - RF-4.2 Resultado novo ingerido para a equipe vinculada gera evidência
-  `competition.result {position, total}` na atividade (não afeta nível — maturidade ≠ resultado;
+  `competition.result {position, total}` na atividade (produtor `community`, registrado no
+  DF-13 RF-2.1; não afeta nível — maturidade ≠ resultado;
   ADR-010).
 
 ## 5. Modelo de dados (proposta — migração `0007_community.sql`)
@@ -122,7 +123,7 @@ CREATE TABLE competitions (
   ends_on    date,
   location   text,
   source_url text,
-  UNIQUE (season, kind, region)
+  UNIQUE NULLS NOT DISTINCT (season, kind, region)  -- region NULL p/ nacional; PG ≥ 15 (Aurora 16 ok)
 );
 
 CREATE TABLE community_teams (
@@ -134,7 +135,7 @@ CREATE TABLE community_teams (
   region            text,
   links             jsonb NOT NULL DEFAULT '[]'::jsonb,
   claimed_by_team_id uuid UNIQUE REFERENCES teams (id) ON DELETE SET NULL,
-  UNIQUE (display_name, university)
+  UNIQUE NULLS NOT DISTINCT (display_name, university)
 );
 
 CREATE TABLE competition_results (
@@ -156,7 +157,7 @@ CREATE TABLE result_corrections (
   source_url   text,
   status       text NOT NULL DEFAULT 'aberta'
                CHECK (status IN ('aberta', 'aplicada', 'recusada')),
-  resolved_by  uuid,
+  resolved_by  uuid REFERENCES users (id) ON DELETE SET NULL,
   resolved_at  timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now()
 );
@@ -168,7 +169,7 @@ CREATE TABLE result_corrections (
 - **Coorte:** view/consulta derivada (sem tabela própria na v1); cache de medianas junto ao
   benchmark do DF-13.
 - **Contratos ODCS:** `competition.odcs.yaml`, `community-team.odcs.yaml`,
-  `competition-result.odcs.yaml`, `result-correction.odcs.yaml`. PII: só `requested_by` das
+  `competition-result.odcs.yaml`, `result-correction.odcs.yaml`. PII: `requested_by` e `resolved_by` das
   correções (contrato; retenção 12 meses após resolução). Dados de equipes são de entes
   coletivos, sem pessoa física — **invariante da ingestão** (AC-DF15.8).
 
@@ -183,7 +184,7 @@ CREATE TABLE result_corrections (
 | `POST /community/claims`                   | solicitar vínculo (capitania)               | owner/admin da equipe |
 | `POST /community/corrections`              | solicitar correção                          | autenticado           |
 | `GET  /community/benchmark?competitionId=` | medianas por prova da coorte da equipe      | membro c/ vínculo     |
-| `POST /api/v1/admin/community/*`           | CRUD calendário/resultados/claims/correções | admin (DF-9)          |
+| `POST /admin/community/*`                  | CRUD calendário/resultados/claims/correções | admin (DF-9)          |
 
 Auditoria: `community.claim.*`, `community.correction.*`, `admin.community.*`.
 

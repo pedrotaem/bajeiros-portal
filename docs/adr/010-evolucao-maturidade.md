@@ -19,7 +19,7 @@ Direção de produto explícita (2026-08-29): **a gaiola não é o core do porta
 equipes é.** Importa mais equipe usando o portal e subindo a maturidade do projeto do que
 qualquer feature pontual; as ferramentas vão mudar e crescer.
 
-O que já existe empurra na mesma direção: o validador produz 40 verificações, massa e ancoragens
+O que já existe empurra na mesma direção: o validador produz ~40 verificações, massa e ancoragens
 por versão salva (avaliadas **no servidor**); o DF-10 entregou organograma com vagas, capitania e
 trainee, e deixou como backlog o "painel de maturidade" (RF-5.7); a pesquisa de mercado mapeou 91
 equipes, 18 competições de resultados públicos e um diagnóstico consistente — **rotatividade é o
@@ -128,6 +128,6 @@ dois transformaria autoavaliação em marketing e destruiria a honestidade do da
   "Alimenta · <área>" do hub é contrato de produto, não decoração.
 - Custo permanente: calibração do catálogo por temporada (governança DF-13 §9) e curadoria dos
   dados de comunidade (DF-15). São horas de gente, não de máquina — orçadas no plano.
-- Riscos aceitos, monitorados no piloto: adoção fria do diário (DF-14 P-1.x), fila percebida
+- Riscos aceitos, monitorados no piloto: adoção fria do diário (DF-14 §8.1), fila percebida
   como cobrança (DF-13 P-3.2), assimetria auto/declarado (dec. 2), queda de nível
   desincentivando salvamento (dec. 3).

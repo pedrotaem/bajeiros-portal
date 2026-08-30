@@ -96,14 +96,17 @@ guide|decision|url`). Número sequencial por equipe atribuído na criação.
 ### E3 — Kits de passagem
 
 - RF-3.1 Abrir kit: capitania ou o próprio membro que sai. Campos: membro, cargo (snapshot do
-  organograma no momento), data prevista de saída, checklist.
+  organograma no momento), data prevista de saída, checklist. Abrir gera evidência
+  `kit.opened {dueDate}` (DF-13) — **a data do kit é o registro da saída anunciada**; não existe
+  outra fonte de formaturas no portal.
 - RF-3.2 Checklist padrão (template no código, editável por kit): ① responsabilidades do cargo
   descritas; ② decisões da área revisadas/vinculadas; ③ guias da área atualizados; ④ pendências
   listadas com dono novo; ⑤ contatos e fornecedores registrados; ⑥ sucessor indicado (opcional).
 - RF-3.3 Estados: `aberto → em andamento → concluído` (percentual = itens marcados). Concluir
   exige todos os itens marcados; gera evidência `kit.completed` (DF-13 CON-4.1).
-- RF-3.4 O painel de kits mostra saídas anunciadas sem kit (cruzando formaturas informadas) com
-  chip VERIFICAR — é o gatilho visual do canvas ("3 membros se formam em dezembro").
+- RF-3.4 O painel de kits destaca com chip VERIFICAR os kits abertos com data de saída vencida
+  ou nos próximos 120 dias — o gatilho visual do canvas ("3 membros se formam em dezembro")
+  nasce dos kits criados, não de um cadastro separado de formaturas.
 - RF-3.5 Kit é da equipe: a saída efetiva do membro não apaga o kit.
 
 ### E4 — Busca
@@ -190,17 +193,19 @@ CREATE TABLE team_handover_kits (
 
 ## 6. API (módulo novo `knowledge`)
 
-| Método/rota                                    | Ação                                 | Permissão                           |
-| ---------------------------------------------- | ------------------------------------ | ----------------------------------- |
-| `GET    /teams/:id/decisions?area=&author=&q=` | listar/buscar (paginado)             | membro                              |
-| `POST   /teams/:id/decisions`                  | criar (seq atômico)                  | membro                              |
-| `PATCH  /teams/:id/decisions/:did`             | editar texto/links                   | autor                               |
-| `DELETE /teams/:id/decisions/:did`             | soft delete                          | `knowledge.moderate` (owner/admin)  |
-| `GET    /teams/:id/guides` · `POST` · `PATCH`  | CRUD de guias (dono/corpo/kind/tags) | membro; reatribuir dono = capitania |
-| `POST   /teams/:id/guides/:gid/complete`       | concluir trilha (o próprio)          | membro                              |
-| `POST   /teams/:id/guides/:gid/still-valid`    | "revisei, está válido"               | dono ou capitania                   |
-| `GET    /teams/:id/kits` · `POST` · `PATCH`    | kits (checklist, status)             | capitania ou o membro do kit        |
-| `GET    /teams/:id/knowledge/search?q=`        | busca agrupada decisões+guias        | membro                              |
+| Método/rota                                    | Ação                                       | Permissão                           |
+| ---------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| `GET    /teams/:id/decisions?area=&author=&q=` | listar/buscar (paginado)                   | membro                              |
+| `POST   /teams/:id/decisions`                  | criar (seq atômico)                        | membro                              |
+| `PATCH  /teams/:id/decisions/:did`             | editar texto/links                         | autor                               |
+| `DELETE /teams/:id/decisions/:did`             | soft delete                                | `knowledge.moderate` (owner/admin)  |
+| `GET    /teams/:id/guides` · `POST` · `PATCH`  | CRUD de guias (dono/corpo/kind/tags)       | membro; reatribuir dono = capitania |
+| `DELETE /teams/:id/guides/:gid`                | soft delete (409 se kit aberto referencia) | `knowledge.moderate`                |
+| `POST   /teams/:id/guides/:gid/complete`       | concluir trilha (o próprio)                | membro                              |
+| `POST   /teams/:id/guides/:gid/still-valid`    | "revisei, está válido"                     | dono ou capitania                   |
+| `GET    /teams/:id/kits`                       | listar kits (painel é da equipe)           | membro                              |
+| `POST` · `PATCH  /teams/:id/kits[/:kid]`       | abrir/editar kit (checklist, status)       | capitania ou o membro do kit        |
+| `GET    /teams/:id/knowledge/search?q=`        | busca agrupada decisões+guias              | membro                              |
 
 Policy layer ganha `knowledge.moderate` (owner/admin). Toda mutação audita
 (`knowledge.decision.*`, `knowledge.guide.*`, `knowledge.kit.*`). Evidências do DF-13 gravadas na

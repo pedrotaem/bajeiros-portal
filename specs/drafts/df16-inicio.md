@@ -58,7 +58,8 @@ continuar → temporada. Densidade `comfortable`.
   com o projeto da temporada; passo de conhecimento → aba Conhecimento; declaração → painel de
   critérios da Evolução. Mapa `criterion_id → destino` vive junto do catálogo.
 - RF-1.3 Atividade usa as strings canônicas e cores de status **com o texto como portador**
-  ("37 CONFORME · 3 NÃO CONFORME"); horário relativo curto (há 2 h · ontem · seg · 23 ago).
+  ("37 CONFORME · 3 INFRAÇÕES" — strings do módulo canônico, ver DF-12 RF-4.2); horário
+  relativo curto (há 2 h · ontem · seg · 23 ago).
 - RF-1.4 "Continuar" do editor = último snapshot cujo autor é o usuário (qualquer projeto da
   equipe); do assistente = última pergunta do usuário (título truncado). Ausentes → módulo
   omitido (nunca card vazio).
@@ -70,7 +71,8 @@ continuar → temporada. Densidade `comfortable`.
   Ferramentas e Comunidade — o Início nunca é beco sem saída.
 - RF-2.2 **Equipe sem evolução ativa** (recém-criada): módulo de bootstrap no lugar de
   passos/atividade: "designe o projeto da temporada · registre a primeira decisão · configure a
-  temporada" (os três primeiros passos automáticos do DF-13).
+  temporada" (o caminho mínimo do DF-13 RF-6.3 — o passo especial de designar o projeto,
+  P-4.1, mais os primeiros critérios pendentes).
 - RF-2.3 **Trainee com trilha aberta:** o passo "concluir a trilha de integração" aparece
   primeiro para esse usuário (personalização mínima; único caso de reordenação por pessoa).
 - RF-2.4 Erro do agregador: mensagem com "tentar de novo" (nunca "Carregando…" eterno —

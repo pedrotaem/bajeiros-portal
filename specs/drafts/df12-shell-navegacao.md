@@ -48,17 +48,23 @@ piloto. Com a direção "portal > validador", o primeiro destino passa a ser o d
 
 | Destino     | Ícone (Lucide, §8.9)    | Conteúdo                                                     | Origem       |
 | ----------- | ----------------------- | ------------------------------------------------------------ | ------------ |
-| Início      | `house` → `IconHome`    | O dia da equipe (DF-16)                                      | novo         |
+| Início      | `house` → `IconHouse`   | O dia da equipe (DF-16)                                      | novo         |
 | Equipe      | `IconUsers` (existe)    | Evolução · Pessoas · Conhecimento · Projetos                 | evolui DF-10 |
-| Ferramentas | `wrench` → `IconTools`  | Hub: Validador, Assistente, futuras                          | novo         |
+| Ferramentas | `wrench` → `IconWrench` | Hub: Validador, Assistente, futuras                          | novo         |
 | Comunidade  | `trophy` → `IconTrophy` | Resultados · Equipes do Brasil (DF-15); Galeria/Fórum futuro | novo         |
 
-Rodapé do rail: **Sobre o portal** (`IconInfo`, abre o conteúdo da landing como página) ·
-**Admin** (`IconSliders`, só `isAdmin`) · bloco do usuário (avatar + nome + papel na equipe; abre
-o menu de conta existente: perfil, meus projetos, sair).
+Rodapé do rail: **Admin** (`IconSliders`, só `isAdmin`) · bloco do usuário (avatar + nome +
+papel na equipe; abre o menu de conta: Perfil · Meus projetos · **Sobre o portal** · Sair).
+"Sobre" **não** é item do rail: o glifo `info` é um dos cinco de status (exclusivos de status,
+DS §8.7/CT-3) e o teto do inventário fica exatamente preenchido — nos mockups do canvas ele
+ainda aparece como item com ícone; a spec corrige.
 
-**Iconografia:** os três glifos novos consomem exatamente as 3 vagas do inventário (DS §8.5, teto 24) pelo processo §8.9 (doador único Lucide 1.34.0). A vaga aberta do Editor **dissolve**: Editor
-deixa de ser destino de rail e o item do hub usa texto + glifo utilitário existente.
+**Iconografia:** os três glifos novos (nomeados pelo que são, convenção do DS §8.8) consomem
+exatamente as 3 vagas do inventário (DS §8.5, teto 24 — fica cheio) pelo processo §8.9 (doador
+único Lucide 1.34.0). A vaga aberta do Editor **dissolve**: Editor deixa de ser destino de rail
+e o item do hub usa texto + glifo utilitário existente. A implementação **emenda no mesmo PR**
+as passagens do DS que este DF torna obsoletas: a vaga do glifo do Editor (§8.5) e o bloqueio de
+`rail-compact` em C-02.
 
 ### 3.2 Mapa de estados (`session.ts`)
 
@@ -136,14 +142,18 @@ permissão: visualizar é de todos, editar é `position.manage`.
 
 - RF-4.1 "Papel de acesso" → **Permissões**; "Função" → **Cargo**; "Entradas" → **Convites e
   pedidos**; zero códigos internos `(DF-n)` na UI.
-- RF-4.2 Strings canônicas de status do design-system §11.3 em toda superfície nova (CONFORME /
-  NÃO CONFORME / VERIFICAR / VERIFICAÇÃO PRESENCIAL / NOTA).
+- RF-4.2 Strings canônicas de status vêm **exclusivamente** do módulo do design-system §11.3 —
+  hoje: CONFORME · INFRAÇÃO · VERIFICAR · PRESENCIAL · NOTA. **Divergência registrada:** o
+  estudo §9.4 e os mockups do canvas usam "NÃO CONFORME" / "VERIFICAÇÃO PRESENCIAL", e a fase
+  2.6 do plano de design marca a escolha como decisão do product owner. Resolver **antes da
+  primeira superfície nova** (um cânone só); mudar depois é editar um módulo, nunca telas.
 - RF-4.3 Rótulo do gabarito: "gabarito de habitáculo (Geraldão)" ao menos uma vez na legenda.
 
 ### E5 — Sobre o portal
 
 - RF-5.1 `page: 'sobre'` renderiza o conteúdo da landing (propósito, aviso legal, contato) como
-  página do shell; a landing deslogada continua sendo a home pública.
+  página do shell, aberto pelo menu de conta (rodapé do rail) e pelo rodapé da landing; a
+  landing deslogada continua sendo a home pública.
 
 ## 5. Modelo de dados e API
 
@@ -163,17 +173,17 @@ communityTab) e componentes. O hub consome endpoints existentes (`GET /projects`
 
 ## 7. Critérios de aceite
 
-| #         | Critério                                                                                             |
-| --------- | ---------------------------------------------------------------------------------------------------- |
-| AC-DF12.1 | Logado cai em Início; deslogado na landing; logout volta à landing; convite aterrissa em Equipe      |
-| AC-DF12.2 | Rail navega pelos 4 destinos + Sobre + Admin (isAdmin) com `aria-current` correto; Tab percorre tudo |
-| AC-DF12.3 | Abrir Validador pelo hub, ir a Equipe e voltar: câmera e cena 3D preservadas (sem remontagem)        |
-| AC-DF12.4 | Item Ferramentas aceso com editor ou assistente abertos                                              |
-| AC-DF12.5 | Página Equipe com 4 abas ARIA; toda capacidade do DF-10 alcançável (paridade funcional)              |
-| AC-DF12.6 | Hub mostra estado real (versão/contagens do projeto da temporada; quota do assistente)               |
-| AC-DF12.7 | Rótulos novos aplicados; zero `(DF-n)` na UI; disclaimer visível em todas as páginas                 |
-| AC-DF12.8 | Zero hex fora de tokens nas superfícies novas (`check-tokens` sem exceções novas)                    |
-| AC-DF12.9 | 1366×768, 1024×768 e 1366×768\@200% verificados (roteiro da fase 6 do plano de design)               |
+| #         | Critério                                                                                                                          |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| AC-DF12.1 | Logado cai em Início; deslogado na landing; logout volta à landing; convite aterrissa em Equipe                                   |
+| AC-DF12.2 | Rail navega pelos 4 destinos + Admin (isAdmin) com `aria-current` correto; Sobre alcançável pelo menu de conta; Tab percorre tudo |
+| AC-DF12.3 | Abrir Validador pelo hub, ir a Equipe e voltar: câmera e cena 3D preservadas (sem remontagem)                                     |
+| AC-DF12.4 | Item Ferramentas aceso com editor ou assistente abertos                                                                           |
+| AC-DF12.5 | Página Equipe com 4 abas ARIA; toda capacidade do DF-10 alcançável (paridade funcional)                                           |
+| AC-DF12.6 | Hub mostra estado real (versão/contagens do projeto da temporada; quota do assistente)                                            |
+| AC-DF12.7 | Rótulos novos aplicados; zero `(DF-n)` na UI; disclaimer visível em todas as páginas                                              |
+| AC-DF12.8 | Zero hex fora de tokens nas superfícies novas (`check-tokens` sem exceções novas)                                                 |
+| AC-DF12.9 | 1366×768, 1024×768 e 1366×768\@200% verificados (roteiro da fase 6 do plano de design)                                            |
 
 ## 8. Riscos e questões em aberto
 
@@ -185,3 +195,6 @@ communityTab) e componentes. O hub consome endpoints existentes (`GET /projects`
    perda do botão Voltar incomodar no piloto.
 4. **Multi-equipe** — o seletor v1 é simples (lista); persistência da "equipe ativa" por
    localStorage pode confundir em máquina compartilhada de oficina. Observar.
+5. **Vocabulário fail/manual** — INFRAÇÃO/PRESENCIAL (§11.3 vigente) × NÃO CONFORME/VERIFICAÇÃO
+   PRESENCIAL (estudo §9.4 + canvas). Decisão do product owner (fase 2.6 do plano de design),
+   bloqueante para a primeira superfície nova — ver RF-4.2.

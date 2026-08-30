@@ -66,10 +66,12 @@ critério oculto fora do denominador, queda de nível, mudança de versão de ca
 Migração `0005_evolution.sql` (5 tabelas, RLS, append-only de evidência), módulo `evolution`
 (rotas do DF-13 §7), policy (`evolution.declare/season`, `step.manage`), produtores:
 `projects` (validation.summary no save do projeto da temporada), `teams` (org.summary),
-`evolution` (season/declaration/level.changed). Contratos ODCS novos; export LGPD ampliado.
+`evolution` (season/declaration/level.changed) + recálculo periódico agendado (1×/dia, cobre
+critérios com janela temporal). Contratos ODCS novos; export LGPD ampliado.
 
-- **Aceite:** teste de integração: criar equipe → designar projeto → salvar versão 0 NC → EST=3;
-  salvar com NC → EST=2 + evento; declarar critério → nível sobe; RLS de terceiros negada.
+- **Aceite:** teste de integração: criar equipe → designar projeto → declarar EST-2.2/3.2 →
+  salvar versão sem infração → EST=3; salvar com infração → EST=2 + evento; RLS de terceiros
+  negada.
 - **Risco:** recomputação na transação do save aumenta a latência do salvar. Medir; se passar de
   ~100 ms adicionais, mover para pós-commit com consistência eventual **declarada**.
 
