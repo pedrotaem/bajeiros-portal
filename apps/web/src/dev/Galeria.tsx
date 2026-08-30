@@ -2,6 +2,7 @@ import { dark, viewport3d } from '../tokens'
 import * as glyphs from '../icons/glyphs'
 import { ICONS, ICON_CEILING, ICON_DONOR } from '../icons/registry'
 import { STATUS_LABEL, StatusChip, type StatusRole } from '../icons/statusIcon'
+import '../shell.css'
 
 /**
  * Galeria de componentes (fase 0, passo 0.6). Montada SÓ em desenvolvimento, por

@@ -230,11 +230,22 @@
 
 /* ---------- conteúdo ---------- */
 
+/* Coluna FLEX, não bloco: o editor legado (`.main`) é `flex: 1` e conta com um pai
+   de altura definida. Solto num bloco rolável ele cresce até a altura do checklist
+   (~4200px) e o canvas WebGL nasce com um buffer do mesmo tamanho — invisível na
+   tela e caro na GPU. Como coluna flex, `.main` ocupa o que sobra e as páginas de
+   conteúdo continuam rolando normalmente. */
 .bj-content {
   grid-area: conteudo;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   overflow: auto;
+}
+.bj-content > .main {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .bj-content:focus {
   outline: none;
@@ -1051,4 +1062,108 @@
 .bj-aba:disabled {
   color: var(--bj-disabled-fg);
   cursor: not-allowed;
+}
+
+/* ---------- galeria do design system (só em dev, ?galeria=1) ---------- */
+
+.bj-galeria {
+  max-width: var(--bj-page-w);
+  margin: 0 auto;
+  padding: var(--bj-space-6) var(--bj-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-7);
+  background: var(--bj-bg-canvas);
+  color: var(--bj-fg-primary);
+  font-family: var(--bj-font-sans);
+  font-size: var(--bj-text-base);
+}
+.bj-galeria h1 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-3xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-galeria h2 {
+  margin: 0 0 var(--bj-space-3);
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-galeria p {
+  margin: 0 0 var(--bj-space-3);
+  color: var(--bj-fg-secondary);
+  line-height: var(--bj-leading-normal);
+}
+.bj-galeria code {
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-brand-dim);
+}
+
+.bj-galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--bj-space-3);
+  padding: var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+}
+.bj-galeria-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+  min-height: 88px;
+  padding: var(--bj-space-3);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius);
+  font-size: var(--bj-text-sm);
+}
+.bj-galeria-swatch strong {
+  font-weight: var(--bj-weight-medium);
+}
+.bj-galeria-swatch span {
+  padding: 2px 6px;
+  border-radius: var(--bj-radius-sm);
+}
+
+.bj-galeria-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bj-space-3);
+  margin-bottom: var(--bj-space-3);
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+
+/* grade a 16px: é o teste de distinção de forma do DS §8.9 — os glifos precisam
+   ficar lado a lado, no tamanho em que colidem, não empilhados */
+.bj-galeria-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--bj-space-3);
+}
+.bj-galeria-icons figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bj-space-2);
+  margin: 0;
+  padding: var(--bj-space-3);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+}
+.bj-galeria-icons figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--bj-text-sm);
+  text-align: center;
+}
+.bj-galeria-icons small {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
 }
