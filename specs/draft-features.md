@@ -65,4 +65,38 @@ graph LR
 - **DF-10 — Gestão de equipe:** capitania (1 capitã/capitão + até 2 co-capitães) que
   confirma entradas, organograma de funções customizável com responsabilidades
   descritas, visualização em árvore e página inteira no lugar do modal; requisitos de
-  maturidade derivados de `Pesquisa de Mercado/praticas-elite.md`.
+  maturidade derivados de `Pesquisa de Mercado/praticas-elite.md`. **Implementada.**
+- **DF-11 — Redesign de interface:** número **reservado** pelo
+  [`docs/plano-implementacao-design.md`](../docs/plano-implementacao-design.md) (13 fases,
+  branches `feat/df11-*`); a spec nasce na fase 0 daquele plano.
+- **DF-12 — Shell de navegação:** rail Início · Equipe · Ferramentas · Comunidade; Editor
+  vira item do hub de Ferramentas (sem tocar a montagem do Viewport — ADR-009); equipe com
+  4 abas (Evolução · Pessoas · Conhecimento · Projetos); rótulos do estudo §9.4.
+- **DF-13 — Evolução da equipe:** maturidade 1–5 por área (6 áreas), critérios verificáveis
+  (automáticos via evidência server-side; declarados auditáveis), fila de próximos passos
+  derivada, faixa de temporada; motor puro `packages/evolution`. Realiza o RF-5.7 do DF-10.
+- **DF-14 — Conhecimento:** diário de decisões numerado, guias com dono (inclui trilha de
+  integração de novatos), kits de passagem por saída anunciada; tudo vira evidência do
+  DF-13. Ataca a rotatividade (problema nº 1 da pesquisa).
+- **DF-15 — Comunidade:** acervo de resultados 2021–2026 publicado com classificação por
+  prova, registro canônico das 91 equipes com claim, benchmark por coorte (mediana, piso
+  de 8) e "transformar em meta"; sem identidade "SAE", sem PII de pilotos.
+- **DF-16 — Início:** página do dia da equipe — 3 próximos passos, atividade, evolução
+  compacta, continuar de onde parou, temporada; um endpoint agregador (`GET /me/home`).
+
+## Lote "Evolução das equipes" (DF-12…DF-16)
+
+Direção de produto (2026-08-29): a evolução das equipes é o core; ferramentas são meios.
+Decisão em [`docs/adr/010-evolucao-maturidade.md`](../docs/adr/010-evolucao-maturidade.md);
+fases de execução (EV-0…EV-8) em
+[`docs/plano-implementacao-evolucao.md`](../docs/plano-implementacao-evolucao.md); desenho
+aprovado no canvas
+["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b).
+
+| Ordem | Spec                                          | Depende de             | Racional da posição                                     |
+| ----- | --------------------------------------------- | ---------------------- | ------------------------------------------------------- |
+| 1     | [DF-13](drafts/df13-evolucao-maturidade.md)   | DF-10                  | Motor e evidências primeiro — tudo o mais consome daqui |
+| 2     | [DF-14](drafts/df14-conhecimento.md)          | DF-10                  | Produtor da área `conhecimento`; anti-rotatividade      |
+| 3     | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                 |
+| 4     | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                 |
+| 5     | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark     |
