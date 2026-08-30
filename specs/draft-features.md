@@ -83,6 +83,9 @@ graph LR
   de 8) e "transformar em meta"; sem identidade "SAE", sem PII de pilotos.
 - **DF-16 — Início:** página do dia da equipe — 3 próximos passos, atividade, evolução
   compacta, continuar de onde parou, temporada; um endpoint agregador (`GET /me/home`).
+- **DF-17 — Entrar com Google:** IdP social no mesmo User Pool (`identity_provider=Google` no
+  `/oauth2/authorize`), sem migração e sem mudança no contrato do token; vinculação de conta
+  no Cognito preserva o invariante `users.id = sub`. Realiza o item 12.5 do plano de produção.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16)
 

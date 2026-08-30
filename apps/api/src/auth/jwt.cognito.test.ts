@@ -97,6 +97,22 @@ describe('verifyToken em AUTH_MODE=cognito', () => {
     ).rejects.toThrow(/verificado/)
   })
 
+  // DF-17: usuário federado traz o atributo mapeado do IdP, que o Cognito pode
+  // emitir como string. As duas formas exatas passam; nada além delas.
+  it('aceita email_verified como string "true" (usuário federado)', async () => {
+    const claims = await verifyToken(await sign({ ...baseClaims(), email_verified: 'true' }))
+    expect(claims.email).toBe('ana@example.com')
+  })
+
+  it('rejeita email_verified como string "false" e como ausente', async () => {
+    await expect(
+      verifyToken(await sign({ ...baseClaims(), email_verified: 'false' })),
+    ).rejects.toThrow(/verificado/)
+    const semClaim: Record<string, unknown> = { ...baseClaims() }
+    delete semClaim.email_verified
+    await expect(verifyToken(await sign(semClaim))).rejects.toThrow(/verificado/)
+  })
+
   it('rejeita token HS256 do modo dev', async () => {
     const dev = await signDevToken({ sub: 'x', email: 'x@x', name: 'X' })
     await expect(verifyToken(dev)).rejects.toThrow()

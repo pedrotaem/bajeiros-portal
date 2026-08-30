@@ -25,6 +25,22 @@ O Bearer aceito pela API é o **ID token** (o access token do Cognito não carre
 - Branding do Managed Login gerenciado via Terraform (`aws_cognito_managed_login_branding`); começa com defaults do Cognito.
 - Proteção contra credential stuffing (tier **Plus**, pricing nov/2024) fica p/ o gate M3 — persona de segurança registrou preferência por Plus desde já (2×1).
 
+## Nota (2026-08-30, DF-17 — IdP Google)
+
+O Google entra como **provedor de identidade do mesmo pool** (`aws_cognito_identity_provider`,
+`provider_type = "Google"`), não como segundo sistema de login: o SPA continua falando só com o
+domínio do Cognito e recebendo o **ID token do pool**. Nada muda no contrato do token nem em
+`auth/jwt.ts`.
+
+Para preservar o invariante **`users.id` = `sub`**, a colisão de e-mail (conta com senha ×
+conta Google) é resolvida **dentro do Cognito**, com `AdminLinkProviderForUser` numa trigger
+`PreSignUp_ExternalProvider`. A alternativa de desacoplar `users.id` do `sub` (tabela de
+identidades + resolução no middleware) foi rejeitada: cobra migração, revisão de RLS e uma
+query por request para resolver o caso mais raro. O risco residual da vinculação automática
+está aceito e justificado no `threat-model.md`; a reversão é a flag `google_enabled`.
+
+Spec completa: [specs/drafts/df17-login-google.md](../../specs/drafts/df17-login-google.md).
+
 ## Nota (2026-08-24, fase 11)
 
 A validação do ID token permanece na aplicação (jose + JWKS do pool) também na AWS — sem JWT authorizer no API Gateway (ver nota no ADR-001). `assertAuthEnv`/`assertProdEnv` rodam no module scope da Lambda: cold start falha alto com config incompleta.

@@ -738,6 +738,20 @@ button.primary:hover {
   opacity: 0.6;
   cursor: default;
 }
+/* Botão de IdP social (DF-17): só layout — a marca do provedor entra como imagem
+   e não pode ser recolorida, então aqui não há cor nenhuma. */
+.account-btn.with-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.provider-mark {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
 .project-chip {
   font-size: 12px;
   color: #aecdf0;

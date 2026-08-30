@@ -1,5 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { authMode, useSession, ApiError, type UserInfo } from '../session'
+import {
+  authMode,
+  authProviders,
+  identityProviderOf,
+  useSession,
+  ApiError,
+  type UserInfo,
+} from '../session'
 import { useStore } from '../store'
 import type { Cage } from '@bajeiros/core/model/types'
 
@@ -49,6 +56,8 @@ function Head({ title }: { title: string }) {
 
 function LoginPanel() {
   const login = useSession((s) => s.login)
+  const loginWithProvider = useSession((s) => s.loginWithProvider)
+  const providers = authProviders()
   const authNotice = useSession((s) => s.authNotice)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -56,11 +65,16 @@ function LoginPanel() {
   const [err, fail, clear] = useErr()
 
   if (authMode() === 'cognito') {
-    const go = async () => {
+    // `go()` sem provedor abre o Managed Login (e-mail e senha); com provedor vai
+    // direto ao IdP (DF-17). O botão do Google NÃO usa a cor primária do portal:
+    // as diretrizes de marca do Google não permitem recolorir o botão, então ele
+    // fica no estilo neutro escuro — a hierarquia vem da ordem e da largura.
+    const go = (provider?: string) => async () => {
       clear()
       setBusy(true)
       try {
-        await login() // redireciona; só volta aqui se algo falhar antes da navegação
+        // redireciona; só volta aqui se algo falhar antes da navegação
+        await (provider ? loginWithProvider(provider) : login())
       } catch (e2) {
         fail(e2)
         setBusy(false)
@@ -70,14 +84,20 @@ function LoginPanel() {
       <>
         <Head title="Entrar" />
         <div className="modal-body">
+          {authNotice && <p className="modal-err">{authNotice}</p>}
+          {err && <p className="modal-err">{err}</p>}
+          {providers.includes('google') && (
+            <button className="account-btn with-mark" disabled={busy} onClick={go('Google')}>
+              <img className="provider-mark" src="/google.svg" alt="" width={18} height={18} />
+              {busy ? 'Redirecionando…' : 'Continuar com Google'}
+            </button>
+          )}
           <p className="modal-note">
             Você será redirecionado à página segura de login — lá dá para entrar, criar conta ou
             recuperar a senha.
           </p>
-          {authNotice && <p className="modal-err">{authNotice}</p>}
-          {err && <p className="modal-err">{err}</p>}
-          <button className="account-btn primary" disabled={busy} onClick={go}>
-            {busy ? 'Redirecionando…' : 'Entrar'}
+          <button className="account-btn" disabled={busy} onClick={go()}>
+            {busy ? 'Redirecionando…' : 'Entrar com e-mail e senha'}
           </button>
           <p className="modal-note">
             Ao entrar você concorda com o uso dos dados necessários à prestação do serviço (LGPD
@@ -156,6 +176,7 @@ const PURPOSE_LABELS: Record<string, string> = {
 
 function ProfilePanel() {
   const { user, api, setUser, logout } = useSession()
+  const signedInWith = useSession((s) => identityProviderOf(s.token))
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [university, setUniversity] = useState(user?.university ?? '')
   const [consents, setConsents] = useState<Record<string, boolean>>({})
@@ -248,6 +269,12 @@ function ProfilePanel() {
         <button className="account-btn primary" disabled={busy} onClick={saveProfile}>
           {saved ? 'Salvo ✓' : 'Salvar perfil'}
         </button>
+        {signedInWith === 'Google' && (
+          <p className="modal-note">
+            Conta conectada com o Google — a senha e a verificação em duas etapas ficam na sua conta
+            Google, não aqui.
+          </p>
+        )}
 
         <div className="modal-section">Comunicações e dados (opcional)</div>
         {Object.entries(PURPOSE_LABELS).map(([purpose, label]) => (

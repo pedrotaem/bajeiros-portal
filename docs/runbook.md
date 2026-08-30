@@ -32,6 +32,48 @@ Migrações são forward-only — rollback de código não desfaz migração; se
 
 - **Budget**: US$ 40/mês por conta (alertas 50/80/100% + forecast → e-mail). Estourou: Cost Explorer por serviço; suspeitos usuais = Aurora fora do auto-pause (ver `ServerlessDatabaseCapacity` no CloudWatch) e tráfego CloudFront.
 
+## Entrar com Google (DF-17) — habilitar num ambiente
+
+Feito uma vez por ambiente (staging primeiro, prod só depois dos cenários manuais da spec §9).
+As credenciais OAuth do Google não têm provider Terraform — este passo é manual de propósito.
+
+1. **Google Cloud Console**, projeto por ambiente (`bajeiros-staging`, `bajeiros-prod`):
+   - Tela de consentimento OAuth: tipo **External**, nome "Bajeiros", e-mail de suporte, link da política de privacidade.
+   - Escopos: apenas `openid`, `email`, `profile` (não sensíveis → sem revisão do Google).
+   - Domínios autorizados: `amazoncognito.com` **e** `bajeiros.com.br`.
+   - Credenciais → **OAuth client ID** → **Web application**:
+     - JavaScript origin: valor do output `auth.auth_domain_url`;
+     - Redirect URI: valor do output `auth.google_redirect_uri` — **copiar, não digitar** (barra final/esquema errados dão `redirect_uri_mismatch`).
+   - **Publicar** a tela de consentimento. Em _Testing_ só os test users listados conseguem entrar.
+2. **Terraform** (as credenciais nunca entram em `.tfvars` versionado):
+
+```bash
+cd infra/envs/staging
+TF_VAR_google_enabled=true \
+TF_VAR_google_client_id='...apps.googleusercontent.com' \
+TF_VAR_google_client_secret='GOCSPX-...' \
+terraform apply
+```
+
+3. **GitHub → repo → Settings → Variables** do ambiente:
+   - `LAMBDA_IDP_LINK_FUNCTION_NAME` = output `auth.idp_link_function_name` (sem ela o deploy não publica a trigger e a Lambda fica no stub, que não vincula);
+   - `COGNITO_PROVIDERS` = `["google"]` (é o que faz o botão aparecer no SPA).
+4. Rodar o deploy (ou `workflow_dispatch`) para publicar o código da trigger e o `config.json` novo.
+5. Conferir os 4 cenários manuais da spec (§9, AC-9…AC-13). Log das decisões da vinculação:
+
+```bash
+aws logs tail /aws/lambda/bajeiros-<env>-idp-link --follow --region sa-east-1
+# uma linha JSON por login federado: {"trigger":"pre-sign-up","decision":"linked",...}
+# `decision` != linked explica por que não vinculou; e-mail sai só como hash (emailTag)
+```
+
+**Desligar / reverter:** `TF_VAR_google_enabled=false terraform apply` + limpar `COGNITO_PROVIDERS`.
+Some o botão, o IdP e a trigger. Contas já vinculadas continuam funcionando pelo caminho
+e-mail+senha — nada no banco depende da vinculação.
+
+**Rotação do client secret:** gerar novo no Google Console, `terraform apply` com o
+`TF_VAR_google_client_secret` novo, invalidar o antigo no Google.
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.
