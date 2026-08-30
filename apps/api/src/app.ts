@@ -11,6 +11,7 @@ import { assistant } from './modules/assistant/routes'
 import { evolution, evolutionRoot } from './modules/evolution/routes'
 import { knowledge } from './modules/knowledge/routes'
 import { community } from './modules/community/routes'
+import { home } from './modules/home/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -26,6 +27,7 @@ app.route('/api/v1/assistant', assistant)
 app.use('/api/v1/*', requireAuth)
 app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
 app.route('/api/v1/me', identity)
+app.route('/api/v1/me', home) // DF-16: GET /me/home (agregador único)
 app.route('/api/v1/projects', projects)
 app.route('/api/v1/teams', teams)
 // DF-13: rotas por equipe em módulo próprio, montadas no MESMO prefixo (o Hono
