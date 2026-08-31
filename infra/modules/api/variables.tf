@@ -65,3 +65,14 @@ variable "gateway_url" {
   type        = string
   default     = ""
 }
+
+variable "evolution_mode" {
+  description = "DF-19/DF-20: 'declarado' (v1 autodeclarativa) ou 'aferido' (liga as contraprovas do DF-20). Trocar não exige migração — é o mesmo dado, outro cálculo."
+  type        = string
+  default     = "declarado"
+
+  validation {
+    condition     = contains(["declarado", "aferido"], var.evolution_mode)
+    error_message = "evolution_mode deve ser 'declarado' ou 'aferido'."
+  }
+}

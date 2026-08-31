@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Motor de maturidade das equipes (DF-13) — catálogo de critérios e cálculo de níveis, puro TypeScript, sem IO",
+  "description": "Motor de maturidade das equipes (DF-13/DF-19), aferição das declarações (DF-20) e patentes do protótipo (DF-18) — catálogo, cálculo de níveis e escada de patentes, puro TypeScript, sem IO",
   "exports": {
     "./*": "./src/*.ts"
   },

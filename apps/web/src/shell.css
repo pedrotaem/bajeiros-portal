@@ -834,10 +834,18 @@
   font-size: var(--bj-text-xs);
   color: var(--bj-fg-muted);
 }
+/* O formulário do critério mora numa coluna estreita e passou a ter DOIS campos
+   (nota + link, DF-19 RF-4.2). Sem `wrap` + `min-width: 0` ele empurrava a lateral
+   e a PÁGINA INTEIRA ganhava barra horizontal — o defeito que só aparece rodando. */
 .bj-criterio-form {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--bj-space-2);
   margin-top: var(--bj-space-1);
+}
+.bj-criterio-form input {
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .bj-passos li {
@@ -1377,4 +1385,279 @@
 .bj-ficha-historico-quem {
   color: var(--bj-fg-muted);
   font-size: var(--bj-text-xs);
+}
+
+/* ---------- DF-18 — patentes do protótipo ----------
+   §7 e P-4.1: a estética fica CONFINADA ao emblema. Nada de tipografia de cartaz
+   nem de vocabulário de filme no resto do produto — o ocre da arte é acento, e o
+   emblema ocupa ~1% da tela. Os GIFs são ativos de terceiro servidos como imagem
+   (RF-8.2): não passam por check-icons nem por check-tokens. */
+
+.bj-emblema {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--bj-radius);
+  background: var(--bj-bg-inset);
+  object-fit: contain;
+  flex: none;
+}
+.bj-emblema-lg {
+  width: 128px;
+  height: 128px;
+}
+/* CT-3 — a dessaturação NUNCA anda sozinha: o rótulo "faltam N" vem ao lado */
+.bj-emblema-bloqueado {
+  filter: grayscale(100%);
+  opacity: 0.55;
+}
+
+.bj-patente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  padding: var(--bj-space-4);
+  background: var(--bj-bg-sunken);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-patente-vazia {
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+}
+/* §3.1 — a unidade avaliada vem ANTES do nome e nunca fica implícita */
+.bj-patente-unidade {
+  margin: 0;
+  color: var(--bj-fg-muted);
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+}
+.bj-patente-corpo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--bj-space-4);
+  align-items: start;
+}
+@media (max-width: 767px) {
+  .bj-patente-corpo {
+    grid-template-columns: 1fr;
+  }
+}
+.bj-patente-txt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+}
+.bj-patente-nome {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  color: var(--bj-brand);
+}
+.bj-patente-num {
+  margin: 0;
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  color: var(--bj-fg-muted);
+  text-transform: uppercase;
+}
+.bj-patente-leitura,
+.bj-patente-numeros,
+.bj-patente-coorte {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-patente-coorte {
+  color: var(--bj-fg-muted);
+}
+.bj-patente-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  align-items: stretch;
+}
+/* §3.5 — a carência é informação, não alarme: cor de aviso, tom de prazo */
+.bj-patente-carencia {
+  margin: 0;
+  padding: var(--bj-space-3);
+  background: var(--bj-warn-bg);
+  border: 1px solid var(--bj-warn-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+
+.bj-proxima {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+}
+.bj-proxima-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-3);
+}
+.bj-proxima-secao {
+  margin: var(--bj-space-2) 0 0;
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  color: var(--bj-fg-muted);
+  text-transform: uppercase;
+}
+.bj-proxima-competicao,
+.bj-proxima-nota {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-proxima-nota {
+  color: var(--bj-fg-muted);
+}
+
+/* RF-8.1 — o crédito da arte aparece NA TELA; a licença exige atribuição */
+.bj-credito-arte {
+  margin: var(--bj-space-3) 0 0;
+  color: var(--bj-fg-faint);
+  font-size: var(--bj-text-xs);
+  line-height: var(--bj-leading-normal);
+}
+
+/* RF-5.1 — só a PROMOÇÃO abre tela cheia; queda vira linha na atividade (RF-5.4) */
+.bj-promocao {
+  position: fixed;
+  inset: 0;
+  z-index: var(--bj-z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--bj-space-4);
+  background: var(--bj-scrim);
+}
+.bj-promocao-caixa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bj-space-2);
+  width: min(100%, var(--bj-modal-w));
+  padding: var(--bj-space-6);
+  background: var(--bj-bg-overlay);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+  box-shadow: var(--bj-shadow-lg);
+  text-align: center;
+}
+.bj-promocao-titulo {
+  margin: 0;
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+.bj-promocao-emblemas {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-3);
+}
+.bj-promocao-acoes {
+  display: flex;
+  gap: var(--bj-space-2);
+  margin-top: var(--bj-space-3);
+}
+
+/* Início — o emblema em miniatura e a distância até a próxima */
+.bj-card-patente .bj-patente-mini {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-3);
+}
+.bj-card-patente .bj-patente-mini strong {
+  display: block;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-lg);
+  color: var(--bj-brand);
+}
+.bj-patente-proxima {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+
+/* ---------- DF-18 E2 — painel de ativação (opt-in) ---------- */
+
+.bj-ativacao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  max-width: var(--bj-prose-w);
+  padding: var(--bj-space-5);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-ativacao p {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-ativacao-secao {
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  color: var(--bj-fg-muted);
+  text-transform: uppercase;
+}
+/* RF-2.6 — quem não pode ativar vê o MESMO painel, com o botão desabilitado */
+.bj-ativacao-sem-permissao {
+  color: var(--bj-disabled-fg);
+}
+
+/* ---------- DF-19/DF-20 — medida, divergência e contraprova ---------- */
+
+.bj-medida {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
+}
+/* RF-1.3 — divergir é permitido; a tela registra, não acusa */
+.bj-medida-divergente {
+  color: var(--bj-warn);
+}
+.bj-criterio-suspenso .bj-criterio-label {
+  text-decoration: line-through;
+  color: var(--bj-fg-muted);
+}
+.bj-contraprova {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  margin-top: var(--bj-space-2);
+  padding: var(--bj-space-3);
+  background: var(--bj-bg-inset);
+  border-left: 2px solid var(--bj-warn-border);
+  border-radius: var(--bj-radius-sm);
+}
+.bj-contraprova p {
+  margin: 0;
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-criterio-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  margin-top: var(--bj-space-2);
+  padding: var(--bj-space-3);
+  background: var(--bj-bg-inset);
+  border-radius: var(--bj-radius-sm);
+}
+.bj-criterio-detalhe p {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
 }

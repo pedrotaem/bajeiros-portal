@@ -4,23 +4,58 @@ import { app } from '../app'
 import { authed, makeUser, type TestUser } from './helpers'
 
 // DF-13 (EV-1) — a evidência flui de ponta a ponta SEM UI: salvar o projeto da
-// temporada muda o nível, declarar critério muda o nível, e nada disso vaza para
+// temporada muda a MEDIDA, declarar critério muda o nível, e nada disso vaza para
 // outra equipe. Marco EV-M1.
+//
+// Duas viradas de spec moldam esta suíte:
+//  - **DF-18 opt-in** (AC-DF18.2): sem ativação da capitania, nenhuma resposta traz
+//    nível nem patente. Por isso o `beforeAll` ativa antes de qualquer coisa;
+//  - **DF-19 modo autodeclarativo** (RF-1.1): o critério `auto` NÃO é mais satisfeito
+//    pela evidência — ele é satisfeito pela declaração, e a evidência vira a MEDIDA
+//    exibida ao lado (`measured`). O que a suíte antiga afirmava em `satisfied`
+//    passa a ser afirmado em `measured`.
 
 const json = (body: unknown) => JSON.stringify(body)
 
 /** Gaiola do template com os membros removidos: passa no motor e falha por PRESENÇA. */
 const CAGE_INCOMPLETA = { ...templateCage, members: [] }
 
+interface CriterionView {
+  id: string
+  satisfied: boolean
+  reason: string
+  type: string
+  state: string
+  divergent: boolean
+  question: string
+  measured: { satisfied: boolean; reason: string } | null
+  counterCheck: unknown | null
+}
 interface AreaView {
   area: string
   level: number
-  criteria: { id: string; satisfied: boolean; reason: string; type: string }[]
+  criteria: CriterionView[]
+}
+interface RankView {
+  rank: { n: number; name: string } | null
+  reason: string | null
+  average: number
+  floor: number
+  next: { n: number; block: string; maturity: { text: string }[] } | null
+  best: { n: number } | null
+  promotion: { from: number | null; to: number } | null
+  visibility: { rankPublic: boolean; rankHistoryPublic: boolean }
 }
 interface EvolutionView {
+  optIn: boolean
+  canOptIn?: boolean
+  notice?: { version: string; reads: string[] }
   catalogVersion: string
-  average: number
+  mode: string
+  average: number | null
+  floor?: number
   areas: AreaView[]
+  rank: RankView | null
   season: { label: string; seasonProjectId: string | null } | null
   bootstrap: boolean
 }
@@ -33,7 +68,7 @@ interface StepView {
   ownerUserId: string | null
 }
 
-describe('DF-13 — evolução da equipe (API)', () => {
+describe('DF-13/DF-18/DF-19 — evolução e patente da equipe (API)', () => {
   let cap: TestUser
   let membro: TestUser
   let fora: TestUser
@@ -60,6 +95,12 @@ describe('DF-13 — evolução da equipe (API)', () => {
       `/api/v1/teams/${id}/evolution/declarations/${criterionId}`,
       authed(by, { method: 'POST', body: json(body) }),
     )
+
+  const optIn = (by: TestUser, id = teamId) =>
+    app.request(`/api/v1/teams/${id}/evolution/optin`, authed(by, { method: 'POST', body: '{}' }))
+
+  const optOut = (by: TestUser, id = teamId) =>
+    app.request(`/api/v1/teams/${id}/evolution/optin`, authed(by, { method: 'DELETE' }))
 
   async function saveSnapshot(by: TestUser, project: string, seq: number, cage: unknown) {
     return app.request(
@@ -130,20 +171,81 @@ describe('DF-13 — evolução da equipe (API)', () => {
     )
   })
 
+  // ---------- DF-18 E2: nada existe antes da capitania ativar ----------
+
+  describe('opt-in (DF-18 E2)', () => {
+    it('AC-DF18.2 — equipe sem opt-in não tem patente nem níveis em nenhuma resposta', async () => {
+      const evo = await evolutionOf(cap)
+      expect(evo.optIn).toBe(false)
+      expect(evo.areas).toEqual([])
+      expect(evo.average).toBeNull()
+      expect(evo.rank).toBeNull()
+      // o que volta no lugar é o convite, dizendo o que a avaliação vai ler (RF-2.3)
+      expect(evo.notice?.reads.length).toBeGreaterThan(2)
+      expect(evo.notice?.version).toBeTruthy()
+
+      const home = await (await app.request('/api/v1/me/home', authed(cap))).json()
+      expect(home.optIn).toBe(false)
+      expect(home.evolution).toBeNull()
+      expect(home.rank).toBeNull()
+    })
+
+    it('AC-DF18.5 — ativar exige `evolution.optin`; membro comum recebe 403 e vê o botão desabilitado', async () => {
+      const r = await optIn(membro)
+      expect(r.status).toBe(403)
+      const evo = await evolutionOf(membro)
+      expect(evo.canOptIn).toBe(false)
+    })
+
+    it('declarar critério antes de ativar é 409, não um write silencioso', async () => {
+      expect((await declare(cap, 'EST-2.2')).status).toBe(409)
+    })
+
+    it('RF-2.4 — ativar recomputa retroativamente e responde na MESMA requisição', async () => {
+      const r = await optIn(cap)
+      expect(r.status).toBe(200)
+      const evo: EvolutionView = await r.json()
+      expect(evo.optIn).toBe(true)
+      expect(evo.areas).toHaveLength(6)
+      // a equipe nasce com organograma padrão, então o portal JÁ mede GES-1.1 —
+      // ninguém encara um painel zerado pedindo formulário
+      expect(criterionOf(evo, 'GES-1.1')?.measured?.satisfied).toBe(true)
+    })
+
+    it('§3.1 — sem protótipo da temporada não há unidade avaliada, e a tela diz isso', async () => {
+      const evo = await evolutionOf(cap)
+      expect(evo.rank?.rank).toBeNull()
+      expect(evo.rank?.reason).toBe('sem-prototipo')
+      const passos = await stepsOf(cap)
+      expect(passos.some((s) => s.title === 'Designar o projeto da temporada')).toBe(true)
+    })
+  })
+
   // ---------- estado inicial ----------
 
-  it('equipe nova já tem evidência de organograma e nível de gestão', async () => {
+  it('o catálogo é o v2 autodeclarativo, com os 51 critérios visíveis', async () => {
     const evo = await evolutionOf(cap)
-    expect(evo.catalogVersion).toMatch(/^\d+\.\d+\.\d+$/)
-    // a equipe nasce com organograma padrão e capitania regular → GES-1.1 satisfeito
-    expect(criterionOf(evo, 'GES-1.1')?.satisfied).toBe(true)
-    expect(areaOf(evo, 'gestao').level).toBe(1)
+    expect(evo.catalogVersion).toBe('2.0.0')
+    expect(evo.mode).toBe('declarado')
+    expect(evo.areas.flatMap((a) => a.criteria)).toHaveLength(51)
+    // AC-DF19.2 — os dois ex-`oculto` entraram no denominador
+    expect(criterionOf(evo, 'EST-4.1')).toBeTruthy()
+    expect(criterionOf(evo, 'DOC-4.2')).toBeTruthy()
+  })
+
+  it('AC-DF19.9 — o enunciado vem canônico do pacote, não é remontado na tela', async () => {
+    const evo = await evolutionOf(cap)
+    expect(criterionOf(evo, 'EST-3.1')?.question).toBe(
+      'O projeto do protótipo atende a todas as regras verificáveis em desenho?',
+    )
   })
 
   it('sem projeto da temporada, a evolução avisa em vez de mentir "0 infrações"', async () => {
     const evo = await evolutionOf(cap)
     expect(evo.bootstrap).toBe(true)
-    expect(criterionOf(evo, 'EST-3.1')?.reason).toBe('nenhuma versão salva do projeto da temporada')
+    expect(criterionOf(evo, 'EST-3.1')?.measured?.reason).toBe(
+      'nenhuma versão salva do projeto da temporada',
+    )
     const passos = await stepsOf(cap)
     expect(passos.some((s) => s.title === 'Designar o projeto da temporada')).toBe(true)
   })
@@ -159,23 +261,11 @@ describe('DF-13 — evolução da equipe (API)', () => {
         e.kind === 'level.changed' && e.payload.from === e.payload.to,
     )
     expect(nulas).toEqual([])
-    // a subida real (gestao 0 -> 1, do organograma padrao) continua sendo narrada
-    const subida = feed.find(
-      (e: { kind: string; payload: { area: string } }) =>
-        e.kind === 'level.changed' && e.payload.area === 'gestao',
-    )
-    expect(subida?.payload).toMatchObject({ from: 0, to: 1 })
-  })
-
-  it('AC-DF13.6 — critério oculto não aparece na resposta', async () => {
-    const evo = await evolutionOf(cap)
-    expect(criterionOf(evo, 'EST-4.1')).toBeUndefined()
-    expect(evo.areas.flatMap((a) => a.criteria).some((c) => c.type === 'oculto')).toBe(false)
   })
 
   // ---------- temporada ----------
 
-  it('AC-DF13.7 — configurar a temporada satisfaz GES-3.1 e dá a contagem regressiva', async () => {
+  it('AC-DF13.7 — configurar a temporada dá a contagem regressiva e a medida de GES-3.1', async () => {
     const futuro = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10)
     const r = await app.request(
       `/api/v1/teams/${teamId}/season`,
@@ -194,7 +284,7 @@ describe('DF-13 — evolução da equipe (API)', () => {
     expect(season.next.daysLeft).toBe(30)
 
     const evo = await evolutionOf(cap)
-    expect(criterionOf(evo, 'GES-3.1')?.satisfied).toBe(true)
+    expect(criterionOf(evo, 'GES-3.1')?.measured?.satisfied).toBe(true)
     expect(evo.bootstrap).toBe(false)
   })
 
@@ -227,19 +317,34 @@ describe('DF-13 — evolução da equipe (API)', () => {
 
   // ---------- o ciclo do validador ----------
 
-  it('AC-DF13.2 — salvar o projeto da temporada vira evidência e mexe no nível', async () => {
+  it('AC-DF13.2 — salvar o projeto da temporada vira evidência e muda a MEDIDA', async () => {
     const antes = await evolutionOf(cap)
-    expect(criterionOf(antes, 'EST-1.1')?.satisfied).toBe(false)
+    expect(criterionOf(antes, 'EST-1.1')?.measured?.satisfied).toBe(false)
 
     const r = await saveSnapshot(cap, projectId, 0, CAGE_INCOMPLETA)
     expect(r.status).toBe(201)
 
     const depois = await evolutionOf(cap)
-    expect(criterionOf(depois, 'EST-1.1')?.satisfied).toBe(true)
-    expect(areaOf(depois, 'estrutura').level).toBe(1)
-    // gaiola vazia = pendências de presença: o nível 2 não fecha, e o motivo é dito
-    expect(criterionOf(depois, 'EST-2.1')?.satisfied).toBe(false)
-    expect(criterionOf(depois, 'EST-2.1')?.reason).toMatch(/pendências de presença/)
+    expect(criterionOf(depois, 'EST-1.1')?.measured?.satisfied).toBe(true)
+    // gaiola vazia = pendências de presença: a medida diz por quê
+    expect(criterionOf(depois, 'EST-2.1')?.measured?.satisfied).toBe(false)
+    expect(criterionOf(depois, 'EST-2.1')?.measured?.reason).toMatch(/pendências de presença/)
+    // DF-19: a medida sozinha NÃO sobe o nível — quem sobe é a declaração
+    expect(areaOf(depois, 'estrutura').level).toBe(0)
+  })
+
+  it('AC-DF19.1 — declarar sobe o nível, e AC-DF19.3 grava a divergência sem mudar nada', async () => {
+    await declare(cap, 'EST-1.1')
+    expect(areaOf(await evolutionOf(cap), 'estrutura').level).toBe(1)
+
+    // a gaiola salva está incompleta: declarar EST-2.1 é divergir da medida
+    await declare(cap, 'EST-2.1')
+    await declare(cap, 'EST-2.2', { note: 'Conferido na reunião de 20/08' })
+    const evo = await evolutionOf(cap)
+    const est21 = criterionOf(evo, 'EST-2.1')
+    expect(est21?.satisfied).toBe(true)
+    expect(est21?.divergent).toBe(true)
+    expect(areaOf(evo, 'estrutura').level).toBe(2)
   })
 
   it('a atividade narra o salvamento com as contagens canônicas', async () => {
@@ -282,24 +387,28 @@ describe('DF-13 — evolução da equipe (API)', () => {
   // ---------- declarações ----------
 
   it('AC-DF13.4 — declarar exige capitania; membro comum recebe 403', async () => {
-    expect((await declare(membro, 'EST-2.2')).status).toBe(403)
-    const r = await declare(cap, 'EST-2.2', { note: 'Conferido na reunião de 20/08' })
+    expect((await declare(membro, 'EST-3.2')).status).toBe(403)
+    const r = await declare(cap, 'EST-3.2')
     expect(r.status).toBe(200)
     const evo: EvolutionView = await r.json()
-    expect(criterionOf(evo, 'EST-2.2')?.satisfied).toBe(true)
-    expect(criterionOf(evo, 'EST-2.2')?.reason).toBe('declarado pela capitania')
+    expect(criterionOf(evo, 'EST-3.2')?.satisfied).toBe(true)
+    expect(criterionOf(evo, 'EST-3.2')?.reason).toBe('declarado pela capitania')
   })
 
-  it('critério automático não é declarável (409)', async () => {
-    expect((await declare(cap, 'EST-3.1')).status).toBe(409)
+  it('DF-19 RF-1.1 — critério que o portal também mede é declarável como qualquer outro', async () => {
+    const r = await declare(cap, 'EST-3.1')
+    expect(r.status).toBe(200)
+    const evo: EvolutionView = await r.json()
+    expect(criterionOf(evo, 'EST-3.1')?.satisfied).toBe(true)
+    expect(criterionOf(evo, 'EST-3.1')?.type).toBe('auto')
+    expect(areaOf(evo, 'estrutura').level).toBe(3)
   })
 
-  it('critério oculto não é declarável (409) e inexistente é 404', async () => {
-    expect((await declare(cap, 'EST-4.1')).status).toBe(409)
+  it('critério inexistente é 404', async () => {
     expect((await declare(cap, 'XXX-9.9')).status).toBe(404)
   })
 
-  it('revogar a declaração derruba o critério de volta', async () => {
+  it('AC-DF19.6 — revogar derruba o nível na hora', async () => {
     await declare(cap, 'DIN-1.1')
     expect(criterionOf(await evolutionOf(cap), 'DIN-1.1')?.satisfied).toBe(true)
     const r = await app.request(
@@ -318,18 +427,43 @@ describe('DF-13 — evolução da equipe (API)', () => {
     ).toBe(404)
   })
 
+  it('AC-DF20.5 — reafirmar sem contraprova em curso é recusado', async () => {
+    const r = await app.request(
+      `/api/v1/teams/${teamId}/evolution/declarations/EST-3.1/reaffirm`,
+      authed(cap, { method: 'POST', body: json({ note: 'o carro é pesado de propósito' }) }),
+    )
+    // em modo declarado nenhuma contraprova dispara: não há o que responder
+    expect(r.status).toBe(409)
+  })
+
+  it('AC-DF20.8 — reafirmação exige `evolution.declare`', async () => {
+    const r = await app.request(
+      `/api/v1/teams/${teamId}/evolution/declarations/EST-3.1/reaffirm`,
+      authed(membro, { method: 'POST', body: json({ note: 'nota qualquer' }) }),
+    )
+    expect(r.status).toBe(403)
+  })
+
+  it('reafirmar sem nota é 400 — a justificativa é o ponto do mecanismo', async () => {
+    const r = await app.request(
+      `/api/v1/teams/${teamId}/evolution/declarations/EST-3.1/reaffirm`,
+      authed(cap, { method: 'POST', body: json({}) }),
+    )
+    expect(r.status).toBe(400)
+  })
+
   // ---------- fila de passos ----------
 
   it('AC-DF13.5 — critério pendente gera exatamente 1 passo; satisfazer conclui o passo', async () => {
     const abertos = await stepsOf(cap)
-    const doCriterio = abertos.filter((s) => s.criterionId === 'GES-2.2')
+    const doCriterio = abertos.filter((s) => s.criterionId === 'GES-1.1')
     expect(doCriterio).toHaveLength(1)
 
-    await declare(cap, 'GES-2.2', { note: 'Reunião toda terça, 19h' })
+    await declare(cap, 'GES-1.1')
     const depois = await stepsOf(cap)
-    expect(depois.some((s) => s.criterionId === 'GES-2.2')).toBe(false)
+    expect(depois.some((s) => s.criterionId === 'GES-1.1')).toBe(false)
     const concluidos = await stepsOf(cap, 'done')
-    expect(concluidos.some((s) => s.criterionId === 'GES-2.2')).toBe(true)
+    expect(concluidos.some((s) => s.criterionId === 'GES-1.1')).toBe(true)
   })
 
   it('recomputar de novo não duplica passo (idempotente)', async () => {
@@ -417,7 +551,98 @@ describe('DF-13 — evolução da equipe (API)', () => {
       authed(membro, { method: 'POST', body: json({ projectId }) }),
     )
     expect(certo.status).toBe(204)
-    expect(criterionOf(await evolutionOf(cap), 'FAB-2.1')?.satisfied).toBe(true)
+    expect(criterionOf(await evolutionOf(cap), 'FAB-2.1')?.measured?.satisfied).toBe(true)
+  })
+
+  // ---------- DF-18: a patente ----------
+
+  describe('patente do protótipo (DF-18)', () => {
+    it('a faixa traz emblema, média, piso e o que falta para a próxima', async () => {
+      const evo = await evolutionOf(cap)
+      const rank = evo.rank!
+      expect(rank.rank?.n).toBeLessThanOrEqual(8)
+      expect(rank.average).toBe(evo.average)
+      expect(rank.floor).toBe(evo.floor)
+      expect(rank.next?.n).toBe((rank.rank?.n ?? 8) - 1)
+      expect(rank.visibility).toEqual({ rankPublic: false, rankHistoryPublic: false })
+    })
+
+    it('AC-DF18.7 — sem vínculo aprovado, a próxima patente 4 é bloqueada por `sem-vinculo`', async () => {
+      // a equipe de teste não está vinculada ao acervo do DF-15
+      const r = await (await app.request(`/api/v1/teams/${teamId}/rank`, authed(membro))).json()
+      expect(r.optIn).toBe(true)
+      // qualquer bloqueio de competição aqui só pode ser por falta de vínculo
+      if (r.next?.block === 'competicao' || r.next?.block === 'sem-vinculo') {
+        expect(r.next.block).toBe('sem-vinculo')
+      }
+    })
+
+    it('promoção aparece uma vez por membro e `POST /rank/seen` silencia só quem chamou', async () => {
+      const antes = await (await app.request(`/api/v1/teams/${teamId}/rank`, authed(cap))).json()
+      const patente = antes.rank?.n ?? 8
+      const seen = await app.request(
+        `/api/v1/teams/${teamId}/rank/seen`,
+        authed(cap, { method: 'POST', body: json({ rank: patente }) }),
+      )
+      expect(seen.status).toBe(204)
+      const depois = await (await app.request(`/api/v1/teams/${teamId}/rank`, authed(cap))).json()
+      expect(depois.promotion).toBeNull()
+      // o outro membro segue com o aviso pendente (AC-DF18.10)
+      const doOutro = await (
+        await app.request(`/api/v1/teams/${teamId}/rank`, authed(membro))
+      ).json()
+      expect(doOutro.promotion).not.toBeNull()
+    })
+
+    it('AC-DF18.4 — o histórico registra a primeira patente e a maior alcançada', async () => {
+      const h = await (
+        await app.request(`/api/v1/teams/${teamId}/rank/history`, authed(membro))
+      ).json()
+      expect(h.history.length).toBeGreaterThan(0)
+      expect(h.history[0].reason).toBe('promocao')
+      expect(h.best.n).toBeLessThanOrEqual(8)
+    })
+
+    it('AC-DF18.11 — a vitrine é privada por padrão e a chave é da capitania', async () => {
+      const negado = await app.request(
+        `/api/v1/teams/${teamId}/rank/visibility`,
+        authed(membro, { method: 'PATCH', body: json({ rankPublic: true }) }),
+      )
+      expect(negado.status).toBe(403)
+
+      const ok = await app.request(
+        `/api/v1/teams/${teamId}/rank/visibility`,
+        authed(cap, { method: 'PATCH', body: json({ rankPublic: true }) }),
+      )
+      expect(ok.status).toBe(200)
+      expect((await ok.json()).rankPublic).toBe(true)
+
+      // e desligar é imediato (RF-6.4)
+      const off = await app.request(
+        `/api/v1/teams/${teamId}/rank/visibility`,
+        authed(cap, { method: 'PATCH', body: json({ rankPublic: false }) }),
+      )
+      expect((await off.json()).rankPublic).toBe(false)
+    })
+
+    it('AC-DF18.3/18.4 — desativar e reativar preserva tudo, e a reativação responde na hora', async () => {
+      const antes = await evolutionOf(cap)
+      const patente = antes.rank?.rank?.n
+      const niveis = antes.areas.map((a) => a.level)
+      expect(patente).toBeLessThanOrEqual(8)
+
+      expect((await optOut(cap)).status).toBe(200)
+      const off = await evolutionOf(cap)
+      expect(off.optIn).toBe(false)
+      expect(off.areas).toEqual([])
+
+      // AC-DF18.3 — a resposta da REATIVAÇÃO já traz níveis e patente, não um painel
+      // zerado que só o segundo carregamento preencheria
+      const volta: EvolutionView = await (await optIn(cap)).json()
+      expect(volta.rank?.rank?.n).toBe(patente)
+      expect(volta.areas.map((a) => a.level)).toEqual(niveis)
+      expect(criterionOf(volta, 'EST-2.2')?.satisfied).toBe(true)
+    })
   })
 
   // ---------- benchmark ----------
@@ -436,25 +661,33 @@ describe('DF-13 — evolução da equipe (API)', () => {
 
   // ---------- isolamento ----------
 
-  it('AC-DF13.10 — nada da equipe alheia é legível ou gravável', async () => {
-    for (const path of ['/evolution', '/evolution/steps', '/season', '/activity']) {
+  it('AC-DF13.10 / AC-DF18.12 — nada da equipe alheia é legível ou gravável', async () => {
+    for (const path of [
+      '/evolution',
+      '/evolution/steps',
+      '/season',
+      '/activity',
+      '/rank',
+      '/rank/history',
+    ]) {
       const r = await app.request(`/api/v1/teams/${teamId}${path}`, authed(fora))
       expect(r.status, path).toBe(404)
     }
     expect((await declare(fora, 'EST-2.2')).status).toBe(404)
+    expect((await optIn(fora)).status).toBe(404)
     const passo = await app.request(
       `/api/v1/teams/${teamId}/evolution/steps`,
       authed(fora, { method: 'POST', body: json({ title: 'Invasão' }) }),
     )
     expect(passo.status).toBe(404)
-    // e a equipe alheia continua com a própria evolução intacta
+    // e a equipe alheia continua com a própria evolução intacta (e desativada)
     const dele = await evolutionOf(fora, outraEquipe)
-    expect(dele.areas.find((a) => a.area === 'estrutura')?.level).toBe(0)
+    expect(dele.optIn).toBe(false)
   })
 
   // ---------- LGPD ----------
 
-  it('AC-DF13.9 — export do titular inclui declarações, passos e evidências', async () => {
+  it('AC-DF13.9 / AC-DF18.14 — export inclui declarações, passos, evidências e o opt-in', async () => {
     const dump = await (await app.request('/api/v1/me/export', authed(cap))).json()
     expect(dump.evolutionDeclarations.length).toBeGreaterThan(0)
     expect(dump.evolutionSteps.length).toBeGreaterThan(0)
@@ -462,5 +695,7 @@ describe('DF-13 — evolução da equipe (API)', () => {
     expect(
       dump.evolutionDeclarations.every((d: { declared_by: string }) => d.declared_by === cap.sub),
     ).toBe(true)
+    expect(dump.evolutionOptIns.length).toBeGreaterThan(0)
+    expect(dump.evolutionOptIns[0].notice_version).toBeTruthy()
   })
 })

@@ -107,6 +107,10 @@ Permite copiar, redistribuir e adaptar **com atribuição** e **sem finalidade c
 **Este crédito aparece na tela**, ao contrário dos ícones do Lucide: a licença exige atribuição
 "de forma razoável", e o rodapé da tela de patentes é onde ela é razoável. Não remover.
 
+Onde ele vive no código: `ART_CREDIT`, em `apps/web/src/components/RankBand.tsx`. A mesma
+constante é escrita no rodapé do **cartaz PNG** exportado (DF-18 RF-7.3) — a atribuição
+acompanha a imagem quando ela sai do portal, que é justamente quando ela mais importa.
+
 **Restrição a monitorar — a cláusula NC.** Vale enquanto o portal for gratuito. O marco M3 do
 `docs/plano-producao-v2.md` prevê assinaturas: antes de qualquer cobrança é preciso obter
 permissão direta dos dois autores **ou** substituir por arte original. A escada de nomes livres de

@@ -115,9 +115,9 @@ aprovado no canvas
 | 3 ✅  | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                  |
 | 4 ✅  | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                  |
 | 5 ✅  | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark      |
-| 6 📝  | [DF-18](drafts/df18-patentes-prototipo.md)    | DF-13, DF-15, DF-19    | A patente é o rosto do modelo; sem ela nada é contável   |
-| 7 📝  | [DF-19](drafts/df19-catalogo-maturidade.md)   | DF-13                  | Define o que alimenta os níveis na v1 — vem com o DF-18  |
-| 8 📝  | [DF-20](drafts/df20-afericao-declaracoes.md)  | DF-19, DF-13, DF-14    | Saída do autodeclarativo; só depois de 1 temporada de v1 |
+| 6 ✅  | [DF-18](drafts/df18-patentes-prototipo.md)    | DF-13, DF-15, DF-19    | A patente é o rosto do modelo; sem ela nada é contável   |
+| 7 ✅  | [DF-19](drafts/df19-catalogo-maturidade.md)   | DF-13                  | Define o que alimenta os níveis na v1 — vem com o DF-18  |
+| 8 ✅  | [DF-20](drafts/df20-afericao-declaracoes.md)  | DF-19, DF-13, DF-14    | Saída do autodeclarativo; só depois de 1 temporada de v1 |
 | 9 ✅  | [DF-21](drafts/df21-ficha-prototipo.md)       | DF-12, motor B6        | Independente; destrava a onda V2 do DF-20 e o Anexo B    |
 
 ## Lote das patentes (DF-18…DF-20) — proposto em 2026-08-30
@@ -140,6 +140,23 @@ fases EV-9 e EV-10 no plano de implementação.
   já mede. Três mecanismos (contradição direta derruba; indício quantitativo pergunta; piso de
   atividade suspende tudo com um aviso só). A onda V1 cobre 19 critérios **sem ferramenta nova**.
 
+**Estado (2026-08-31): as três specs implementadas de ponta a ponta** — catálogo `2.0.0` com os
+51 critérios detalhados e `CATALOG_MODE`, escada de patentes em `packages/evolution/ranks.ts`,
+contraprovas em `counter.ts`, migrações `0008` (patentes e opt-in) e `0010` (reafirmação e
+mediana de massa por classe), opt-in e patente na API, faixa da patente, painel de ativação,
+aviso de promoção, cartaz PNG no cliente e UI do critério suspenso.
+
+Três coisas que a implementação decidiu e que valem saber:
+
+1. **O DF-20 fica ligado por variável de ambiente** (`EVOLUTION_MODE`, default `declarado`), não
+   por deploy. O gate da spec — uma temporada de v1 autodeclarativa acumulada — é de produto, e
+   virar o modo não exige migração nenhuma (AC-DF19.10).
+2. **A onda V2 do `DIN-3.x` deixou de estar bloqueada:** a ficha do DF-21 deu a classe do
+   projeto (ocupantes + tração), então a mediana de massa compara só protótipos comparáveis.
+3. **O emblema na Comunidade ficou de fora** por respeito à RF-6.3: a web só tem a listagem de
+   equipes do acervo, e patente de terceiro não entra em agregado. A rota já devolve a vitrine
+   (`GET /community/teams/:id`); a tela entra com o perfil de equipe, que é outra spec.
+
 ## DF-21 — Ficha do protótipo (proposto em 2026-08-30)
 
 Lacuna encontrada ao escrever o DF-19: **17 dos 51 critérios se apoiam em informação de projeto
@@ -154,14 +171,18 @@ projetado × medido), porque **a divergência entre o protótipo idealizado e o 
 produto**, não ruído. Histórico por campo e exportação. Vale por si — inspeção, relatório, geração
 seguinte, comparação com a comunidade. Efeitos colaterais: destrava a onda V2 do DF-20 (classe de
 projeto), tira `EST-4.1`/`DOC-4.2` da condição de "ferramenta futura" e dá conteúdo concreto aos
-kits de passagem do DF-14. Fase **EV-11**, executável antes do EV-10.
+kits de passagem do DF-14. Fase **EV-11**, executada antes do EV-10 — e foi ela que destravou
+a onda V2 do `DIN-3.x`, que o DF-20 §8.1 dava como bloqueada.
 
 **Estado (2026-08-30): implementada** — `packages/datasheet` (catálogo v1.0.0 com 78 campos em 9
 seções, sugestões, validação e progresso), migração `0009`, módulo `datasheet` na API (leitura,
 escrita parcial com lock por campo, histórico, dispensas, exportação Markdown/CSV) e a página de
 projeto com as três abas. Fora da entrega, por dependerem de decisão ou de outra spec: kit de
-passagem por cargo (a amarração seção → cargo é a questão aberta §12.5), catálogo de maturidade
-`2.1.0` (o v2.0.0 do DF-19 ainda não existe em código) e as medianas por classe da comunidade.
+passagem por cargo (a amarração seção → cargo é a questão aberta §12.5) e o catálogo de
+maturidade `2.1.0` — que só troca o campo "onde registrar" dos 17 critérios que hoje apontam
+para link externo, agora que a ficha existe. As **medianas por classe** deixaram de ser
+pendência: `evolution_mass_median(classe)` entrou com o DF-20 e é o que sustenta o indício de
+massa do `DIN-3.x`.
 
 **Estado (2026-08-30): as cinco specs implementadas de ponta a ponta** — motor puro,
 banco, API, produtores de evidência e todas as superfícies, sobre a fase 0 do plano de

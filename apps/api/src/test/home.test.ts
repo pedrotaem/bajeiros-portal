@@ -14,7 +14,9 @@ interface Home {
   teams: { id: string }[]
   state: 'normal' | 'bootstrap' | 'sem-equipe'
   season?: { label: string; next: { title: string; daysLeft: number } | null } | null
-  evolution?: { average: number; areas: { area: string; level: number }[] }
+  optIn?: boolean
+  rank?: { rank: { n: number } | null; next: { missing: number } | null } | null
+  evolution?: { average: number; areas: { area: string; level: number }[] } | null
   steps?: { id: string; title: string; destination: { page: string; tab?: string } }[]
   openSteps?: number
   activity?: { kind: string; payload: Record<string, unknown> }[]
@@ -82,7 +84,18 @@ describe('DF-16 — GET /me/home', () => {
     )
   })
 
+  it('DF-18 AC-18.2 — sem opt-in o Início não mostra evolução, patente nem fila', async () => {
+    const h = await home(cap)
+    expect(h.optIn).toBe(false)
+    expect(h.evolution).toBeNull()
+    expect(h.rank).toBeNull()
+    expect(h.steps).toEqual([])
+    // o resto da página continua de pé: equipe, conhecimento, "continuar de onde parou"
+    expect(h.team?.id).toBe(teamId)
+  })
+
   it('AC-DF16.5 — equipe recém-criada cai no estado de bootstrap', async () => {
+    await post(cap, '/evolution/optin', {})
     const h = await home(cap)
     expect(h.state).toBe('bootstrap')
     expect(h.team?.id).toBe(teamId)
@@ -151,14 +164,17 @@ describe('DF-16 — GET /me/home', () => {
     expect(h.season?.label).toBe('2027')
     expect(h.season?.next?.daysLeft).toBe(10)
     expect(h.evolution?.areas).toHaveLength(6)
-    expect(h.evolution?.average).toBeGreaterThan(0)
+    // DF-19: a média só sobe com declaração; a equipe do teste ainda não declarou
+    expect(h.evolution?.average).toBe(0)
+    await post(cap, '/evolution/declarations/GES-1.1', {})
+    expect((await home(cap)).evolution?.average).toBeGreaterThan(0)
+    // DF-18 §7 — o Início carrega o emblema e a distância até a próxima patente
+    expect(h.rank?.rank?.n).toBe(8)
+    expect(h.rank?.next?.missing).toBeGreaterThan(0)
 
     const salvamento = h.activity!.find((e) => e.kind === 'validation.summary')
     expect(salvamento).toBeTruthy()
     expect((salvamento!.payload.counts as { fail: number }).fail).toBeGreaterThan(0)
-    const nivel = h.activity!.find((e) => e.kind === 'level.changed')
-    expect(nivel?.payload.area).toBeTruthy()
-    expect(Array.isArray(nivel?.payload.because)).toBe(true)
   })
 
   it('AC-DF16.1 — uma chamada alimenta a página e o payload é enxuto', async () => {
@@ -184,6 +200,7 @@ describe('DF-16 — GET /me/home', () => {
     expect(h.team).toBeNull()
     expect(h.teams).toEqual([])
     expect(h.steps).toBeUndefined()
+    expect(h.rank).toBeUndefined()
     expect(h.continueEditor).toBeNull()
   })
 

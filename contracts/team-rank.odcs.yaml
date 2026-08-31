@@ -1,0 +1,181 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:team-rank
+name: team_rank
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Patente do protótipo da temporada (DF-18) — opt-in da capitania, estado vigente com
+    carência de 30 dias e histórico append-only da maior patente alcançada.
+  usage: A patente é DERIVADA dos níveis do DF-13; `team_rank_state` só existe porque a carência
+    precisa de carimbo. Emblema é privado por padrão (teams.rank_public = false) e não existe
+    listagem ordenada de equipes por patente (RF-6.3).
+schema:
+  - name: evolution_optin
+    logicalType: object
+    physicalType: table
+    physicalName: evolution_optin
+    description: Opt-in da avaliação de maturidade. Desativar não apaga nada (RF-2.5).
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: enabled
+        logicalType: boolean
+        required: true
+        description: Falso enquanto desativado; declarações e histórico ficam dormentes.
+      - name: notice_version
+        logicalType: string
+        required: true
+        description: Versão do texto do painel aceito na ativação (RF-2.1).
+      - name: enabled_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem ativou. Anonimizado (SET NULL) na exclusão de conta, preservando o fato.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: enabled_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: disabled_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da equipe; anonimizado na exclusão da conta do titular
+      - name: disabled_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+
+  - name: team_rank_state
+    logicalType: object
+    physicalType: table
+    physicalName: team_rank_state
+    description: Estado vigente + carência. Materializado só porque a queda espera 30 dias.
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: rank
+        logicalType: integer
+        required: false
+        description: 1 (The Interceptor) a 8 (Motorats); NULL enquanto não há avaliação.
+      - name: season_label
+        logicalType: string
+        required: false
+      - name: broken_since
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        description: Quando a trava rompeu. A queda só é efetiva 30 dias depois (§3.5).
+      - name: broken_target
+        logicalType: integer
+        required: false
+        description: Patente para onde cairia; some quando a equipe conserta antes do prazo.
+      - name: catalog_version
+        logicalType: string
+        required: true
+      - name: computed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+
+  - name: team_rank_history
+    logicalType: object
+    physicalType: table
+    physicalName: team_rank_history
+    description: Append-only por GRANT. Fonte da maior patente alcançada — a marca que
+      sobrevive à formatura da turma. Nunca apagada por desativação, queda ou virada.
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: rank
+        logicalType: integer
+        required: true
+      - name: previous_rank
+        logicalType: integer
+        required: false
+      - name: season_label
+        logicalType: string
+        required: false
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: O protótipo avaliado — a unidade da patente é o carro, não a equipe (§3.1).
+      - name: reason
+        logicalType: string
+        required: true
+        description: promocao | queda | catalogo | reativacao
+      - name: catalog_version
+        logicalType: string
+        required: true
+      - name: changed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+
+  - name: team_rank_seen
+    logicalType: object
+    physicalType: table
+    physicalName: team_rank_seen
+    description: Aviso de promoção visto, POR MEMBRO (RF-5.1). Silenciar para si não
+      silencia para os outros.
+    properties:
+      - name: team_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: user_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida da associação à equipe; removido em cascata na exclusão da conta
+      - name: rank
+        logicalType: integer
+        required: true
+      - name: seen_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: derived
+    value: A patente é derivada dos níveis do DF-13 — nunca um placar paralelo (RF-1.3)
+  - property: visibility
+    value: privada por padrão; vitrine opcional expõe SÓ emblema, número e temporada (RF-6.2)
+  - property: noRanking
+    value: não existe (e não é pendência) listagem ordenada de equipes por patente (RF-6.3)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

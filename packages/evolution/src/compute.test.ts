@@ -1,22 +1,36 @@
 import { describe, expect, it } from 'vitest'
 import { formatAverage } from './areas'
+import { CATALOG } from './catalog'
 import { computeLevels, evidence } from './compute'
 import type { ComputeInput, Declaration, Evidence } from './types'
+
+// DF-13 (níveis) + DF-19 (modo autodeclarativo) + DF-20 (aferição).
+//
+// A virada do DF-19 está em toda a suíte: no v1.0.0 o critério `auto` era satisfeito
+// pela EVIDÊNCIA; na v2.0.0 quem satisfaz é a DECLARAÇÃO, e a evidência vira a
+// MEDIDA que aparece ao lado da resposta (RF-1.3). Por isso o que antes se afirmava
+// em `reason` agora se afirma em `measured`.
 
 const NOW = new Date('2026-08-30T12:00:00Z')
 const days = (n: number) => new Date(NOW.getTime() - n * 24 * 60 * 60 * 1000)
 
-function run(evidences: Evidence[], declarations: string[] = [], now = NOW) {
+function run(
+  evidences: Evidence[],
+  declarations: (string | Declaration)[] = [],
+  over: Partial<ComputeInput> = {},
+) {
   const input: ComputeInput = {
     evidences,
-    declarations: declarations.map<Declaration>((criterionId) => ({
-      criterionId,
-      declaredAt: days(1),
-    })),
-    now,
+    declarations: declarations.map<Declaration>((d) =>
+      typeof d === 'string' ? { criterionId: d, declaredAt: days(1) } : d,
+    ),
+    now: NOW,
+    ...over,
   }
   return computeLevels(input)
 }
+
+const ALL_IDS = CATALOG.map((c) => c.id)
 
 const validation = (
   over: Partial<{
@@ -24,6 +38,7 @@ const validation = (
     presence: number
     failedRuleIds: string[]
     seq: number
+    massKg: number | null
   }> = {},
   at = days(1),
 ) =>
@@ -34,7 +49,7 @@ const validation = (
       snapshotSeq: over.seq ?? 15,
       counts: { pass: 37, fail: over.fail ?? 0, warn: 0, manual: 3 },
       presence: over.presence ?? 0,
-      massKg: 62.4,
+      massKg: over.massKg === undefined ? 62.4 : over.massKg,
       failedRuleIds: over.failedRuleIds ?? [],
       manualRuleIds: ['B6.2.5.3'],
     },
@@ -52,6 +67,7 @@ const org = (over: Record<string, unknown> = {}, at = days(1)) =>
       positions: 14,
       leads: 6,
       leadsFilled: 6,
+      unfilledLeads: [],
       lastApprovedUserId: null,
       ...over,
     },
@@ -73,20 +89,23 @@ const knowledge = (over: Record<string, unknown> = {}, at = days(1)) =>
     at,
   )
 
-const level = (r: ReturnType<typeof run>, area: string) => r.levels[area as 'estrutura']
-const reason = (r: ReturnType<typeof run>, id: string) =>
-  r.areas.flatMap((a) => a.criteria).find((c) => c.id === id)?.reason
+type Result = ReturnType<typeof run>
+const level = (r: Result, area: string) => r.levels[area as 'estrutura']
+const crit = (r: Result, id: string) => r.areas.flatMap((a) => a.criteria).find((c) => c.id === id)
+const reason = (r: Result, id: string) => crit(r, id)?.reason
+const measured = (r: Result, id: string) => crit(r, id)?.measured?.reason
 
 describe('equipe zerada', () => {
-  it('todas as áreas em 0 e média 0,0', () => {
+  it('todas as áreas em 0, média 0,0 e piso 0', () => {
     const r = run([])
     expect(r.average).toBe(0)
     expect(formatAverage(r.average)).toBe('0,0')
+    expect(r.floor).toBe(0)
     for (const a of r.areas) expect(a.level, a.area).toBe(0)
   })
 
   it('explica que falta o projeto da temporada, não "0 infrações"', () => {
-    expect(reason(run([]), 'EST-3.1')).toBe('nenhuma versão salva do projeto da temporada')
+    expect(measured(run([]), 'EST-3.1')).toBe('nenhuma versão salva do projeto da temporada')
   })
 
   it('só o próximo nível gera pendências (fila não vira cobrança)', () => {
@@ -96,130 +115,157 @@ describe('equipe zerada', () => {
   })
 })
 
-describe('AC-DF13.2 — ciclo do validador', () => {
-  it('com EST-2.2/3.2 declarados, salvar sem infração sobe Estrutura para 3', () => {
-    const r = run([validation()], ['EST-2.2', 'EST-3.2'])
+describe('DF-19 — modo autodeclarativo', () => {
+  it('AC-DF19.1 — critério `auto` NÃO satisfeito por evidência sobe o nível quando declarado', () => {
+    const semDeclarar = run([validation()])
+    expect(level(semDeclarar, 'estrutura')).toBe(0)
+    expect(measured(semDeclarar, 'EST-1.1')).toBe('projeto da temporada com versão salva')
+
+    const declarado = run([], ['EST-1.1'])
+    expect(level(declarado, 'estrutura')).toBe(1)
+  })
+
+  it('AC-DF19.2 — 51 critérios, todos visíveis, nenhum fora do denominador', () => {
+    const r = run([])
+    expect(r.areas.flatMap((a) => a.criteria)).toHaveLength(51)
+    expect(r.areas.flatMap((a) => a.criteria).map((c) => c.id)).toContain('EST-4.1')
+    expect(r.areas.flatMap((a) => a.criteria).map((c) => c.id)).toContain('DOC-4.2')
+  })
+
+  it('AC-DF19.3 — a medida aparece ao lado da resposta; discordar grava `divergent` sem mudar o nível', () => {
+    // a equipe diz que a gaiola está sem infração; a última versão salva tem 2
+    const r = run(
+      [validation({ fail: 2 })],
+      ['EST-1.1', 'EST-2.1', 'EST-2.2', 'EST-3.1', 'EST-3.2'],
+    )
+    const c = crit(r, 'EST-3.1')!
+    expect(c.satisfied).toBe(true) // na v1 a divergência NÃO muda o nível
+    expect(c.divergent).toBe(true)
+    expect(c.measured).toEqual({ satisfied: false, reason: '2 infrações na última versão' })
     expect(level(r, 'estrutura')).toBe(3)
   })
 
-  it('salvar com infração derruba Estrutura para 2', () => {
-    const r = run(
-      [validation({ fail: 2, failedRuleIds: ['B6.2.4.2', 'B6.3.1'] })],
-      ['EST-2.2', 'EST-3.2'],
-    )
-    expect(level(r, 'estrutura')).toBe(2)
-    expect(reason(r, 'EST-3.1')).toBe('2 infrações na última versão')
+  it('divergência não existe onde o portal não mede', () => {
+    const r = run([], ['EST-3.2'])
+    expect(crit(r, 'EST-3.2')?.measured).toBeNull()
+    expect(crit(r, 'EST-3.2')?.divergent).toBe(false)
   })
 
-  it('pendência de presença segura no nível 1', () => {
-    const r = run([validation({ fail: 1, presence: 1 })], ['EST-2.2', 'EST-3.2'])
+  it('AC-DF19.4 — cumulativo: declarar nível 5 com o 2 incompleto não altera o nível', () => {
+    const r = run([], ['EST-1.1', 'EST-5.1', 'EST-5.2'])
     expect(level(r, 'estrutura')).toBe(1)
+    expect(crit(r, 'EST-5.1')?.satisfied).toBe(true)
   })
 
-  it('a evidência mais recente manda (nível acompanha a última versão salva)', () => {
-    const r = run(
-      [validation({ fail: 3, seq: 14 }, days(5)), validation({ fail: 0, seq: 15 }, days(1))],
-      ['EST-2.2', 'EST-3.2'],
-    )
-    expect(level(r, 'estrutura')).toBe(3)
+  it('AC-DF19.5 — critério sazonal declarado em outra temporada vence na virada', () => {
+    const decl: Declaration = { criterionId: 'DOC-1.1', declaredAt: days(400), seasonLabel: '2026' }
+    const vigente = run([], [decl], { seasonLabel: '2026' })
+    expect(crit(vigente, 'DOC-1.1')?.satisfied).toBe(true)
+    expect(vigente.expiring).toContain('DOC-1.1')
+
+    const virou = run([], [decl], { seasonLabel: '2027' })
+    expect(crit(virou, 'DOC-1.1')?.satisfied).toBe(false)
+    expect(crit(virou, 'DOC-1.1')?.expired).toBe(true)
+    expect(reason(virou, 'DOC-1.1')).toBe('vencido com a virada da temporada 2027')
+    expect(level(virou, 'documentacao')).toBe(0)
   })
 
-  it('sem declarar EST-2.2, o nível trava em 1 mesmo com validação limpa', () => {
-    expect(level(run([validation()]), 'estrutura')).toBe(1)
+  it('declaração sem rótulo de temporada não expira retroativamente', () => {
+    const r = run([], [{ criterionId: 'DOC-1.1', declaredAt: days(400) }], { seasonLabel: '2027' })
+    expect(crit(r, 'DOC-1.1')?.satisfied).toBe(true)
+  })
+
+  it('critério não-sazonal atravessa a virada', () => {
+    const decl: Declaration = { criterionId: 'DOC-3.2', declaredAt: days(400), seasonLabel: '2026' }
+    expect(crit(run([], [decl], { seasonLabel: '2027' }), 'DOC-3.2')?.satisfied).toBe(true)
   })
 })
 
-describe('dinâmica — regras do validador por ID', () => {
-  it('SUSP.1 com infração impede o nível 2', () => {
-    const r = run([validation({ fail: 1, failedRuleIds: ['SUSP.1'] })], ['DIN-1.1'])
-    expect(level(r, 'dinamica')).toBe(1)
-    expect(reason(r, 'DIN-2.1')).toBe('SUSP.1 com infração na última versão')
+describe('a medida do portal (checks do catálogo)', () => {
+  it('EST-1.1 aceita os dois caminhos: gaiola salva OU ficha com conteúdo', () => {
+    expect(measured(run([validation()]), 'EST-1.1')).toBe('projeto da temporada com versão salva')
+    const comFicha = run([evidence('datasheet.summary', { projectId: 'p1', filled: 12 }, days(1))])
+    expect(measured(comFicha, 'EST-1.1')).toBe('ficha do protótipo com 12 campos')
+    expect(measured(run([]), 'EST-1.1')).toBe('sem versão salva e sem ficha preenchida')
   })
 
-  it('STEER.1 ausente do projeto não bloqueia (critério condicional)', () => {
-    const r = run([validation()], ['DIN-1.1'])
-    expect(level(r, 'dinamica')).toBe(2)
-  })
-})
-
-describe('gestão — organograma e temporada', () => {
-  it('capitania regular + organograma criado fecha o nível 1', () => {
-    expect(level(run([org({ leads: 6, leadsFilled: 0 })]), 'gestao')).toBe(1)
-  })
-
-  it('capitania irregular (2 capitães) reprova GES-1.1', () => {
-    const r = run([org({ owners: 2 })])
-    expect(level(r, 'gestao')).toBe(0)
-    expect(reason(r, 'GES-1.1')).toBe('capitania irregular (2 capitão/capitã, 2 co)')
-  })
-
-  it('cargo de liderança vago segura o nível 2', () => {
-    const r = run([org({ leadsFilled: 4 })], ['GES-2.2'])
-    expect(level(r, 'gestao')).toBe(1)
-    expect(reason(r, 'GES-2.1')).toBe('2 cargos de liderança sem ocupante')
-  })
-
-  it('AC-DF13.7 — temporada com marcos satisfaz GES-3.1', () => {
-    const r = run(
-      [org(), evidence('season.configured', { label: '2027', milestones: 5 }, days(1))],
-      ['GES-2.2', 'GES-3.2'],
+  it('infração e pendência de presença aparecem com o número', () => {
+    expect(measured(run([validation({ fail: 2 })]), 'EST-3.1')).toBe('2 infrações na última versão')
+    expect(measured(run([validation({ fail: 1, presence: 1 })]), 'EST-2.1')).toBe(
+      '1 pendências de presença',
     )
-    expect(level(r, 'gestao')).toBe(3)
+  })
+
+  it('a evidência mais recente manda', () => {
+    const r = run([
+      validation({ fail: 3, seq: 14 }, days(5)),
+      validation({ fail: 0, seq: 15 }, days(1)),
+    ])
+    expect(measured(r, 'EST-3.1')).toBe('zero infrações automáticas na última versão')
+  })
+
+  it('SUSP.1 e STEER.1 são lidas por ID', () => {
+    const r = run([validation({ fail: 1, failedRuleIds: ['SUSP.1'] })])
+    expect(measured(r, 'DIN-2.1')).toBe('SUSP.1 com infração na última versão')
+    expect(measured(r, 'DIN-2.2')).toBe('ancoragem da direção apoiada (ou não declarada)')
+  })
+
+  it('capitania irregular e cargo vago aparecem no organograma', () => {
+    expect(measured(run([org({ owners: 2 })]), 'GES-1.1')).toBe(
+      'capitania irregular (2 capitão/capitã, 2 co)',
+    )
+    expect(measured(run([org({ leadsFilled: 4 })]), 'GES-2.1')).toBe(
+      '2 cargos de liderança sem ocupante',
+    )
   })
 
   it('temporada sem marcos não conta', () => {
-    const r = run(
-      [org(), evidence('season.configured', { label: '2027', milestones: 0 }, days(1))],
-      ['GES-2.2', 'GES-3.2'],
-    )
-    expect(level(r, 'gestao')).toBe(2)
-  })
-})
-
-describe('conhecimento — contagens vivas e janelas temporais', () => {
-  const areasDecisions = (areas: string[], at = days(10)) =>
-    areas.map((area) => evidence('decision.created', { area }, at))
-
-  it('uma decisão fecha o nível 1', () => {
-    expect(level(run([knowledge({ decisions: 1 })]), 'conhecimento')).toBe(1)
-  })
-
-  it('10 decisões + 2 guias + trilha fecham o nível 2', () => {
-    const r = run([
-      knowledge({ decisions: 10, guides: 2, guidesByKind: { guia: 1, trilha: 1, checklist: 0 } }),
+    const semMarcos = run([
+      evidence('season.configured', { label: '2027', milestones: 0 }, days(1)),
     ])
-    expect(level(r, 'conhecimento')).toBe(2)
+    expect(measured(semMarcos, 'GES-3.1')).toBe('temporada sem marcos datados')
+    const comMarcos = run([
+      evidence('season.configured', { label: '2027', milestones: 5 }, days(1)),
+    ])
+    expect(measured(comMarcos, 'GES-3.1')).toBe('temporada com 5 marcos')
   })
 
   it('CON-3.2 conta só decisões dentro da janela de 6 meses', () => {
-    const base = knowledge({
-      decisions: 12,
-      guides: 2,
-      guidesByKind: { guia: 1, trilha: 1, checklist: 0 },
-    })
-    const antigas = areasDecisions(['estrutura', 'dinamica', 'gestao'], days(300))
-    const recentes = areasDecisions(['estrutura', 'dinamica', 'gestao'], days(10))
-    expect(reason(run([base, ...antigas]), 'CON-3.2')).toBe('0/3 áreas com decisão em 6 meses')
-    expect(reason(run([base, ...recentes]), 'CON-3.2')).toBe('3 áreas com decisão em 6 meses')
+    const areasDecisions = (areas: string[], at: Date) =>
+      areas.map((area) => evidence('decision.created', { area }, at))
+    const base = knowledge({ decisions: 12 })
+    expect(
+      measured(
+        run([base, ...areasDecisions(['estrutura', 'dinamica', 'gestao'], days(300))]),
+        'CON-3.2',
+      ),
+    ).toBe('0/3 áreas com decisão em 6 meses')
+    expect(
+      measured(
+        run([base, ...areasDecisions(['estrutura', 'dinamica', 'gestao'], days(10))]),
+        'CON-3.2',
+      ),
+    ).toBe('3 áreas com decisão em 6 meses')
   })
 
   it('decisão de área "geral" não conta como área distinta', () => {
-    const base = knowledge({ decisions: 12 })
-    const r = run([base, ...areasDecisions(['estrutura', 'geral', 'geral'])])
-    expect(reason(r, 'CON-3.2')).toBe('1/3 áreas com decisão em 6 meses')
+    const r = run([
+      knowledge({ decisions: 12 }),
+      evidence('decision.created', { area: 'estrutura' }, days(10)),
+      evidence('decision.created', { area: 'geral' }, days(10)),
+    ])
+    expect(measured(r, 'CON-3.2')).toBe('1/3 áreas com decisão em 6 meses')
   })
 
   it('CON-3.1 exige que o ÚLTIMO novato aprovado tenha concluído a trilha', () => {
     const base = [knowledge({ decisions: 12 }), org({ lastApprovedUserId: 'u2' })]
-    expect(reason(run([knowledge({ decisions: 12 }), org()]), 'CON-3.1')).toBe(
-      'nenhum novato aprovado ainda',
-    )
+    expect(measured(run([knowledge(), org()]), 'CON-3.1')).toBe('nenhum novato aprovado ainda')
     const outro = evidence('trail.completed', { userId: 'u1' }, days(3))
-    expect(reason(run([...base, outro]), 'CON-3.1')).toBe(
+    expect(measured(run([...base, outro]), 'CON-3.1')).toBe(
       'o último novato aprovado não concluiu a trilha',
     )
     const certo = evidence('trail.completed', { userId: 'u2' }, days(2))
-    expect(reason(run([...base, outro, certo]), 'CON-3.1')).toBe(
+    expect(measured(run([...base, outro, certo]), 'CON-3.1')).toBe(
       'último novato aprovado concluiu a trilha',
     )
   })
@@ -228,86 +274,55 @@ describe('conhecimento — contagens vivas e janelas temporais', () => {
     const aberto = evidence('kit.opened', { kitId: 'k1', dueDate: '2026-06-01' }, days(120))
     const concluido = evidence('kit.completed', { kitId: 'k2' }, days(30))
     const outroAberto = evidence('kit.opened', { kitId: 'k2', dueDate: '2026-05-01' }, days(150))
-    expect(reason(run([aberto, outroAberto, concluido]), 'CON-4.1')).toBe(
+    expect(measured(run([aberto, outroAberto, concluido]), 'CON-4.1')).toBe(
       '1 kits abertos com saída vencida',
     )
     const fechado = evidence('kit.completed', { kitId: 'k1' }, days(1))
-    expect(reason(run([aberto, outroAberto, concluido, fechado]), 'CON-4.1')).toBe('kits em dia')
-  })
-
-  it('kit aberto com saída futura não é pendência', () => {
-    const futuro = evidence('kit.opened', { kitId: 'k9', dueDate: '2026-12-20' }, days(1))
-    const feito = evidence('kit.completed', { kitId: 'k1' }, days(10))
-    expect(reason(run([futuro, feito]), 'CON-4.1')).toBe('kits em dia')
+    expect(measured(run([aberto, outroAberto, concluido, fechado]), 'CON-4.1')).toBe('kits em dia')
   })
 
   it('CON-4.2 — guia sem dono ou envelhecido reprova', () => {
-    expect(reason(run([knowledge({ guides: 3, guidesWithoutOwner: 1 })]), 'CON-4.2')).toBe(
+    expect(measured(run([knowledge({ guides: 3, guidesWithoutOwner: 1 })]), 'CON-4.2')).toBe(
       '1 guias sem dono',
     )
     expect(
-      reason(
+      measured(
         run([knowledge({ guides: 3, oldestGuideUpdatedAt: days(300).toISOString() })]),
         'CON-4.2',
       ),
     ).toBe('há guia sem atualização há mais de 6 meses')
-    expect(
-      reason(
-        run([knowledge({ guides: 3, oldestGuideUpdatedAt: days(10).toISOString() })]),
-        'CON-4.2',
-      ),
-    ).toBe('todos os guias com dono e atualizados')
   })
 
   it('a mesma entrada em outra data muda o resultado (now é injetado)', () => {
     const g = knowledge({ guides: 1, oldestGuideUpdatedAt: '2026-08-01T00:00:00Z' })
-    expect(reason(run([g], [], new Date('2026-08-30T12:00:00Z')), 'CON-4.2')).toBe(
+    expect(measured(run([g], [], { now: new Date('2026-08-30T12:00:00Z') }), 'CON-4.2')).toBe(
       'todos os guias com dono e atualizados',
     )
-    expect(reason(run([g], [], new Date('2027-08-30T12:00:00Z')), 'CON-4.2')).toBe(
+    expect(measured(run([g], [], { now: new Date('2027-08-30T12:00:00Z') }), 'CON-4.2')).toBe(
       'há guia sem atualização há mais de 6 meses',
     )
   })
 })
 
-describe('fabricação', () => {
-  it('gabarito gerado + plano de solda declarado fecham o nível 2', () => {
+describe('média, piso e cumulatividade', () => {
+  it('é a média aritmética das 6 áreas com uma casa decimal, e o piso é a menor', () => {
     const r = run(
-      [evidence('template.generated', { projectId: 'p1' }, days(1))],
-      ['FAB-1.1', 'FAB-2.2'],
-    )
-    expect(level(r, 'fabricacao')).toBe(2)
-  })
-
-  it('guia com etiqueta "solda" satisfaz FAB-3.1', () => {
-    const r = run(
+      [],
       [
-        evidence('template.generated', { projectId: 'p1' }, days(1)),
-        knowledge({ guides: 2, guideTags: ['Solda', 'freio'] }),
+        'EST-1.1',
+        'EST-2.1',
+        'EST-2.2',
+        'EST-3.1',
+        'EST-3.2',
+        'DIN-1.1',
+        'DIN-2.1',
+        'DIN-2.2',
+        'GES-1.1',
+        'GES-2.1',
+        'GES-2.2',
+        'CON-1.1',
       ],
-      ['FAB-1.1', 'FAB-2.2', 'FAB-3.2'],
     )
-    expect(level(r, 'fabricacao')).toBe(3)
-  })
-})
-
-describe('AC-DF13.6 — critério oculto', () => {
-  it('não aparece na lista nem impede o nível 4', () => {
-    const declaradosEstrutura = ['EST-2.2', 'EST-3.2', 'EST-4.2', 'EST-4.3']
-    const r = run([validation()], declaradosEstrutura)
-    const est = r.areas.find((a) => a.area === 'estrutura')!
-    expect(est.criteria.some((c) => c.id === 'EST-4.1')).toBe(false)
-    expect(est.level).toBe(4)
-  })
-})
-
-describe('média da equipe', () => {
-  it('é a média aritmética das 6 áreas com uma casa decimal', () => {
-    const r = run(
-      [validation(), org(), knowledge({ decisions: 1 })],
-      ['EST-2.2', 'EST-3.2', 'DIN-1.1', 'GES-2.2'],
-    )
-    // estrutura 3 · dinâmica 2 · documentação 0 · fabricação 0 · gestão 2 · conhecimento 1
     expect(r.levels).toEqual({
       estrutura: 3,
       dinamica: 2,
@@ -318,39 +333,13 @@ describe('média da equipe', () => {
     })
     expect(r.average).toBe(1.3)
     expect(formatAverage(r.average)).toBe('1,3')
+    expect(r.floor).toBe(0)
   })
 
-  it('equipe completa chega a 5,0', () => {
-    const todos = [
-      ...['EST-2.2', 'EST-3.2', 'EST-4.2', 'EST-4.3', 'EST-5.1', 'EST-5.2'],
-      ...['DIN-1.1', 'DIN-3.1', 'DIN-3.2', 'DIN-4.1', 'DIN-4.2', 'DIN-5.1', 'DIN-5.2'],
-      ...['DOC-1.1', 'DOC-2.1', 'DOC-3.1', 'DOC-3.2', 'DOC-4.1', 'DOC-5.1'],
-      ...['FAB-1.1', 'FAB-2.2', 'FAB-3.2', 'FAB-4.1', 'FAB-5.1'],
-      ...['GES-2.2', 'GES-3.2', 'GES-4.1', 'GES-4.2', 'GES-5.1', 'GES-5.2'],
-      ...['CON-5.1', 'CON-5.2'],
-    ]
-    const r = run(
-      [
-        validation(),
-        org({ lastApprovedUserId: 'u2' }),
-        evidence('season.configured', { label: '2027', milestones: 5 }, days(1)),
-        evidence('template.generated', { projectId: 'p1' }, days(1)),
-        knowledge({
-          decisions: 40,
-          guides: 12,
-          guidesByKind: { guia: 10, trilha: 1, checklist: 1 },
-          guideTags: ['solda'],
-          oldestGuideUpdatedAt: days(20).toISOString(),
-        }),
-        evidence('decision.created', { area: 'estrutura' }, days(5)),
-        evidence('decision.created', { area: 'dinamica' }, days(5)),
-        evidence('decision.created', { area: 'gestao' }, days(5)),
-        evidence('trail.completed', { userId: 'u2' }, days(4)),
-        evidence('kit.completed', { kitId: 'k1' }, days(9)),
-      ],
-      todos,
-    )
+  it('equipe que responde tudo chega a 5,0 com piso 5', () => {
+    const r = run([], ALL_IDS)
     expect(r.average).toBe(5)
+    expect(r.floor).toBe(5)
     for (const a of r.areas) {
       expect(a.level, `${a.area}: ${a.pending.map((p) => p.id).join(', ')}`).toBe(5)
       expect(a.pending).toEqual([])
@@ -359,21 +348,24 @@ describe('média da equipe', () => {
 })
 
 describe('resultado do cálculo', () => {
-  it('carrega a versão do catálogo (base do delta de recomputação)', () => {
-    expect(run([]).catalogVersion).toMatch(/^\d+\.\d+\.\d+$/)
+  it('carrega a versão e o modo do catálogo (base do delta de recomputação)', () => {
+    const r = run([])
+    expect(r.catalogVersion).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(r.mode).toBe('declarado')
   })
 
   it('resultado de competição não muda nível (maturidade ≠ resultado, ADR-010)', () => {
-    const semResultado = run([validation()], ['EST-2.2', 'EST-3.2'])
+    const declaradas = ['EST-1.1', 'EST-2.1', 'EST-2.2']
+    const semResultado = run([validation()], declaradas)
     const comResultado = run(
       [validation(), evidence('competition.result', { position: 3, total: 42 }, days(2))],
-      ['EST-2.2', 'EST-3.2'],
+      declaradas,
     )
     expect(comResultado.levels).toEqual(semResultado.levels)
   })
 
   it('é determinístico: mesma entrada, mesmo resultado', () => {
     const ev = [validation(), org(), knowledge({ decisions: 4 })]
-    expect(JSON.stringify(run(ev, ['EST-2.2']))).toBe(JSON.stringify(run(ev, ['EST-2.2'])))
+    expect(JSON.stringify(run(ev, ['EST-1.1']))).toBe(JSON.stringify(run(ev, ['EST-1.1'])))
   })
 })

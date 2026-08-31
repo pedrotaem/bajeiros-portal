@@ -18,8 +18,9 @@ export type TeamAction =
   | 'member.assign' // atribuir função do organograma / status trainee-efetivo (DF-10)
   | 'position.manage' // criar, mover, descrever e excluir funções (DF-10)
   | 'project.transfer' // trazer projeto pessoal p/ a equipe
-  | 'evolution.declare' // declarar/revogar critério de maturidade (DF-13)
+  | 'evolution.declare' // declarar/revogar/reafirmar critério de maturidade (DF-13/DF-20)
   | 'evolution.season' // configurar a temporada: rótulo, projeto, marcos (DF-13)
+  | 'evolution.optin' // ativar/desativar a avaliação e a vitrine da patente (DF-18)
   | 'step.manage' // dono, ordem e descarte da fila de próximos passos (DF-13)
   | 'knowledge.moderate' // excluir decisão/guia, reatribuir dono de guia (DF-14)
 
@@ -37,6 +38,7 @@ const PERMISSIONS: Record<TeamRole, ReadonlySet<TeamAction>> = {
     'project.transfer',
     'evolution.declare',
     'evolution.season',
+    'evolution.optin',
     'step.manage',
     'knowledge.moderate',
   ]),
@@ -54,6 +56,7 @@ const PERMISSIONS: Record<TeamRole, ReadonlySet<TeamAction>> = {
     'project.transfer',
     'evolution.declare',
     'evolution.season',
+    'evolution.optin',
     'step.manage',
     'knowledge.moderate',
   ]),

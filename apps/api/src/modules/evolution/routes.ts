@@ -3,17 +3,41 @@ import { z } from 'zod'
 import { AREA_IDS, AREA_LABELS, levelName } from '@bajeiros/evolution/areas'
 import { CATALOG_VERSION, criterionById } from '@bajeiros/evolution/catalog'
 import { destinationFor } from '@bajeiros/evolution/destinations'
-import type { EvolutionResult } from '@bajeiros/evolution/types'
+import { MAX_RANK, RANK_GRACE_DAYS, medianRankOf } from '@bajeiros/evolution/ranks'
+import type { EvolutionResult, RankNumber } from '@bajeiros/evolution/types'
 import { withUser, type DbClient } from '../../db'
 import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import { can } from '../../policy'
 import { lockTeam, myRole } from '../teams/shared'
 import type { AuthEnv } from '../../auth/middleware'
-import { recomputeTeam, recordEvidence, syncSeasonProjectStep } from './engine'
+import {
+  catalogMode,
+  recomputeTeam,
+  recomputeTeamFull,
+  recordEvidence,
+  syncSeasonProjectStep,
+  type TeamEvolution,
+} from './engine'
+import {
+  OPTIN_NOTICE_VERSION,
+  RANK_LADDER,
+  bestRank,
+  loadOptIn,
+  loadRankHistory,
+  markRankSeen,
+  serializeRank,
+  setOptIn,
+  unseenPromotion,
+} from './rank'
 
-// DF-13 — API da evolução. Montada em /api/v1/teams (rotas por equipe) e
-// /api/v1/evolution (benchmark, que não é de uma equipe só).
+// DF-13/DF-19/DF-20 — API da evolução, e DF-18 — API das patentes. Montada em
+// /api/v1/teams (rotas por equipe) e /api/v1/evolution (benchmark, que não é de uma
+// equipe só).
+//
+// DF-18 RF-2.5 / AC-DF18.2: **sem opt-in, nenhuma resposta carrega nível ou
+// patente.** O painel de ativação é o que a tela recebe no lugar — com o que será
+// lido, nas palavras da spec (RF-2.3).
 
 export const evolution = new Hono<AuthEnv>()
 export const evolutionRoot = new Hono<AuthEnv>()
@@ -26,49 +50,184 @@ const MAX_MILESTONES = 12
 
 // ---------- leitura ----------
 
+/**
+ * RF-2.3 — o painel pré-ativação lista, com as palavras da tela, O QUE SERÁ LIDO.
+ * Nada de conteúdo de decisão sai da equipe: o motor conta, não lê. Mudar esta lista
+ * é mudar `OPTIN_NOTICE_VERSION`, senão ninguém saberia quem aceitou o quê.
+ */
+const OPTIN_NOTICE = {
+  version: OPTIN_NOTICE_VERSION,
+  title: 'O que a avaliação de maturidade lê',
+  reads: [
+    'a última versão salva do protótipo da temporada (contagens do validador, nunca a geometria)',
+    'o organograma e a capitania — quantos cargos existem e quantos têm ocupante',
+    'os contadores do diário e dos guias: quantos, de quem, quando foram atualizados',
+    'os resultados públicos de competição, se e quando houver vínculo com o registro do Brasil',
+  ],
+  neverReads: [
+    'o texto das suas decisões e dos seus guias',
+    'a geometria do seu projeto',
+    'qualquer coisa que apareça para outra equipe sem você ligar a vitrine',
+  ],
+  retroactive:
+    'Ativar recomputa na hora o que a equipe já produziu — ninguém encara um painel zerado.',
+  reversible:
+    'Desativar é simétrico: patente e níveis somem da tela e param de recomputar, e nada é apagado.',
+}
+
 evolution.get('/:id/evolution', async (c) => {
   const { sub } = c.get('auth')
   const teamId = c.req.param('id')
   const result = await withUser(sub, async (db) => {
-    if (!(await myRole(db, teamId, sub))) return 'notfound' as const
+    const role = await myRole(db, teamId, sub)
+    if (!role) return 'notfound' as const
+    const optIn = await loadOptIn(db, teamId)
+    if (!optIn.enabled) return { optIn, canOptIn: can(role, 'evolution.optin') } as const
     const season = await loadSeason(db, teamId)
     await syncSeasonProjectStep(db, teamId, !!season?.seasonProjectId)
     // O GET recomputa: os critérios com janela temporal (CON-3.2/4.1/4.2) expiram
     // sem evidência nova, e o recálculo diário pode não ter rodado ainda (RF-2.3).
     // Só escreve quando algo mudou de verdade.
-    const evo = await recomputeTeam(db, teamId, { actorUserId: sub })
-    return { evo, season }
+    const full = await recomputeTeamFull(db, teamId, { actorUserId: sub })
+    const rank = await rankBlock(db, teamId, sub, full)
+    return { full, season, rank, canOptIn: can(role, 'evolution.optin') } as const
   })
   if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if ('optIn' in result) return c.json(offPayload(result.canOptIn))
   return c.json({
-    ...toEvolution(result.evo),
+    optIn: true,
+    ...toEvolution(result.full.result),
+    rank: result.rank,
     season: result.season,
+    canOptIn: result.canOptIn,
     bootstrap: !result.season?.seasonProjectId,
   })
 })
 
+/**
+ * AC-DF18.2 — equipe sem opt-in não tem patente NEM níveis em resposta nenhuma. O
+ * que volta é o convite, e ele diz exatamente o que a avaliação vai ler.
+ */
+function offPayload(canOptIn: boolean) {
+  return {
+    optIn: false,
+    canOptIn,
+    notice: OPTIN_NOTICE,
+    catalogVersion: CATALOG_VERSION,
+    mode: catalogMode(),
+    average: null,
+    areas: [],
+    rank: null,
+    season: null,
+    bootstrap: false,
+  }
+}
+
 function toEvolution(evo: EvolutionResult) {
   return {
     catalogVersion: evo.catalogVersion,
+    mode: evo.mode,
     average: evo.average,
+    floor: evo.floor,
+    // RF-4.4 — "6 critérios vencem com a temporada 2027": a tela avisa ANTES
+    expiring: evo.expiring,
+    // DF-20 RF-4.3 — quando dispara, substitui a tela inteira por um aviso só
+    activityFloor: evo.activityFloor,
     areas: evo.areas.map((a) => ({
       area: a.area,
       label: AREA_LABELS[a.area],
       level: a.level,
       levelName: levelName(a.level),
-      criteria: a.criteria.map((cr) => ({
-        id: cr.id,
-        level: cr.level,
-        type: cr.type,
-        label: cr.label,
-        source: cr.source,
-        satisfied: cr.satisfied,
-        reason: cr.reason,
-        linkHint: cr.linkHint ?? null,
-        destination: destinationFor(cr.id),
-      })),
+      criteria: a.criteria.map(toCriterion),
       pending: a.pending.map((cr) => cr.id),
     })),
+  }
+}
+
+function toCriterion(cr: EvolutionResult['areas'][number]['criteria'][number]) {
+  const def = criterionById(cr.id)
+  return {
+    id: cr.id,
+    level: cr.level,
+    type: cr.type,
+    label: cr.label,
+    source: cr.source,
+    satisfied: cr.satisfied,
+    reason: cr.reason,
+    state: cr.state,
+    // DF-19 §3 — os quatro textos são canônicos no pacote; a tela não reescreve
+    question: def?.question ?? cr.label,
+    fulfilled: def?.fulfilled ?? '',
+    notValid: def?.notValid ?? '',
+    where: def?.where ?? '',
+    audit: def?.audit ?? { wave: null, note: '' },
+    seasonal: cr.seasonal,
+    expired: cr.expired,
+    // RF-1.3 — a medida do portal aparece ao lado da resposta, sem veredito
+    measured: cr.measured,
+    divergent: cr.divergent,
+    // DF-20 — só existem em modo `aferido`
+    counterCheck: cr.counterCheck,
+    notComparable: cr.notComparable,
+    reaffirmable: cr.reaffirmable,
+    linkHint: cr.linkHint ?? null,
+    destination: destinationFor(cr.id),
+  }
+}
+
+/**
+ * DF-18 §7 — o bloco da faixa da patente: emblema vigente, próxima com o que falta,
+ * carência em curso, maior patente alcançada e a mediana da coorte EM EMBLEMA.
+ */
+async function rankBlock(db: DbClient, teamId: string, sub: string, full: TeamEvolution) {
+  const outcome = full.rank
+  if (!outcome) return null
+  const n = outcome.rank
+  const bench = (await db.query('SELECT * FROM evolution_benchmark(90)', [])).rows
+  const benchmark = toBenchmark(bench)
+  const best = await bestRank(db, teamId)
+  const visibility = (
+    await db.query('SELECT rank_public, rank_history_public FROM teams WHERE id = $1', [teamId])
+  ).rows[0]
+
+  return {
+    rank: n === null ? null : serializeRank(n),
+    max: MAX_RANK,
+    reason: outcome.computed.reason,
+    average: outcome.computed.average,
+    floor: outcome.computed.floor,
+    seasonLabel: full.season.label,
+    seasonProjectId: full.season.projectId,
+    next: outcome.computed.next
+      ? {
+          ...serializeRank(outcome.computed.next.n),
+          block: outcome.computed.next.block,
+          maturity: outcome.computed.next.maturity,
+          competition: outcome.computed.next.competition,
+        }
+      : null,
+    // §3.5 — a queda é amortecida: a tela diz até quando dá para consertar
+    grace:
+      outcome.brokenSince && outcome.brokenTarget
+        ? {
+            since: outcome.brokenSince,
+            target: serializeRank(outcome.brokenTarget),
+            endsAt: outcome.graceEndsAt,
+            days: RANK_GRACE_DAYS,
+          }
+        : null,
+    best: best === null ? null : serializeRank(best),
+    // §7 — "a mediana da sua coorte é The Peacemaker" (só maturidade; ver o motor)
+    cohort:
+      benchmark.visible && benchmark.average !== null
+        ? { ...serializeRank(medianRankOf(benchmark.average)), teams: benchmark.teams }
+        : null,
+    promotion: await unseenPromotion(db, teamId, sub, n),
+    visibility: {
+      rankPublic: visibility?.rank_public === true,
+      rankHistoryPublic: visibility?.rank_history_public === true,
+    },
+    ladder: RANK_LADDER,
   }
 }
 
@@ -87,31 +246,31 @@ evolution.post('/:id/evolution/declarations/:cid', async (c) => {
   const teamId = c.req.param('id')
   const criterionId = c.req.param('cid')
 
+  // DF-19 RF-1.1 — na v2.0.0 TODO critério é respondível pela equipe, inclusive os
+  // que o portal também mede: o `type` virou rótulo de tela, não porteiro.
   const criterion = criterionById(criterionId)
   if (!criterion) return problem(c, 404, 'Critério não encontrado')
-  if (criterion.type !== 'declarado') {
-    return problem(
-      c,
-      409,
-      'Critério não é declarável',
-      criterion.type === 'auto'
-        ? 'Este critério é verificado automaticamente pelo portal.'
-        : 'Este critério depende de uma ferramenta que ainda não existe.',
-    )
-  }
 
   const result = await withUser(sub, async (db) => {
     if (!(await lockTeam(db, teamId))) return 'notfound' as const
     const role = await myRole(db, teamId, sub)
     if (!role) return 'notfound' as const
     if (!can(role, 'evolution.declare')) return 'forbidden' as const
+    if (!(await loadOptIn(db, teamId)).enabled) return 'no-optin' as const
 
+    // RF-4.4 — o rótulo da temporada carimba a resposta: critério sazonal vence na
+    // virada e precisa ser reafirmado.
+    const season = await loadSeason(db, teamId)
     await db.query(
-      `INSERT INTO evolution_declarations (team_id, criterion_id, note, link_kind, link_ref, declared_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO evolution_declarations
+         (team_id, criterion_id, note, link_kind, link_ref, declared_by, season_label)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (team_id, criterion_id) DO UPDATE
          SET note = EXCLUDED.note, link_kind = EXCLUDED.link_kind,
              link_ref = EXCLUDED.link_ref, declared_by = EXCLUDED.declared_by,
+             season_label = EXCLUDED.season_label,
+             reaffirmed_at = NULL, reaffirmed_by = NULL,
+             reaffirmed_season = NULL, reaffirm_note = NULL,
              declared_at = now()`,
       [
         teamId,
@@ -120,6 +279,7 @@ evolution.post('/:id/evolution/declarations/:cid', async (c) => {
         parsed.data.linkKind ?? null,
         parsed.data.linkRef ?? null,
         sub,
+        season?.label ?? null,
       ],
     )
     await recordEvidence(db, {
@@ -141,6 +301,7 @@ evolution.post('/:id/evolution/declarations/:cid', async (c) => {
   })
 
   if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'no-optin') return optInRequired(c)
   if (result === 'forbidden')
     return problem(c, 403, 'Sem permissão', 'Apenas a capitania declara critérios.')
   return c.json(toEvolution(result.evo))
@@ -177,6 +338,281 @@ evolution.delete('/:id/evolution/declarations/:cid', async (c) => {
   if (result === 'forbidden')
     return problem(c, 403, 'Sem permissão', 'Apenas a capitania revoga declarações.')
   return c.json(toEvolution(result.evo))
+})
+
+// ---------- reafirmação de indício (DF-20 E3) ----------
+
+const reaffirmBody = z.object({ note: z.string().trim().min(3).max(500) })
+
+/**
+ * DF-20 RF-3.3 — responder a um INDÍCIO com justificativa devolve a declaração ao
+ * cálculo, e a nota fica no histórico, visível ao lado do critério para sempre.
+ *
+ * RF-3.2 — contradição direta **não** admite reafirmação (AC-DF20.5): o caminho é
+ * consertar o dado. Reafirmar ali seria pedir ao portal que ignorasse o que ele
+ * mesmo mediu.
+ */
+evolution.post('/:id/evolution/declarations/:cid/reaffirm', async (c) => {
+  const parsed = reaffirmBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) {
+    return problem(
+      c,
+      400,
+      'Justificativa obrigatória',
+      'Reafirmar um indício exige a nota que explica o número medido — é ela que a próxima geração lê no lugar de repetir a dúvida.',
+    )
+  }
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+  const criterionId = c.req.param('cid')
+  if (!criterionById(criterionId)) return problem(c, 404, 'Critério não encontrado')
+
+  const result = await withUser(sub, async (db) => {
+    if (!(await lockTeam(db, teamId))) return 'notfound' as const
+    const role = await myRole(db, teamId, sub)
+    if (!role) return 'notfound' as const
+    if (!can(role, 'evolution.declare')) return 'forbidden' as const
+    if (!(await loadOptIn(db, teamId)).enabled) return 'no-optin' as const
+
+    const full = await recomputeTeamFull(db, teamId, { actorUserId: sub })
+    const criterion = full.result.areas
+      .flatMap((a) => a.criteria)
+      .find((cr) => cr.id === criterionId)
+    if (!criterion || criterion.state === 'revogada') return 'no-declaration' as const
+    if (!criterion.counterCheck) return 'nothing-to-answer' as const
+    if (!criterion.reaffirmable) return 'not-reaffirmable' as const
+
+    const season = await loadSeason(db, teamId)
+    await db.query(
+      `UPDATE evolution_declarations
+       SET reaffirmed_at = now(), reaffirmed_by = $3,
+           reaffirmed_season = $4, reaffirm_note = $5
+       WHERE team_id = $1 AND criterion_id = $2`,
+      [teamId, criterionId, sub, season?.label ?? null, parsed.data.note],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'evolution.reaffirm',
+      resourceType: 'team',
+      resourceId: teamId,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { criterionId, kind: criterion.counterCheck.kind },
+    })
+    return { evo: await recomputeTeam(db, teamId, { actorUserId: sub }) }
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'no-optin') return optInRequired(c)
+  if (result === 'no-declaration') return problem(c, 404, 'Declaração não encontrada')
+  if (result === 'forbidden')
+    return problem(c, 403, 'Sem permissão', 'Apenas a capitania responde a uma contraprova.')
+  if (result === 'nothing-to-answer')
+    return problem(c, 409, 'Nada a responder', 'Este critério não está em contraprova.')
+  if (result === 'not-reaffirmable') {
+    return problem(
+      c,
+      400,
+      'Contradição não se reafirma',
+      'O portal mediu o mesmo fato que o critério afirma. O caminho é consertar o dado — salvar a versão conforme, criar o organograma —, não justificar.',
+    )
+  }
+  return c.json(toEvolution(result.evo))
+})
+
+// ---------- opt-in da avaliação (DF-18 E2) ----------
+
+function optInRequired(c: Parameters<typeof problem>[0]) {
+  return problem(
+    c,
+    409,
+    'Avaliação não ativada',
+    'A capitania precisa ativar a avaliação de maturidade antes de responder critérios.',
+  )
+}
+
+const optInBody = z.object({ noticeVersion: z.string().trim().max(20).optional() })
+
+/**
+ * RF-2.4 — a ativação é RETROATIVA e responde na mesma requisição: o motor lê o que a
+ * equipe já produziu e devolve nível e patente na hora. Ninguém encara um painel
+ * zerado pedindo formulário. Isso é requisito, não otimização.
+ */
+evolution.post('/:id/evolution/optin', async (c) => {
+  const parsed = optInBody.safeParse((await c.req.json().catch(() => null)) ?? {})
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+
+  const result = await withUser(sub, async (db) => {
+    if (!(await lockTeam(db, teamId))) return 'notfound' as const
+    const role = await myRole(db, teamId, sub)
+    if (!role) return 'notfound' as const
+    if (!can(role, 'evolution.optin')) return 'forbidden' as const
+
+    const antes = await loadOptIn(db, teamId)
+    await setOptIn(db, teamId, sub, true)
+    const season = await loadSeason(db, teamId)
+    await syncSeasonProjectStep(db, teamId, !!season?.seasonProjectId)
+    const full = await recomputeTeamFull(db, teamId, { actorUserId: sub })
+    // reativação: o histórico não zerou, e a patente volta ao mesmo lugar (RF-2.5)
+    await audit(db, {
+      actorUserId: sub,
+      action: 'evolution.optin',
+      resourceType: 'team',
+      resourceId: teamId,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { noticeVersion: OPTIN_NOTICE_VERSION, reactivation: antes.enabledAt !== null },
+    })
+    return {
+      full,
+      season,
+      rank: await rankBlock(db, teamId, sub, full),
+      canOptIn: true,
+    } as const
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'forbidden') {
+    return problem(
+      c,
+      403,
+      'Sem permissão',
+      'Apenas a capitania ativa a avaliação de maturidade — peça a quem capitaneia.',
+    )
+  }
+  return c.json({
+    optIn: true,
+    ...toEvolution(result.full.result),
+    rank: result.rank,
+    season: result.season,
+    canOptIn: true,
+    bootstrap: !result.season?.seasonProjectId,
+  })
+})
+
+/** RF-2.5 — desativar é simétrico e reversível: nada é apagado, tudo fica dormente. */
+evolution.delete('/:id/evolution/optin', async (c) => {
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+
+  const result = await withUser(sub, async (db) => {
+    if (!(await lockTeam(db, teamId))) return 'notfound' as const
+    const role = await myRole(db, teamId, sub)
+    if (!role) return 'notfound' as const
+    if (!can(role, 'evolution.optin')) return 'forbidden' as const
+    await setOptIn(db, teamId, sub, false)
+    await audit(db, {
+      actorUserId: sub,
+      action: 'evolution.optout',
+      resourceType: 'team',
+      resourceId: teamId,
+      ip: clientIp(c.req.raw.headers),
+      metadata: {},
+    })
+    return 'ok' as const
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'forbidden')
+    return problem(c, 403, 'Sem permissão', 'Apenas a capitania desativa a avaliação.')
+  return c.json(offPayload(true))
+})
+
+// ---------- patente (DF-18 E4/E5/E6) ----------
+
+evolution.get('/:id/rank', async (c) => {
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+  const result = await withUser(sub, async (db) => {
+    if (!(await myRole(db, teamId, sub))) return 'notfound' as const
+    if (!(await loadOptIn(db, teamId)).enabled) return 'off' as const
+    const full = await recomputeTeamFull(db, teamId, { actorUserId: sub })
+    return await rankBlock(db, teamId, sub, full)
+  })
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'off') return c.json({ optIn: false, rank: null })
+  return c.json({ optIn: true, ...result })
+})
+
+/** RF-4.4 — o histórico é a marca que sobrevive à formatura da turma. */
+evolution.get('/:id/rank/history', async (c) => {
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+  const rows = await withUser(sub, async (db) => {
+    if (!(await myRole(db, teamId, sub))) return null
+    return { history: await loadRankHistory(db, teamId), best: await bestRank(db, teamId) }
+  })
+  if (!rows) return problem(c, 404, 'Equipe não encontrada')
+  return c.json({
+    history: rows.history,
+    best: rows.best === null ? null : serializeRank(rows.best),
+  })
+})
+
+const visibilityBody = z.object({
+  rankPublic: z.boolean().optional(),
+  rankHistoryPublic: z.boolean().optional(),
+})
+
+/**
+ * RF-6.1/6.4 — as duas chaves da vitrine nascem `false` e desligar é imediato, sem
+ * notificar ninguém. O que a vitrine expõe é SÓ emblema, número e temporada (RF-6.2);
+ * níveis, critérios e fila nunca são publicáveis, e não existe listagem ordenada de
+ * equipes por patente (RF-6.3).
+ */
+evolution.patch('/:id/rank/visibility', async (c) => {
+  const parsed = visibilityBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+
+  const result = await withUser(sub, async (db) => {
+    if (!(await lockTeam(db, teamId))) return 'notfound' as const
+    const role = await myRole(db, teamId, sub)
+    if (!role) return 'notfound' as const
+    if (!can(role, 'evolution.optin')) return 'forbidden' as const
+    const r = await db.query(
+      `UPDATE teams
+       SET rank_public = COALESCE($2, rank_public),
+           rank_history_public = COALESCE($3, rank_history_public)
+       WHERE id = $1 RETURNING rank_public, rank_history_public`,
+      [teamId, parsed.data.rankPublic ?? null, parsed.data.rankHistoryPublic ?? null],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'rank.visibility',
+      resourceType: 'team',
+      resourceId: teamId,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { ...parsed.data },
+    })
+    return r.rows[0]
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
+  if (result === 'forbidden')
+    return problem(c, 403, 'Sem permissão', 'Apenas a capitania mexe na vitrine da equipe.')
+  return c.json({
+    rankPublic: result.rank_public === true,
+    rankHistoryPublic: result.rank_history_public === true,
+  })
+})
+
+const seenBody = z.object({ rank: z.number().int().min(1).max(MAX_RANK) })
+
+/** RF-5.1 — silenciar o aviso é POR MEMBRO: não afeta os outros (AC-DF18.10). */
+evolution.post('/:id/rank/seen', async (c) => {
+  const parsed = seenBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const teamId = c.req.param('id')
+  const ok = await withUser(sub, async (db) => {
+    if (!(await myRole(db, teamId, sub))) return false
+    await markRankSeen(db, teamId, sub, parsed.data.rank as RankNumber)
+    return true
+  })
+  if (!ok) return problem(c, 404, 'Equipe não encontrada')
+  return c.body(null, 204)
 })
 
 // ---------- fila de próximos passos (RF-4.x) ----------
@@ -513,6 +949,11 @@ evolution.put('/:id/season', async (c) => {
 const NARRATABLE = [
   'validation.summary',
   'level.changed',
+  // DF-18 RF-5.4: a QUEDA de patente vira linha discreta aqui, nunca tela cheia
+  'rank.changed',
+  // DF-20 RF-4.4: "Estrutura voltou ao nível 2 — a v14 introduziu 3 não conformidades"
+  'counter.raised',
+  'counter.cleared',
   'season.configured',
   'criterion.declared',
   'template.generated',

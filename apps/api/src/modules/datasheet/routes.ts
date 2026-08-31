@@ -25,6 +25,7 @@ import { problem } from '../../problem'
 import { audit, clientIp } from '../../audit'
 import { can } from '../../policy'
 import { myRole } from '../teams/shared'
+import { publishDatasheetSummary, seasonTeamOf } from '../evolution/engine'
 import type { AuthEnv } from '../../auth/middleware'
 
 // DF-21 — ficha do protótipo. Montado em /api/v1/projects, ao lado do módulo de
@@ -394,6 +395,12 @@ datasheet.put('/:id/datasheet', async (c) => {
       ip: clientIp(c.req.raw.headers),
       metadata: { fields: prepared.map((p) => p.field.id).slice(0, 40), count: prepared.length },
     })
+
+    // DF-19 §5.1 — a ficha é o SEGUNDO caminho do EST-1.1, e vale igual à gaiola
+    // modelada. Sem este resumo o portal só mediria quem usa o editor 3D, que é
+    // exatamente o que a RF-4.8 proíbe. Só o projeto DA TEMPORADA vira evidência (§3.4).
+    const teamId = await seasonTeamOf(db, project.id)
+    if (teamId) await publishDatasheetSummary(db, teamId, project.id, sub)
 
     const values = await loadValues(db, project.id)
     const waivers = await loadWaivers(db, project.id)

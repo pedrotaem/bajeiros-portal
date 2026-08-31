@@ -208,6 +208,10 @@ resource "aws_lambda_function" "api" {
       # G3/DF-8: Function URL do AI Gateway (vazio = 502 gracioso no /chat)
       GATEWAY_URL  = trimsuffix(var.gateway_url, "/")
       GATEWAY_AUTH = var.gateway_url == "" ? "" : "iam" # SigV4 (Function URL AWS_IAM)
+      # DF-19 AC-10 / DF-20 §9: 'declarado' é a v1 autodeclarativa; 'aferido' liga as
+      # contraprovas. A troca NÃO exige migração — é o mesmo dado, outro cálculo — e o
+      # gate é de produto (uma temporada de v1 acumulada), não de deploy.
+      EVOLUTION_MODE = var.evolution_mode
     }
   }
 

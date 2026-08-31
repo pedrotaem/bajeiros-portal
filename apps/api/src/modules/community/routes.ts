@@ -6,6 +6,7 @@ import { audit, clientIp } from '../../audit'
 import { can } from '../../policy'
 import { myRole } from '../teams/shared'
 import { recordEvidence, recomputeTeam } from '../evolution/engine'
+import { rankShowcase } from '../evolution/rank'
 import type { AuthEnv } from '../../auth/middleware'
 
 // DF-15 — comunidade: acervo de resultados, registro canônico das equipes do
@@ -162,8 +163,14 @@ community.get('/teams/:id', async (c) => {
        ORDER BY c.season DESC, c.kind`,
       [id],
     )
+    // DF-18 RF-6.2 — vitrine: SÓ emblema, número, nome e temporada, e só com a chave
+    // ligada pela capitania. Níveis por área, critérios, declarações e fila nunca são
+    // publicáveis, e não existe filtro nem ordenação por patente aqui (RF-6.3).
+    const claimed = t.rows[0].claimed_by_team_id as string | null
+    const rank = claimed ? await rankShowcase(db, claimed) : null
     return {
       ...toCommunityTeam(t.rows[0]),
+      rank,
       history: history.rows.map((row) => ({
         competitionId: row.competition_id,
         name: row.name,
