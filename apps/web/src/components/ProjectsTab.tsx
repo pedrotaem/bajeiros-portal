@@ -26,6 +26,7 @@ export function ProjectsTab({ teamId, canManage }: { teamId: string; canManage: 
   const api = useSession((s) => s.api)
   const setPage = useSession((s) => s.setPage)
   const setCurrentProject = useSession((s) => s.setCurrentProject)
+  const goToProject = useSession((s) => s.goToProject)
   const projetos = useFetch<ProjectRow[]>('/api/v1/projects')
   const season = useFetch<SeasonView | null>(`/api/v1/teams/${teamId}/season`)
   const [erro, setErro] = useState<string | null>(null)
@@ -98,6 +99,17 @@ export function ProjectsTab({ teamId, canManage }: { teamId: string; canManage: 
                 {p.lastSeq ? `última versão salva: v${p.lastSeq}` : 'ainda sem versão salva'}
               </p>
               <div className="bj-card-acoes">
+                {/* a ficha vem ANTES do validador de propósito (DF-21 §3.2): é a porta
+                    que não exige gaiola modelada */}
+                <button
+                  type="button"
+                  className="bj-btn"
+                  onClick={() =>
+                    goToProject({ id: p.id, name: p.name, seq: p.lastSeq ?? 0 }, 'ficha')
+                  }
+                >
+                  Abrir a ficha <IconArrow size={16} />
+                </button>
                 <button type="button" className="bj-btn" onClick={() => abrir(p)}>
                   Abrir no validador <IconArrow size={16} />
                 </button>

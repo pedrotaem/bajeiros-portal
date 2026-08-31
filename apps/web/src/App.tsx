@@ -15,6 +15,7 @@ import { HomePage } from './components/HomePage'
 import { CommunityPage } from './components/CommunityPage'
 import { ToolsHub } from './components/ToolsHub'
 import { PrecisaDeConta, PublicHome } from './components/PublicHome'
+import { ProjectPage } from './components/ProjectPage'
 import { About } from './components/About'
 import { Shell } from './components/Shell'
 import { useSession, track, type PageId } from './session'
@@ -30,6 +31,7 @@ const TITULOS: Record<PageId, string> = {
   assistant: 'Assistente do regulamento',
   admin: 'Administração',
   sobre: 'Sobre o portal',
+  projeto: 'Projeto',
 }
 
 function ViewportToggles() {
@@ -121,6 +123,8 @@ export default function App() {
   const page = useSession((s) => s.page)
   const setPage = useSession((s) => s.setPage)
   const activeTeamId = useSession((s) => s.activeTeamId)
+  const currentProject = useSession((s) => s.currentProject)
+  const goToProject = useSession((s) => s.goToProject)
 
   // DF-9: pageview (só p/ logado; anônimo não é rastreado)
   useEffect(() => {
@@ -147,7 +151,8 @@ export default function App() {
   const failed = allFails.length - pendingFails
 
   return (
-    <Shell title={TITULOS[page]}>
+    // um <h1> por página (DF-12 RF-1.3): na página de projeto ele é o nome do carro
+    <Shell title={page === 'projeto' && currentProject ? currentProject.name : TITULOS[page]}>
       <SessionPanels />
       {sessionUser && <AvisoDeMudanca />}
 
@@ -165,6 +170,8 @@ export default function App() {
           <PrecisaDeConta destino="A Comunidade" />
         ))}
       {page === 'sobre' && <About />}
+      {page === 'projeto' &&
+        (sessionUser ? <ProjectPage /> : <PrecisaDeConta destino="A ficha do protótipo" />)}
       {page === 'assistant' && (
         <div className="page-body">
           <div className="page-inner page-narrow">
@@ -209,6 +216,17 @@ export default function App() {
                 {(mass.weldKg * 1000).toFixed(0)} g ({mass.jointCount} juntas)
               </span>
             </div>
+            {/* DF-21 §3.5 — atalho para a ficha SEM desmontar o <Viewport>: a ida e
+                volta preserva a câmera porque o editor só é escondido, nunca removido */}
+            {currentProject && (
+              <button
+                type="button"
+                className="bj-btn bj-btn-sm"
+                onClick={() => goToProject(currentProject, 'ficha')}
+              >
+                Ficha do protótipo
+              </button>
+            )}
             <RulePanel results={results} />
           </aside>
         ) : (
