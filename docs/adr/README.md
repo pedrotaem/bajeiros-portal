@@ -14,3 +14,4 @@ Formato: contexto → decisão → consequências. Status: `aceito` | `proposto`
 | [008](008-regiao-dados.md)           | Região dos dados: sa-east-1 (voto de minerva)     | aceito   |
 | [009](009-design-system.md)          | Design system tokenizado (escuro primeiro)        | aceito   |
 | [010](010-evolucao-maturidade.md)    | Evolução da equipe: maturidade por área           | proposto |
+| [011](011-patentes-gamificacao.md)   | Patentes do protótipo (emenda dec. 1 e 2 do 010)  | proposto |

@@ -83,6 +83,18 @@ graph LR
   de 8) e "transformar em meta"; sem identidade "SAE", sem PII de pilotos.
 - **DF-16 — Início:** página do dia da equipe — 3 próximos passos, atividade, evolução
   compacta, continuar de onde parou, temporada; um endpoint agregador (`GET /me/home`).
+- **DF-18 — Patentes do protótipo:** oito patentes derivadas dos níveis do DF-13, as quatro
+  superiores travadas por resultado de competição do acervo do DF-15; opt-in retroativo da
+  capitania, carência de 30 dias na queda, privada por padrão com vitrine opcional.
+- **DF-19 — Catálogo de maturidade v2.0.0:** os 51 critérios detalhados (enunciado, o que conta, o
+  que não vale, onde registrar, como será aferido); **v1 autodeclarativa**, sem critério oculto e
+  sem critério que exija ferramenta específica do portal (RF-4.8).
+- **DF-20 — Aferição:** contraprovas que confrontam declaração com o que o portal já mede —
+  contradição derruba, indício pergunta, piso de atividade suspende tudo; ausência de dado nunca é
+  contraprova. Onda V1 cobre 19 critérios sem ferramenta nova.
+- **DF-21 — Ficha do protótipo:** ~70 campos tipados por subsistema, todos preenchíveis à mão;
+  o modelo 3D sugere seis deles e nunca sobrescreve; guarda sugerido × projetado × medido para
+  registrar a divergência entre o carro idealizado e o construído.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16)
 
@@ -93,13 +105,53 @@ fases de execução (EV-0…EV-8) em
 aprovado no canvas
 ["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b).
 
-| Ordem | Spec                                          | Depende de             | Racional da posição                                     |
-| ----- | --------------------------------------------- | ---------------------- | ------------------------------------------------------- |
-| 1 ✅  | [DF-13](drafts/df13-evolucao-maturidade.md)   | DF-10                  | Motor e evidências primeiro — tudo o mais consome daqui |
-| 2 ✅  | [DF-14](drafts/df14-conhecimento.md)          | DF-10                  | Produtor da área `conhecimento`; anti-rotatividade      |
-| 3 ✅  | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                 |
-| 4 ✅  | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                 |
-| 5 ✅  | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark     |
+| Ordem | Spec                                          | Depende de             | Racional da posição                                      |
+| ----- | --------------------------------------------- | ---------------------- | -------------------------------------------------------- |
+| 1 ✅  | [DF-13](drafts/df13-evolucao-maturidade.md)   | DF-10                  | Motor e evidências primeiro — tudo o mais consome daqui  |
+| 2 ✅  | [DF-14](drafts/df14-conhecimento.md)          | DF-10                  | Produtor da área `conhecimento`; anti-rotatividade       |
+| 3 ✅  | [DF-12](drafts/df12-shell-navegacao.md)       | design fases 0 e 6     | O chrome que dá endereço às telas novas                  |
+| 4 ✅  | [DF-16](drafts/df16-inicio.md)                | DF-12, DF-13, DF-14    | Agrega; sem fontes não há o que mostrar                  |
+| 5 ✅  | [DF-15](drafts/df15-comunidade-resultados.md) | DF-12 (DF-13 p/ metas) | Independente no dado; fecha o ciclo com o benchmark      |
+| 6 📝  | [DF-18](drafts/df18-patentes-prototipo.md)    | DF-13, DF-15, DF-19    | A patente é o rosto do modelo; sem ela nada é contável   |
+| 7 📝  | [DF-19](drafts/df19-catalogo-maturidade.md)   | DF-13                  | Define o que alimenta os níveis na v1 — vem com o DF-18  |
+| 8 📝  | [DF-20](drafts/df20-afericao-declaracoes.md)  | DF-19, DF-13, DF-14    | Saída do autodeclarativo; só depois de 1 temporada de v1 |
+| 9 📝  | [DF-21](drafts/df21-ficha-prototipo.md)       | DF-12, motor B6        | Independente; destrava a onda V2 do DF-20 e o Anexo B    |
+
+## Lote das patentes (DF-18…DF-20) — proposto em 2026-08-30
+
+Direção de produto: a medição de maturidade precisa de **um rosto que a equipe queira mostrar** e
+de **validação externa**. Decisão em
+[`docs/adr/011-patentes-gamificacao.md`](../docs/adr/011-patentes-gamificacao.md), que **emenda as
+decisões 1 e 2 do ADR-010**; desenho no canvas
+["Patentes da Estrada"](https://claude.ai/code/artifact/aca0d047-5859-43fd-9b58-5e07d3a7d921);
+fases EV-9 e EV-10 no plano de implementação.
+
+- **DF-18** — oito patentes do **protótipo da temporada**, derivadas dos níveis do DF-13, com as
+  quatro superiores travadas por resultado de competição do acervo do DF-15. **Opt-in da
+  capitania**: nada disso existe até a equipe pedir para ser avaliada, e a ativação é retroativa.
+  Privada por padrão, com vitrine opcional; nunca uma listagem ordenada.
+- **DF-19** — o catálogo de 51 critérios **detalhado**: enunciado, o que conta como cumprido, o
+  que não vale, onde registrar e por qual dado será aferido depois. **A v1 é autodeclarativa**
+  (`CATALOG_MODE = 'declarado'`, catálogo v2.0.0, sem critério oculto).
+- **DF-20** — a saída do autodeclarativo: contraprovas que confrontam declaração com o que o portal
+  já mede. Três mecanismos (contradição direta derruba; indício quantitativo pergunta; piso de
+  atividade suspende tudo com um aviso só). A onda V1 cobre 19 critérios **sem ferramenta nova**.
+
+## DF-21 — Ficha do protótipo (proposto em 2026-08-30)
+
+Lacuna encontrada ao escrever o DF-19: **17 dos 51 critérios se apoiam em informação de projeto
+que o portal não tem onde guardar.** Hoje `projects` tem `name`, `description` e os snapshots da
+gaiola — e nada sobre entre-eixos, massa alvo, curso da suspensão, mola do CVT ou pneu.
+
+A [ficha do protótipo](drafts/df21-ficha-prototipo.md) é feature **independente da maturidade e do
+validador**: ~70 campos tipados em 9 seções, **todos preenchíveis à mão**. Onde o modelo 3D existe,
+6 campos ganham sugestão com um botão "usar" — oferta, nunca preenchimento automático, e a
+sugestão jamais persiste ou sobrescreve. Guarda três leituras do mesmo número (sugerido ×
+projetado × medido), porque **a divergência entre o protótipo idealizado e o construído é o
+produto**, não ruído. Histórico por campo e exportação. Vale por si — inspeção, relatório, geração
+seguinte, comparação com a comunidade. Efeitos colaterais: destrava a onda V2 do DF-20 (classe de
+projeto), tira `EST-4.1`/`DOC-4.2` da condição de "ferramenta futura" e dá conteúdo concreto aos
+kits de passagem do DF-14. Fase **EV-11**, executável antes do EV-10.
 
 **Estado (2026-08-30): as cinco specs implementadas de ponta a ponta** — motor puro,
 banco, API, produtores de evidência e todas as superfícies, sobre a fase 0 do plano de
