@@ -318,7 +318,9 @@ export function TeamPage(): JSX.Element {
         {err && <p className="bj-erro">{err}</p>}
 
         <div className="team-tab-body">
-          {tab === 'evolucao' && <EvolutionTab teamId={team.id} canManage={canManage} />}
+          {tab === 'evolucao' && (
+            <EvolutionTab teamId={team.id} teamName={team.name} canManage={canManage} />
+          )}
           {tab === 'conhecimento' && <KnowledgeTab teamId={team.id} canManage={canManage} />}
           {tab === 'projetos' && <ProjectsTab teamId={team.id} canManage={canManage} />}
           {tab === 'pessoas' && (

@@ -18,10 +18,21 @@ interface Home {
   teams: { id: string; name: string }[]
   state: 'normal' | 'bootstrap' | 'sem-equipe'
   season?: { label: string; next: { title: string; daysLeft: number } | null } | null
+  /** DF-18 RF-2.5 — sem opt-in a evolução some do shell inteiro, Início incluído. */
+  optIn?: boolean
+  rank?: {
+    rank: { n: number; name: string; emblem: string; reading: string } | null
+    max: number
+    reason: string | null
+    average: number
+    seasonLabel: string | null
+    next: { n: number; name: string; emblem: string; block: string; missing: number } | null
+    best: { n: number; name: string } | null
+  } | null
   evolution?: {
     average: number
     areas: { area: AreaId; short: string; level: AreaLevel; levelName: string }[]
-  }
+  } | null
   steps?: {
     id: string
     title: string
@@ -160,7 +171,17 @@ export function HomePage() {
                   primeira decisão e configurar os marcos.
                 </p>
               )}
-              {(d.steps ?? []).length === 0 ? (
+              {/* DF-18 RF-2.5 — com a avaliação desativada a fila não existe. Dizer
+                  "nada pendente, bom sinal" aqui seria elogiar o silêncio de uma
+                  ferramenta desligada; o certo é explicar por que está vazio. */}
+              {d.optIn === false ? (
+                <p className="bj-vazio">
+                  A avaliação de maturidade não está ativada — a fila de passos nasce dela.{' '}
+                  <button type="button" className="bj-link" onClick={() => goToTeam('evolucao')}>
+                    Ver o que a avaliação lê ›
+                  </button>
+                </p>
+              ) : (d.steps ?? []).length === 0 ? (
                 <p className="bj-vazio">Nada pendente agora. Bom sinal.</p>
               ) : (
                 <ol className="bj-passos">
@@ -199,6 +220,44 @@ export function HomePage() {
           </div>
 
           <aside className="bj-inicio-lateral">
+            {/* DF-18 §7 — o Início mostra o emblema e a DISTÂNCIA até a próxima
+                patente. A faixa completa (coorte, carência, histórico) mora em
+                Equipe · Evolução: aqui é convite, não painel. */}
+            {d.rank?.rank && (
+              <section className="bj-card bj-card-patente">
+                <header>
+                  <h3>Patente do protótipo</h3>
+                </header>
+                <div className="bj-patente-mini">
+                  <img
+                    className="bj-emblema"
+                    src={`/patentes/${d.rank.rank.emblem}`}
+                    alt={`Emblema da patente ${d.rank.rank.n}: ${d.rank.rank.name}`}
+                    width={64}
+                    height={64}
+                  />
+                  <div>
+                    <strong>{d.rank.rank.name}</strong>
+                    <span className="bj-patente-num">
+                      patente {d.rank.rank.n} de {d.rank.max}
+                      {d.rank.seasonLabel ? ` · temporada ${d.rank.seasonLabel}` : ''}
+                    </span>
+                  </div>
+                </div>
+                {d.rank.next && (
+                  <p className="bj-patente-proxima">
+                    Faltam <b>{d.rank.next.missing}</b> passos para {d.rank.next.name}
+                    {d.rank.next.block === 'sem-vinculo' &&
+                      ' — comece vinculando a equipe ao registro do Brasil, em Comunidade'}
+                    .
+                  </p>
+                )}
+                <button type="button" className="bj-link" onClick={() => goToTeam('evolucao')}>
+                  Ver a escada completa ›
+                </button>
+              </section>
+            )}
+
             {d.evolution && (
               <section className="bj-card">
                 <header>
@@ -318,11 +377,18 @@ function Narrativa({
       const para = n('to')
       const motivos = (payload.because ?? []) as { reason: string }[]
       const subiu = para > de
+      // DF-19 §7 / DF-13 P-1.3 — mudança de catálogo tem causa própria e a equipe
+      // precisa ler isso, não "voltou para o nível 0" sem explicação nenhuma.
+      const doCatalogo = payload.fromCatalog === true
       return (
         <span>
           {subiu ? <StatusChip role="pass" /> : <StatusChip role="warn" />}{' '}
           <b>{String(payload.area)}</b> {subiu ? 'subiu' : 'voltou'} para o nível {para}
-          {!subiu && motivos[0] ? ` — ${motivos[0].reason}` : ''}
+          {doCatalogo
+            ? ` — o catálogo de critérios passou para a v${String(payload.catalogVersion ?? '')}`
+            : !subiu && motivos[0]
+              ? ` — ${motivos[0].reason}`
+              : ''}
         </span>
       )
     }
@@ -363,6 +429,37 @@ function Narrativa({
         <span>
           Resultado de {String(payload.competition ?? 'competição')}: {n('position')}º de{' '}
           {n('total')}
+        </span>
+      )
+    // DF-18 RF-5.4 — a QUEDA de patente é uma linha discreta aqui, com a causa e sem
+    // alarde. Comemorar em tela cheia e cobrar no rodapé é decisão de produto.
+    case 'rank.changed': {
+      const de = payload.from == null ? null : n('from')
+      const para = n('to')
+      // patente MENOR é melhor: 1 é The Interceptor, 8 é Motorats
+      const subiu = de === null || para < de
+      return (
+        <span>
+          {subiu ? <StatusChip role="pass" /> : <StatusChip role="warn" />}{' '}
+          {de === null ? 'Primeira patente do protótipo' : subiu ? 'Nova patente' : 'Patente caiu'}:{' '}
+          <b>{String(payload.name ?? '')}</b> (patente {para}
+          {de === null ? '' : `, era ${de}`})
+        </span>
+      )
+    }
+    // DF-20 RF-4.4 — "Estrutura voltou ao nível 2 — a v14 introduziu 3 não conformidades"
+    case 'counter.raised':
+      return (
+        <span>
+          <StatusChip role="fail" /> <b>{String(payload.label ?? payload.criterionId ?? '')}</b> em
+          contraprova — {String(payload.measured ?? '')}
+        </span>
+      )
+    case 'counter.cleared':
+      return (
+        <span>
+          <StatusChip role="pass" /> Contraprova encerrada:{' '}
+          <b>{String(payload.label ?? payload.criterionId ?? '')}</b>
         </span>
       )
     default:
