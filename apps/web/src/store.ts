@@ -8,7 +8,13 @@ import type {
   SteeringMount,
   Vec3,
 } from '@bajeiros/core/model/types'
-import { mirrorId } from '@bajeiros/core/model/types'
+import { isLocked, mirrorId, sanitizeLocked } from '@bajeiros/core/model/types'
+import {
+  PLANE_TOL_MM,
+  detectPlanes,
+  rotatePlaneTo,
+  setPointDistance,
+} from '@bajeiros/core/model/planes'
 import { templateCage } from '@bajeiros/core/model/template'
 import { DEFAULT_MATERIAL_ID, STEELS, migrateSection } from '@bajeiros/core/model/materials'
 import { sanitizeContinuity } from '@bajeiros/core/model/continuity'
@@ -25,17 +31,52 @@ interface Pending {
   first: NodeId | null
 }
 
+/**
+ * Aplica as posições novas e, com o espelho ligado, reflete as que ainda não têm
+ * gêmeo no próprio lote — o mesmo contrato de `moveNode`, num lugar só porque
+ * agora três ações (arrastar, cotar e girar plano) movem nó.
+ *
+ * DF-23: gêmeo TRAVADO não acompanha. Recusar o movimento inteiro por causa do
+ * outro lado seria pior — travar o lado direito porque ele já está decidido não
+ * pode impedir de mexer no esquerdo.
+ */
+function withMirror(
+  cage: Cage,
+  moved: Record<NodeId, Vec3>,
+  mirror: boolean,
+): Record<NodeId, Vec3> {
+  const next = { ...cage.nodes, ...moved }
+  if (!mirror) return next
+  for (const [id, pos] of Object.entries(moved)) {
+    const mid = mirrorId(id)
+    if (mid && next[mid] && !(mid in moved) && !isLocked(cage, mid)) {
+      next[mid] = { x: -pos.x, y: pos.y, z: pos.z }
+    }
+  }
+  return next
+}
+
+/** Vistas canônicas da câmera (DF-23). `seq` faz o mesmo botão reenquadrar. */
+export type CameraView = 'lateral' | 'frontal' | 'superior' | 'iso'
+
 interface State {
   cage: Cage
   selectedNode: NodeId | null
   selectedMember: string | null
   selectedAnchor: string | null
   selectedSteering: string | null
+  selectedPlane: string | null
   highlightRule: string | null
   mirror: boolean
   showRedundant: boolean
   showGeraldao: boolean
   showManikin: boolean
+  showPlanes: boolean
+  planeTolMm: number
+  cameraView: { view: CameraView; seq: number } | null
+  setCameraView: (view: CameraView) => void
+  toggleLock: (id: string) => void
+  setLocked: (ids: string[], locked: boolean) => void
   pending: Pending | null
   wizardActive: boolean
   setWizardActive: (v: boolean) => void
@@ -43,6 +84,11 @@ interface State {
   selectMember: (id: string | null) => void
   selectAnchor: (id: string | null) => void
   selectSteering: (id: string | null) => void
+  selectPlane: (id: string | null) => void
+  setShowPlanes: (v: boolean) => void
+  setPlaneTol: (mm: number) => void
+  setDistance: (a: NodeId, b: NodeId, targetMm: number, move: 'a' | 'b' | 'both') => void
+  setPlaneAngle: (movingId: string, refId: string, deg: number) => void
   moveAnchor: (id: string, pos: Vec3) => void
   addSteering: (mode: 'central' | 'mesa') => void
   removeSteering: () => void
@@ -86,11 +132,36 @@ export const useStore = create<State>((set, _get) => ({
   selectedMember: null,
   selectedAnchor: null,
   selectedSteering: null,
+  selectedPlane: null,
   highlightRule: null,
   mirror: true,
   showRedundant: false,
   showGeraldao: false,
   showManikin: false,
+  showPlanes: false,
+  planeTolMm: PLANE_TOL_MM,
+  cameraView: null,
+  setCameraView: (view) =>
+    set((s) => ({ cameraView: { view, seq: (s.cameraView?.seq ?? 0) + 1 } })),
+  toggleLock: (id) =>
+    set((s) => {
+      const cur = s.cage.locked ?? []
+      return {
+        cage: {
+          ...s.cage,
+          locked: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
+        },
+      }
+    }),
+  setLocked: (ids, locked) =>
+    set((s) => {
+      const cur = new Set(s.cage.locked ?? [])
+      for (const id of ids) {
+        if (locked) cur.add(id)
+        else cur.delete(id)
+      }
+      return { cage: { ...s.cage, locked: [...cur] } }
+    }),
   pending: null,
   wizardActive: false,
   setWizardActive: (v) =>
@@ -100,6 +171,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedAnchor: null,
       selectedSteering: null,
+      selectedPlane: null,
       pending: null,
     }),
   selectNode: (id) =>
@@ -108,6 +180,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedAnchor: null,
       selectedSteering: null,
+      selectedPlane: null,
       highlightRule: null,
     }),
   selectMember: (id) =>
@@ -116,6 +189,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedNode: null,
       selectedAnchor: null,
       selectedSteering: null,
+      selectedPlane: null,
       highlightRule: null,
     }),
   selectAnchor: (id) =>
@@ -124,6 +198,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedNode: null,
       selectedMember: null,
       selectedSteering: null,
+      selectedPlane: null,
       highlightRule: null,
     }),
   selectSteering: (id) =>
@@ -132,7 +207,43 @@ export const useStore = create<State>((set, _get) => ({
       selectedNode: null,
       selectedMember: null,
       selectedAnchor: null,
+      selectedPlane: null,
       highlightRule: null,
+    }),
+  selectPlane: (id) =>
+    set({
+      selectedPlane: id,
+      selectedNode: null,
+      selectedMember: null,
+      selectedAnchor: null,
+      selectedSteering: null,
+      highlightRule: null,
+    }),
+  setShowPlanes: (v) => set({ showPlanes: v }),
+  setPlaneTol: (mm) => set({ planeTolMm: Math.max(1, Math.min(50, mm)), selectedPlane: null }),
+  setDistance: (a, b, targetMm, move) =>
+    set((s) => {
+      // par L/R espelhado só admite afastamento simétrico: mover só um lado seria
+      // desfeito pelo próprio espelho no mesmo passo, com a cota errada no fim.
+      const twins = s.mirror && mirrorId(a) === b
+      const moved = setPointDistance(s.cage, a, b, targetMm, twins ? 'both' : move)
+      // DF-23: quem se move é escolha explícita — se o escolhido está travado, a cota
+      // não acontece. Deslocar o outro ponto "para ajudar" entregaria uma edição que
+      // ninguém pediu.
+      if (!moved || Object.keys(moved).some((id) => isLocked(s.cage, id))) return {}
+      return { cage: { ...s.cage, nodes: withMirror(s.cage, moved, s.mirror) } }
+    }),
+  setPlaneAngle: (movingId, refId, deg) =>
+    set((s) => {
+      const planes = detectPlanes(s.cage, s.planeTolMm)
+      const moving = planes.find((p) => p.id === movingId)
+      const ref = planes.find((p) => p.id === refId)
+      if (!moving || !ref) return {}
+      const moved = rotatePlaneTo(s.cage, moving, ref, deg, s.planeTolMm)
+      // giro é corpo rígido: com um ponto travado no meio, girar o resto deformaria o
+      // plano em vez de inclinar — recusa inteiro (a tela avisa antes, FR-DF23.6)
+      if (!moved || Object.keys(moved).some((id) => isLocked(s.cage, id))) return {}
+      return { cage: { ...s.cage, nodes: withMirror(s.cage, moved, s.mirror) } }
     }),
   addSteering: (mode) =>
     set((s) => {
@@ -159,11 +270,17 @@ export const useStore = create<State>((set, _get) => ({
       return { cage: { ...s.cage, steering } }
     }),
   removeSteering: () =>
-    set((s) => ({ cage: { ...s.cage, steering: undefined }, selectedSteering: null })),
+    set((s) => {
+      const cage: Cage = { ...s.cage, steering: undefined }
+      return { cage: { ...cage, locked: sanitizeLocked(cage) }, selectedSteering: null }
+    }),
   setSteeringMode: (mode) =>
     set((s) => {
       const st = s.cage.steering
       if (!st || st.mode === mode) return {}
+      // trocar de modo troca os ids dos pontos (SW ↔ SWL/SWR): a trava do id antigo
+      // não pode sobreviver como fantasma
+      const locked = (s.cage.locked ?? []).filter((id) => !st.points.some((p) => p.id === id))
       if (mode === 'central') {
         const avg = st.points.reduce(
           (a, p) => ({
@@ -176,6 +293,7 @@ export const useStore = create<State>((set, _get) => ({
         return {
           cage: {
             ...s.cage,
+            locked,
             steering: {
               ...st,
               mode,
@@ -189,6 +307,7 @@ export const useStore = create<State>((set, _get) => ({
       return {
         cage: {
           ...s.cage,
+          locked,
           steering: {
             ...st,
             mode,
@@ -210,12 +329,13 @@ export const useStore = create<State>((set, _get) => ({
   moveSteeringPoint: (id, pos) =>
     set((s) => {
       const st = s.cage.steering
-      if (!st) return {}
+      if (!st || isLocked(s.cage, id)) return {}
       const points = st.points.map((p) => {
         if (p.id === id) return { ...p, pos }
         if (
           s.mirror &&
           st.mode === 'mesa' &&
+          !isLocked(s.cage, p.id) &&
           ((id === 'SWL' && p.id === 'SWR') || (id === 'SWR' && p.id === 'SWL'))
         ) {
           return { ...p, pos: { x: -pos.x, y: pos.y, z: pos.z } }
@@ -226,9 +346,10 @@ export const useStore = create<State>((set, _get) => ({
     }),
   moveAnchor: (id, pos) =>
     set((s) => {
+      if (isLocked(s.cage, id)) return {}
       const anchors = (s.cage.anchors ?? []).map((a) => {
         if (a.id === id) return { ...a, pos }
-        if (s.mirror) {
+        if (s.mirror && !isLocked(s.cage, a.id)) {
           const me = (s.cage.anchors ?? []).find((x) => x.id === id)
           if (me && a.axle === me.axle && a.role === me.role && a.side !== me.side) {
             return { ...a, pos: { x: -pos.x, y: pos.y, z: pos.z } }
@@ -301,12 +422,19 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedNode: null,
       selectedAnchor: null,
+      selectedPlane: null,
     }),
   cancelPending: () => set({ pending: null }),
   pickNode: (id) =>
     set((s) => {
       if (!s.pending)
-        return { selectedNode: id, selectedMember: null, selectedAnchor: null, highlightRule: null }
+        return {
+          selectedNode: id,
+          selectedMember: null,
+          selectedAnchor: null,
+          selectedPlane: null,
+          highlightRule: null,
+        }
       if (!s.pending.first) return { pending: { ...s.pending, first: id } }
       if (s.pending.first === id) return {}
       const exists = s.cage.members.some(
@@ -340,15 +468,12 @@ export const useStore = create<State>((set, _get) => ({
     }),
   moveNode: (id, pos) =>
     set((s) => {
-      const nodes = { ...s.cage.nodes, [id]: pos }
-      if (s.mirror) {
-        const mid = mirrorId(id)
-        if (mid && nodes[mid]) nodes[mid] = { x: -pos.x, y: pos.y, z: pos.z }
-      }
-      return { cage: { ...s.cage, nodes } }
+      if (isLocked(s.cage, id)) return {}
+      return { cage: { ...s.cage, nodes: withMirror(s.cage, { [id]: pos }, s.mirror) } }
     }),
   deleteNode: (id) =>
     set((s) => {
+      if (isLocked(s.cage, id)) return {}
       if (s.cage.members.some((m) => m.a === id || m.b === id)) return {}
       const nodes = { ...s.cage.nodes }
       delete nodes[id]
@@ -447,11 +572,14 @@ export const useStore = create<State>((set, _get) => ({
         secondarySection: migrateSection(cage.secondarySection),
         // FR-DF6.4/6.5 — saneia declarações de continuidade importadas
         continuity: sanitizeContinuity(cage),
+        // DF-23 — trava de id que não existe mais no JSON importado é fantasma
+        locked: sanitizeLocked(cage),
       },
       selectedNode: null,
       selectedMember: null,
       selectedAnchor: null,
       selectedSteering: null,
+      selectedPlane: null,
       highlightRule: null,
       pending: null,
     }),
@@ -462,6 +590,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedAnchor: null,
       selectedSteering: null,
+      selectedPlane: null,
       highlightRule: null,
       pending: null,
     }),

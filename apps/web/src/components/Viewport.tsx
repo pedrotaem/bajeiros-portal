@@ -1,13 +1,17 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, Grid, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store'
+import { viewport3d } from '../tokens'
 import type { RuleResult } from '@bajeiros/core/rules/b6'
-import { isNamedIn, anchorLabel, PRIMARY_TYPES } from '@bajeiros/core/model/types'
+import type { Cage } from '@bajeiros/core/model/types'
+import { isLocked, isNamedIn, anchorLabel, PRIMARY_TYPES } from '@bajeiros/core/model/types'
 import { Geraldao } from './Geraldao'
 import { chainOf } from '@bajeiros/core/model/continuity'
 import { Manikin } from './Manikin'
+import { Planes } from './Planes'
+import type { CagePlane } from '@bajeiros/core/model/planes'
 import { defaultManikin, profileById, solveManikin } from '@bajeiros/core/model/manikin'
 
 const S = 0.001 // mm → m na cena
@@ -27,6 +31,7 @@ const COLORS = {
 interface Props {
   results: RuleResult[]
   removalMap: Record<string, string[]>
+  planes: CagePlane[]
 }
 
 interface DragState {
@@ -37,7 +42,111 @@ interface DragState {
   active: boolean
 }
 
-function Scene({ results, removalMap }: Props) {
+/**
+ * Marca de "travado no espaço" (DF-23): gaiola de arame em volta do elemento.
+ * É distinção por FORMA, não por cor — o canal de cor da cena já carrega status
+ * (infração, atenção, redundância) e identidade (primário/secundário).
+ */
+function LockMark() {
+  return (
+    <mesh raycast={() => null}>
+      <boxGeometry args={[0.058, 0.058, 0.058]} />
+      <meshBasicMaterial color={viewport3d['node-named']} wireframe transparent opacity={0.85} />
+    </mesh>
+  )
+}
+
+const VIEW_DIR: Record<string, THREE.Vector3> = {
+  // lado esquerdo do piloto: com +Z para a frente, a câmera em −X põe o nariz à direita
+  lateral: new THREE.Vector3(-1, 0, 0),
+  frontal: new THREE.Vector3(0, 0, 1),
+  // o ε em −Z evita o degenerado (direção paralela ao `up`) e deixa a frente para cima
+  superior: new THREE.Vector3(0, 1, -0.001),
+  iso: new THREE.Vector3(1, 0.75, 1),
+}
+
+/** Alvo inicial da órbita — constante de módulo para o R3F não reaplicar a cada render. */
+const INITIAL_TARGET: [number, number, number] = [0, 0.7, 0.3]
+
+/** Caixa que envolve tudo o que a cena desenha a partir da gaiola. */
+function cageBounds(cage: Cage): THREE.Box3 {
+  const box = new THREE.Box3()
+  const add = (p: { x: number; y: number; z: number }) =>
+    box.expandByPoint(new THREE.Vector3(p.x * S, p.y * S, p.z * S))
+  for (const n of Object.values(cage.nodes)) add(n)
+  add(cage.geraldao)
+  for (const a of cage.anchors ?? []) add(a.pos)
+  for (const p of cage.steering?.points ?? []) add(p.pos)
+  if (box.isEmpty()) box.set(new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(0.5, 1, 0.5))
+  return box
+}
+
+/**
+ * Distância que põe a caixa inteira dentro do tronco de visão. Cada canto exige
+ * `dz + lateral/tan(meio-ângulo)`; o maior manda. Enquadrar pela ESFERA seria uma
+ * linha a menos e desperdiçaria meia tela: a gaiola é comprida e baixa, e vista de
+ * lado a esfera que a envolve tem o diâmetro da diagonal.
+ */
+function fitDistance(box: THREE.Box3, dir: THREE.Vector3, camera: THREE.PerspectiveCamera): number {
+  const center = box.getCenter(new THREE.Vector3())
+  const forward = dir.clone().negate()
+  const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
+  const up = new THREE.Vector3().crossVectors(right, forward).normalize()
+  const tanV = Math.tan((camera.fov * Math.PI) / 360)
+  const tanH = tanV * camera.aspect
+  const min = box.min
+  const max = box.max
+  let dist = 0
+  for (const x of [min.x, max.x]) {
+    for (const y of [min.y, max.y]) {
+      for (const z of [min.z, max.z]) {
+        const v = new THREE.Vector3(x, y, z).sub(center)
+        const dz = v.dot(dir)
+        dist = Math.max(dist, dz + Math.abs(v.dot(right)) / tanH, dz + Math.abs(v.dot(up)) / tanV)
+      }
+    }
+  }
+  return Math.max(dist * 1.08, 0.3)
+}
+
+/**
+ * Vistas canônicas (DF-23). O botão também ENQUADRA: a distância sai do raio da
+ * esfera que envolve a gaiola, então "Lateral" numa gaiola grande e numa pequena
+ * enche a tela do mesmo jeito. `up` fica sempre em +Y para o OrbitControls não
+ * trocar o eixo de órbita debaixo da mão de quem arrasta em seguida.
+ */
+function CameraRig() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
+  const controls = useThree((s) => s.controls) as {
+    target: THREE.Vector3
+    update: () => void
+  } | null
+  const cameraView = useStore((s) => s.cameraView)
+  useEffect(() => {
+    if (!cameraView || !controls) return
+    const dir = VIEW_DIR[cameraView.view]?.clone().normalize()
+    if (!dir) return
+    // um quadro de espera: recolher uma lateral muda o tamanho do canvas, e o
+    // `camera.aspect` só é atualizado no próximo frame — enquadrar antes disso
+    // usaria a largura antiga e a gaiola sairia torta na tela
+    const id = requestAnimationFrame(() => {
+      // a gaiola é lida do store no momento do clique: reenquadrar não pode virar
+      // efeito que dispara a cada edição de geometria
+      const box = cageBounds(useStore.getState().cage)
+      const center = box.getCenter(new THREE.Vector3())
+      const dist = fitDistance(box, dir, camera)
+      camera.up.set(0, 1, 0)
+      camera.position.copy(center.clone().add(dir.multiplyScalar(dist)))
+      camera.lookAt(center)
+      controls.target.copy(center)
+      controls.update()
+    })
+    return () => cancelAnimationFrame(id)
+  }, [cameraView, controls, camera])
+  return null
+}
+
+function Scene({ results, removalMap, planes }: Props) {
   const cage = useStore((s) => s.cage)
   const selectedNode = useStore((s) => s.selectedNode)
   const selectedMember = useStore((s) => s.selectedMember)
@@ -55,6 +164,9 @@ function Scene({ results, removalMap }: Props) {
   const showRedundant = useStore((s) => s.showRedundant)
   const showGeraldao = useStore((s) => s.showGeraldao)
   const showManikin = useStore((s) => s.showManikin)
+  const showPlanes = useStore((s) => s.showPlanes)
+  const selectedPlane = useStore((s) => s.selectedPlane)
+  const selectPlane = useStore((s) => s.selectPlane)
   const pending = useStore((s) => s.pending)
 
   const camera = useThree((s) => s.camera)
@@ -173,6 +285,7 @@ function Scene({ results, removalMap }: Props) {
       {Object.entries(cage.nodes).map(([id, n]) => {
         const named = isNamedIn(cage, id)
         const sel = id === selectedNode || pending?.first === id
+        const locked = isLocked(cage, id)
         const pos = new THREE.Vector3(n.x * S, n.y * S, n.z * S)
         return (
           <group key={id} position={pos}>
@@ -184,7 +297,8 @@ function Scene({ results, removalMap }: Props) {
                   return
                 }
                 selectNode(id)
-                startDrag('node', id, pos, e)
+                // travado seleciona, mas não arrasta — e nem suspende a órbita
+                if (!locked) startDrag('node', id, pos, e)
               }}
               onPointerMove={(e) => onDragMove('node', id, e)}
               onPointerUp={endDrag}
@@ -194,6 +308,7 @@ function Scene({ results, removalMap }: Props) {
                 color={sel ? '#3b82f6' : pending ? '#f3a712' : named ? '#d8dee5' : '#6b7683'}
               />
             </mesh>
+            {locked && <LockMark />}
             <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
               <div className={named ? 'node-label' : 'node-label free'}>{id}</div>
             </Html>
@@ -208,10 +323,15 @@ function Scene({ results, removalMap }: Props) {
 
       {showGeraldao && <Geraldao geraldao={cage.geraldao} />}
       {showManikin && <Manikin cage={cage} />}
+      {/* durante "adicionar membro" os planos saem de cena: o clique ali é para nó */}
+      {showPlanes && !pending && (
+        <Planes cage={cage} planes={planes} selected={selectedPlane} onSelect={selectPlane} />
+      )}
 
       {/* Ancoragens da suspensão */}
       {(cage.anchors ?? []).map((a) => {
         const sel = a.id === selectedAnchor
+        const locked = isLocked(cage, a.id)
         const pos = new THREE.Vector3(a.pos.x * S, a.pos.y * S, a.pos.z * S)
         return (
           <group key={a.id} position={pos}>
@@ -220,7 +340,7 @@ function Scene({ results, removalMap }: Props) {
                 e.stopPropagation()
                 if (pending) return
                 selectAnchor(a.id)
-                startDrag('anchor', a.id, pos, e)
+                if (!locked) startDrag('anchor', a.id, pos, e)
               }}
               onPointerMove={(e) => onDragMove('anchor', a.id, e)}
               onPointerUp={endDrag}
@@ -234,6 +354,7 @@ function Scene({ results, removalMap }: Props) {
                 color={sel ? '#3b82f6' : a.role === 'amort' ? '#fb7185' : '#fb923c'}
               />
             </mesh>
+            {locked && <LockMark />}
             {sel && (
               <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
                 <div className="node-label anchor">{anchorLabel(a)}</div>
@@ -246,6 +367,7 @@ function Scene({ results, removalMap }: Props) {
       {/* Ancoragem do volante (DF-5) — octaedro ciano com alvo ampliado */}
       {(cage.steering?.points ?? []).map((pt) => {
         const sel = pt.id === selectedSteering
+        const locked = isLocked(cage, pt.id)
         const pos = new THREE.Vector3(pt.pos.x * S, pt.pos.y * S, pt.pos.z * S)
         return (
           <group key={pt.id} position={pos}>
@@ -254,7 +376,7 @@ function Scene({ results, removalMap }: Props) {
                 e.stopPropagation()
                 if (pending) return
                 selectSteering(pt.id)
-                startDrag('steer', pt.id, pos, e)
+                if (!locked) startDrag('steer', pt.id, pos, e)
               }}
               onPointerMove={(e) => onDragMove('steer', pt.id, e)}
               onPointerUp={endDrag}
@@ -266,6 +388,7 @@ function Scene({ results, removalMap }: Props) {
               <octahedronGeometry args={[sel ? 0.026 : 0.018]} />
               <meshStandardMaterial color={sel ? '#3b82f6' : '#22d3ee'} />
             </mesh>
+            {locked && <LockMark />}
             {sel && (
               <Html distanceFactor={4} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
                 <div className="node-label anchor">volante · {pt.id}</div>
@@ -295,7 +418,8 @@ function Scene({ results, removalMap }: Props) {
           )
         })()}
 
-      <OrbitControls target={[0, 0.7, 0.3]} makeDefault />
+      <OrbitControls target={INITIAL_TARGET} makeDefault />
+      <CameraRig />
     </>
   )
 }
@@ -305,6 +429,7 @@ export function Viewport(props: Props) {
   const selectMember = useStore((s) => s.selectMember)
   const selectAnchor = useStore((s) => s.selectAnchor)
   const selectSteering = useStore((s) => s.selectSteering)
+  const selectPlane = useStore((s) => s.selectPlane)
   return (
     <Canvas
       camera={{ position: [2.6, 1.8, 2.8], fov: 45 }}
@@ -314,6 +439,7 @@ export function Viewport(props: Props) {
         selectMember(null)
         selectAnchor(null)
         selectSteering(null)
+        selectPlane(null)
       }}
     >
       <Scene {...props} />

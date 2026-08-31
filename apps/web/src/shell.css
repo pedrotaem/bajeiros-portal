@@ -68,9 +68,41 @@
 
 .bj-rail-brand {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: var(--bj-space-2);
   padding: var(--bj-space-2);
   margin-bottom: var(--bj-space-2);
+}
+.bj-rail-brand-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.bj-rail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bj-control-h-sm);
+  height: var(--bj-control-h-sm);
+  flex: none;
+  background: none;
+  border: 0;
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-muted);
+  cursor: pointer;
+}
+.bj-rail-toggle:hover {
+  background: var(--bj-hover);
+  color: var(--bj-fg-primary);
+}
+/* Um glifo só, girado 180° (§8.8 permite): aberto aponta para dentro (recolher),
+   recolhido aponta para fora (expandir). */
+.bj-rail-toggle svg {
+  transform: rotate(180deg);
+}
+.bj-rail-toggle[aria-expanded='false'] svg {
+  transform: none;
 }
 .bj-rail-brand-name {
   font-family: var(--bj-font-display);
@@ -149,6 +181,120 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---------- C-02 variante `sub` — recursos da página ativa (DF-24) ---------- */
+
+.bj-rail-sublist {
+  list-style: none;
+  margin: 2px 0 var(--bj-space-2);
+  padding: 0 0 0 var(--bj-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: relative;
+}
+/* fio vertical: liga os recursos ao destino que os abriu */
+.bj-rail-sublist::before {
+  content: '';
+  position: absolute;
+  inset-block: 2px;
+  inset-inline-start: var(--bj-space-4);
+  width: 1px;
+  background: var(--bj-border);
+}
+.bj-nav-sub {
+  min-height: var(--bj-control-h);
+  gap: var(--bj-space-2);
+  padding-block: var(--bj-space-1);
+  font-size: var(--bj-text-sm);
+}
+/* nome de ferramenta quebra em duas linhas em vez de virar reticências: "Assistente
+   do regulamento" não cabe em 224px, e cortar o nome do produto é pior que gastar
+   uma linha a mais no rail */
+.bj-nav-sub .bj-nav-label {
+  white-space: normal;
+  overflow: visible;
+  line-height: var(--bj-leading-tight);
+}
+/* slot fixo da marca: com ou sem marca, os rótulos do nível 2 alinham */
+.bj-nav-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex: none;
+}
+
+/* ---------- rail compacto (C-02 `rail-compact`) ---------- */
+
+.bj-shell-compacto {
+  grid-template-columns: var(--bj-rail-w-compact) 1fr;
+}
+.bj-shell-compacto .bj-rail {
+  padding-inline: var(--bj-space-1);
+  /* a dica sai da coluna do rail; `overflow-y: auto` a cortaria. No compacto o rail
+     tem 6 alvos e não precisa rolar — trocar o corte pela dica é o negócio certo */
+  overflow: visible;
+}
+.bj-shell-compacto .bj-rail-brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+/* o rótulo continua no DOM para o leitor de tela; some só do olho (C-02) */
+.bj-shell-compacto .bj-rail-brand-texto,
+.bj-shell-compacto .bj-nav-label,
+.bj-shell-compacto .bj-conta-btn svg:last-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.bj-shell-compacto .bj-nav-item {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.bj-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Dica do rail compacto: hover E foco (C-02). Não é o C-15 completo — é o mínimo
+   que o item precisa quando o rótulo sai da tela. */
+.bj-shell-compacto .bj-nav-item[data-dica],
+.bj-rail-toggle[data-dica] {
+  position: relative;
+}
+.bj-shell-compacto .bj-nav-item[data-dica]:hover::after,
+.bj-shell-compacto .bj-nav-item[data-dica]:focus-visible::after,
+.bj-rail-toggle[data-dica]:hover::after,
+.bj-rail-toggle[data-dica]:focus-visible::after {
+  content: attr(data-dica);
+  position: absolute;
+  inset-inline-start: calc(100% + var(--bj-space-2));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--bj-z-dropdown);
+  padding: var(--bj-space-1) var(--bj-space-2);
+  background: var(--bj-bg-overlay);
+  color: var(--bj-fg-primary);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-sm);
+  box-shadow: var(--bj-shadow-md);
+  font-size: var(--bj-text-sm);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .bj-conta {

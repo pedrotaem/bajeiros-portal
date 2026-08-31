@@ -1,6 +1,7 @@
 import { dark, viewport3d } from '../tokens'
 import * as glyphs from '../icons/glyphs'
-import { ICONS, ICON_CEILING, ICON_DONOR } from '../icons/registry'
+import * as marks from '../icons/marks'
+import { ICONS, ICON_CEILING, ICON_DONOR, MARKS, MARK_CEILING } from '../icons/registry'
 import { STATUS_LABEL, StatusChip, type StatusRole } from '../icons/statusIcon'
 import '../shell.css'
 
@@ -100,6 +101,27 @@ export function Galeria() {
                 <figcaption>
                   {entry.name.replace('Icon', '')}
                   <small>{entry.meaning}</small>
+                </figcaption>
+              </figure>
+            )
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h2>
+          Marcas de ferramenta a 16px ({MARKS.length}/{MARK_CEILING}) — categoria à parte do
+          inventário (§8.6.1)
+        </h2>
+        <div className="bj-galeria-icons">
+          {MARKS.map((entry) => {
+            const Mark = (marks as Record<string, (p: { size: 16 }) => JSX.Element>)[entry.name]
+            return (
+              <figure key={entry.name}>
+                <Mark size={16} />
+                <figcaption>
+                  {entry.name.replace('Mark', '')}
+                  <small>{entry.product}</small>
                 </figcaption>
               </figure>
             )

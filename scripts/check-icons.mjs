@@ -15,6 +15,7 @@ const dir = path.join(root, 'apps', 'web', 'src', 'icons')
 const errors = []
 
 const glyphs = readFileSync(path.join(dir, 'glyphs.tsx'), 'utf8')
+const marks = readFileSync(path.join(dir, 'marks.tsx'), 'utf8')
 const registry = readFileSync(path.join(dir, 'registry.ts'), 'utf8')
 const statusIcon = readFileSync(path.join(dir, 'statusIcon.tsx'), 'utf8')
 
@@ -53,6 +54,30 @@ for (const name of roles) {
   }
 }
 
+// MARCAS DE FERRAMENTA (DF-24): categoria própria, teto próprio, mesmas regras de
+// geometria. A exceção ao "nada se desenha" de §8.6 é ESCRITA e limitada — quem
+// desenhar uma terceira marca esbarra aqui e tem de nomear o produto que ela
+// identifica no registro.
+const MARK_CEILING = 4
+const marksExported = [...marks.matchAll(/export const (Mark\w+)\s*=/g)].map((m) => m[1])
+const marksRegistered = [...registry.matchAll(/name: '(Mark\w+)'/g)].map((m) => m[1])
+
+for (const name of marksExported) {
+  if (!marksRegistered.includes(name)) errors.push(`${name} desenhada mas ausente de MARKS`)
+}
+for (const name of marksRegistered) {
+  if (!marksExported.includes(name)) errors.push(`${name} em MARKS mas sem geometria em marks.tsx`)
+  const entry = registry.match(new RegExp(`name: '${name}',\\s*\\n\\s*product: '([^']+)'`))
+  if (!entry) errors.push(`${name} sem produto nomeado — marca identifica produto (§8.6)`)
+}
+if (marksRegistered.length > MARK_CEILING) {
+  errors.push(`${marksRegistered.length} marcas — o teto é ${MARK_CEILING}`)
+}
+// as duas listas não se misturam: marca não vira vocabulário e ícone não vira logo
+for (const name of marksRegistered) {
+  if (registered.includes(name)) errors.push(`${name} está nas duas listas`)
+}
+
 // contrato do primitivo: a geometria não carrega estilo próprio
 const FORBIDDEN = [
   [/\sfill="(?!none)/, 'fill literal'],
@@ -65,6 +90,7 @@ const FORBIDDEN = [
 ]
 for (const [re, what] of FORBIDDEN) {
   if (re.test(glyphs)) errors.push(`glyphs.tsx contém ${what} — proibido por §8.10`)
+  if (re.test(marks)) errors.push(`marks.tsx contém ${what} — proibido por §8.10`)
 }
 
 // regra de build que dois glifos dependem para existir
@@ -81,5 +107,6 @@ if (errors.length) {
   process.exit(1)
 }
 console.log(
-  `✓ ${registered.length}/${CEILING} formas registradas, 5 papéis de status, doador único`,
+  `✓ ${registered.length}/${CEILING} formas registradas, ${marksRegistered.length}/${MARK_CEILING} marcas de ferramenta, ` +
+    '5 papéis de status, doador único',
 )

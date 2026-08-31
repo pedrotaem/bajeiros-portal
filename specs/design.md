@@ -37,6 +37,7 @@ Cage {
   primarySection / secondarySection: TubeSection  // { od, wall, carbon }
   namedExtra?: NodeId[]               // nós promovidos a "ponto denominado" pelo usuário
   anchors?: Anchor[]                  // ancoragens da suspensão (posição livre)
+  locked?: string[]                   // travados no espaço: nós, ancoragens e pontos do volante
 }
 ```
 
@@ -60,7 +61,16 @@ Não há entidade "curva". Uma dobra é um **nó intermediário não denominado 
 O motor caminha o grafo entre pontos denominados (ver §5.2) somando comprimento e medindo
 a deflexão em cada nó intermediário. Raio de curvatura não é modelado (item manual).
 
-### 3.4 Ancoragens
+### 3.4 Planos (DF-22)
+
+Não há entidade "plano" no `Cage`. Um plano é derivado: **circuito fechado de pontos denominados
+adjacentes** (adjacência de vão, §5.2) cujos vértices cabem dentro de `tolMm` de um plano ajustado
+por mínimos quadrados totais — normal = autovetor do menor autovalor da covariância, obtido pelo
+maior cofator (sem solucionador de autovalores). `detectPlanes` semeia em cada canto, cresce pelo
+candidato de menor resíduo, poda pontas soltas e devolve só os conjuntos maximais. Tolerância é
+estado de UI (default 5 mm): afrouxar funde painéis vizinhos, apertar separa.
+
+### 3.5 Ancoragens
 
 `Anchor { id, axle: dianteira|traseira, side: L|R, role: sup1|sup2|inf1|inf2|amort, pos: Vec3 }`
 — 20 fixas em identidade, livres em posição. Não referenciam tubos; o vínculo físico é
@@ -73,11 +83,13 @@ src/
   model/types.ts       tipos, classificação primário/secundário, pontos denominados
   model/template.ts    gaiola exemplo completa (com 1 falha didática em B6.2.7.5)
   model/builder.ts     buildCage(params, upTo): geração paramétrica do assistente (§6)
+  model/planes.ts      planos derivados (§3.4), ângulo entre planos, giro na dobradiça, cota
   rules/geometry.ts    primitivas: dist, ângulo, plano (Newell), ponto-segmento, interpolações
   rules/b6.ts          evaluate(), removalImpact(), catálogo de regras (rules.md)
   store.ts             zustand: cage + seleção (nó/membro/ancoragem) + modo adicionar + wizard
   components/
     Viewport.tsx       cena 3D: tubos (cilindros), nós, ancoragens, Geraldão, cores de status
+    Planes.tsx         planos translúcidos (DF-22): leque de triângulos + contorno + rótulo
     RulePanel.tsx      checklist com badges e destaque de membros
     Inspector.tsx      edição (nó/membro/ancoragem), adicionar, seções, lista de ancoragens, JSON
     Wizard.tsx         assistente de 6 passos
@@ -168,6 +180,24 @@ passos" enquanto o assistente está ativo. Cancelar restaura snapshot da gaiola 
   separa clique de arrasto. O mapa de análise de remoção usa `useDeferredValue(cage)`
   para não recalcular ~40 avaliações por frame durante o gesto; o checklist principal
   (uma avaliação) permanece síncrono.
+- **Planos** (DF-22): `detectPlanes` entra no mesmo `useDeferredValue` (~6–13 ms na gaiola
+  default). O preenchimento é clicável sem roubar o clique de nó/tubo porque a superfície passa
+  pelo eixo dos tubos e pelo centro dos nós — a esfera (r = 20 mm) e o cilindro (r = 12,7 mm) estão
+  sempre mais perto da câmera. Durante "adicionar membro" os planos são desmontados.
+- **Trava** (DF-23): `isLocked` é consultado nas cinco ações que movem (`moveNode`,
+  `moveAnchor`, `moveSteeringPoint`, `setDistance`, `setPlaneAngle`) e no `deleteNode`. O arrasto
+  nem começa em elemento travado — o gesto não suspende o OrbitControls. O espelho é parcial
+  (gêmeo travado fica); o giro de plano é recusado inteiro, porque é corpo rígido. Marca no 3D
+  por forma (gaiola de arame), não por cor.
+- **Vistas canônicas** (DF-23): o botão publica `{view, seq}` no store e um `<CameraRig/>` dentro
+  do `<Canvas>` reage — a barra vive fora do Canvas e não tem `useThree`. O enquadramento usa a
+  caixa envolvente projetada nos dois meio-ângulos do tronco (não a esfera, que desperdiça meia
+  tela num objeto comprido) e espera um `requestAnimationFrame`, porque `camera.aspect` só é
+  atualizado no frame seguinte a uma mudança de layout. `up` fica sempre em +Y.
+- **Cota e ângulo aplicam no Enter**, não a cada tecla (`CommitField`): para coordenada, aplicar por
+  tecla é inofensivo (o ponto passeia e chega), mas digitar "102" num ângulo passaria por 1° e 10° —
+  e o plano deitado sobre o vizinho no caminho pode fundir os dois, mudando a identidade do plano
+  que a próxima tecla ia editar.
 
 ## 8. Evolução prevista
 

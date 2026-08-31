@@ -81,6 +81,21 @@ function readActiveTeam(): string | null {
   }
 }
 
+/**
+ * Rail recolhido entre sessões (DF-24). Quem trabalha no editor recolhe uma vez e
+ * quer assim toda vez; guardar é o que faz o botão valer a pena. Mesmo contrato do
+ * `ACTIVE_TEAM_KEY`: storage bloqueado só custa a memória entre sessões.
+ */
+const RAIL_KEY = 'bajeiros:rail-compacto'
+
+function readRailCompact(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 // Header de auth p/ fetches feitos fora do método api() (track, streaming SSE).
 export function authHeaders(): Record<string, string> {
   const { token } = useSession.getState()
@@ -107,6 +122,9 @@ interface SessionState {
   communityTab: CommunityTab
   projectTab: ProjectTab
   activeTeamId: string | null
+  /** Rail recolhido a só-ícone (DF-24 / design-system C-02 `rail-compact`). */
+  railCompact: boolean
+  setRailCompact: (v: boolean) => void
   inviteToken: string | null
   inviteNotice: string | null
   authNotice: string | null // falha do pós-login cognito (ex.: 409 de e-mail), exibida no LoginPanel
@@ -324,6 +342,15 @@ export const useSession = create<SessionState>((set, get) => ({
   communityTab: 'resultados',
   projectTab: 'ficha',
   activeTeamId: readActiveTeam(),
+  railCompact: readRailCompact(),
+  setRailCompact: (railCompact) => {
+    try {
+      localStorage.setItem(RAIL_KEY, railCompact ? '1' : '0')
+    } catch {
+      /* storage bloqueado: vale só esta sessão */
+    }
+    set({ railCompact })
+  },
   // A home é o Início do shell, logado ou não (a apresentação pública mora nele).
   // Convite pendente pula direto para o login.
   panel: initialInvite ? 'login' : null,
