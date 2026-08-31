@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
 import { AREA_LABELS, AREA_SHORT, levelName } from '@bajeiros/evolution/areas'
 import { destinationFor } from '@bajeiros/evolution/destinations'
+import { MAX_RANK } from '@bajeiros/evolution/ranks'
 import { withUser, type DbClient } from '../../db'
 import { problem } from '../../problem'
-import { recomputeTeam, syncSeasonProjectStep } from '../evolution/engine'
+import { recomputeTeamFull, syncSeasonProjectStep } from '../evolution/engine'
+import { bestRank, loadOptIn, serializeRank, unseenPromotion } from '../evolution/rank'
 import { loadActivity, loadSeason } from '../evolution/routes'
 import type { AuthEnv } from '../../auth/middleware'
 
@@ -52,8 +54,11 @@ home.get('/home', async (c) => {
 
     const teamId = active.id as string
     const season = await loadSeason(db, teamId)
-    await syncSeasonProjectStep(db, teamId, !!season?.seasonProjectId)
-    const evo = await recomputeTeam(db, teamId, { actorUserId: sub })
+    // DF-18 RF-2.5 — sem opt-in a evolução some do shell inteiro, Início incluído
+    const optIn = await loadOptIn(db, teamId)
+    if (optIn.enabled) await syncSeasonProjectStep(db, teamId, !!season?.seasonProjectId)
+    const full = await recomputeTeamFull(db, teamId, { actorUserId: sub })
+    const evo = full.result
 
     const steps = (
       await db.query(
@@ -132,19 +137,26 @@ home.get('/home', async (c) => {
       season: season
         ? { label: season.label, next: season.next, seasonProjectId: season.seasonProjectId }
         : null,
-      evolution: {
-        average: evo.average,
-        catalogVersion: evo.catalogVersion,
-        areas: evo.areas.map((a) => ({
-          area: a.area,
-          label: AREA_LABELS[a.area],
-          short: AREA_SHORT[a.area],
-          level: a.level,
-          levelName: levelName(a.level),
-        })),
-      },
-      steps: [...priority, ...steps].slice(0, STEPS),
-      openSteps: priority.length + steps.length,
+      optIn: optIn.enabled,
+      evolution: optIn.enabled
+        ? {
+            average: evo.average,
+            floor: evo.floor,
+            catalogVersion: evo.catalogVersion,
+            areas: evo.areas.map((a) => ({
+              area: a.area,
+              label: AREA_LABELS[a.area],
+              short: AREA_SHORT[a.area],
+              level: a.level,
+              levelName: levelName(a.level),
+            })),
+          }
+        : null,
+      // DF-18 §7 — emblema + barra até a próxima patente, e a frase "um deles é seu"
+      // quando o membro carrega um passo pendente. ~400 bytes: cabe no teto de 20 KB.
+      rank: optIn.enabled ? await homeRank(db, teamId, sub, full) : null,
+      steps: optIn.enabled ? [...priority, ...steps].slice(0, STEPS) : [],
+      openSteps: optIn.enabled ? priority.length + steps.length : 0,
       activity,
       knowledge: { decisions: Number(counts.decisions), guides: Number(counts.guides) },
       lastResult: lastResult
@@ -162,6 +174,39 @@ home.get('/home', async (c) => {
   if (payload === 'no-user') return problem(c, 404, 'Usuário não encontrado')
   return c.json(payload)
 })
+
+/**
+ * DF-18 §7 — o Início mostra a patente e a DISTÂNCIA até a próxima. Só o essencial:
+ * a faixa completa (mediana da coorte, carência, histórico) mora em Equipe · Evolução.
+ */
+async function homeRank(
+  db: DbClient,
+  teamId: string,
+  sub: string,
+  full: Awaited<ReturnType<typeof recomputeTeamFull>>,
+) {
+  const outcome = full.rank
+  if (!outcome) return null
+  const n = outcome.rank
+  const best = await bestRank(db, teamId)
+  return {
+    rank: n === null ? null : serializeRank(n),
+    max: MAX_RANK,
+    reason: outcome.computed.reason,
+    average: outcome.computed.average,
+    seasonLabel: full.season.label,
+    next: outcome.computed.next
+      ? {
+          ...serializeRank(outcome.computed.next.n),
+          block: outcome.computed.next.block,
+          missing:
+            outcome.computed.next.maturity.length + (outcome.computed.next.competition ? 1 : 0),
+        }
+      : null,
+    best: best === null ? null : serializeRank(best),
+    promotion: await unseenPromotion(db, teamId, sub, n),
+  }
+}
 
 /**
  * "Continuar de onde parou" — do USUÁRIO, não da equipe (RF-1.4). Ausente é módulo

@@ -331,8 +331,13 @@ describe('DF-15 — API da comunidade', () => {
     expect(resultado.payload.position).toBe(1)
     expect(resultado.payload.total).toBe(10)
 
+    // maturidade ≠ resultado (ADR-010 dec. 4): nenhuma área sobe por causa do 1º
+    // lugar. A PATENTE é outra coisa e o DF-18 RF-3.5 diz isso com todas as letras.
+    await app.request(
+      `/api/v1/teams/${teamId}/evolution/optin`,
+      authed(cap, { method: 'POST', body: '{}' }),
+    )
     const evo = await (await app.request(`/api/v1/teams/${teamId}/evolution`, authed(cap))).json()
-    // maturidade ≠ resultado: nenhuma área subiu por causa do 1º lugar
     expect(evo.areas.find((a: { area: string }) => a.area === 'estrutura').level).toBe(0)
   })
 

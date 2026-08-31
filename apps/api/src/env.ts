@@ -9,6 +9,10 @@ const def = {
   GATEWAY_URL: 'http://localhost:8788',
   GATEWAY_AUTH: '', // 'iam' em prod: assina SigV4 na Function URL do gateway (G3)
   ASSISTANT_RATE_SALT: 'dev-salt-nao-usar-em-prod',
+  // DF-19 AC-10 / DF-20 §9 — 'declarado' (v1 autodeclarativa) | 'aferido' (liga as
+  // contraprovas). Alternar NÃO exige migração: é o mesmo dado, outro cálculo. O
+  // gate do DF-20 é uma temporada de v1 acumulada, não uma decisão de deploy.
+  EVOLUTION_MODE: 'declarado',
   // fase 11 — driver RDS Data API (Lambda). Defaults mantêm dev/test em pg.
   DB_MODE: 'pg',
   DB_CLUSTER_ARN: '',

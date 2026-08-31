@@ -32,6 +32,17 @@ interface Kit {
   checklist: { id: string; label: string; done: boolean }[]
   attention: boolean
 }
+interface Evo {
+  areas: {
+    area: string
+    level: number
+    criteria: {
+      id: string
+      satisfied: boolean
+      measured: { satisfied: boolean; reason: string } | null
+    }[]
+  }[]
+}
 
 describe('DF-14 — conhecimento da equipe (API)', () => {
   let cap: TestUser
@@ -93,6 +104,9 @@ describe('DF-14 — conhecimento da equipe (API)', () => {
       ).json()
     ).id
     await joinTeam(membro, cap)
+    // DF-18 RF-2.5 — sem opt-in a evolução não existe em resposta nenhuma; o que
+    // este arquivo afirma é que o conhecimento ALIMENTA a evolução, então ativa.
+    await post(cap, '/evolution/optin', {})
   })
 
   // ---------- diário ----------
@@ -207,27 +221,30 @@ describe('DF-14 — conhecimento da equipe (API)', () => {
     expect(dupla.status).toBe(409)
   })
 
-  it('AC-DF14.5 — trilha concluída pelo novato satisfaz CON-3.1 no DF-13', async () => {
+  it('AC-DF14.5 — trilha concluída pelo novato satisfaz a MEDIDA de CON-3.1 no DF-13', async () => {
     const guias = await get<Guide[]>(membro, '/guides')
     const trilha = guias.find((g) => g.kind === 'trilha')!
     expect((await post(membro, `/guides/${trilha.id}/complete`, {})).status).toBe(204)
 
-    const evo = await get<{ areas: { criteria: { id: string; satisfied: boolean }[] }[] }>(
-      cap,
-      '/evolution',
-    )
+    const evo = await get<Evo>(cap, '/evolution')
     const con31 = evo.areas.flatMap((a) => a.criteria).find((c) => c.id === 'CON-3.1')
+    // DF-19: o portal MEDE; quem sobe o nível é a declaração da capitania
     // o "último novato aprovado" é o membro, que acabou de concluir a trilha
-    expect(con31?.satisfied).toBe(true)
+    expect(con31?.measured?.satisfied).toBe(true)
 
     const meus = await get<Guide[]>(membro, '/guides')
     expect(meus.find((g) => g.id === trilha.id)?.completedByMe).toBe(true)
   })
 
   it('o conhecimento move o nível da área conhecimento no DF-13', async () => {
-    const evo = await get<{ areas: { area: string; level: number }[] }>(cap, '/evolution')
+    // a medida está em pé (≥ 1 decisão registrada); declarar é o que sobe o nível
+    const antes = await get<Evo>(cap, '/evolution')
+    expect(
+      antes.areas.flatMap((a) => a.criteria).find((c) => c.id === 'CON-1.1')?.measured?.satisfied,
+    ).toBe(true)
+    await post(cap, '/evolution/declarations/CON-1.1', {})
+    const evo = await get<Evo>(cap, '/evolution')
     const area = evo.areas.find((a) => a.area === 'conhecimento')!
-    // ≥ 1 decisão fecha o nível 1; guias + trilha e 10 decisões fecham o 2
     expect(area.level).toBeGreaterThanOrEqual(1)
   })
 
@@ -262,13 +279,10 @@ describe('DF-14 — conhecimento da equipe (API)', () => {
     expect((await fim.json()).progress).toBe(100)
   })
 
-  it('o kit concluído satisfaz CON-4.1 e sobrevive à saída do membro', async () => {
-    const evo = await get<{ areas: { criteria: { id: string; satisfied: boolean }[] }[] }>(
-      cap,
-      '/evolution',
-    )
+  it('o kit concluído satisfaz a medida de CON-4.1 e sobrevive à saída do membro', async () => {
+    const evo = await get<Evo>(cap, '/evolution')
     const con41 = evo.areas.flatMap((a) => a.criteria).find((c) => c.id === 'CON-4.1')
-    expect(con41?.satisfied).toBe(true)
+    expect(con41?.measured?.satisfied).toBe(true)
 
     const kits = await get<Kit[]>(cap, '/kits')
     expect(kits.some((k) => k.status === 'concluido')).toBe(true)

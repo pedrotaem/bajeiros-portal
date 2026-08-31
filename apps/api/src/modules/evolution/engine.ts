@@ -1,9 +1,10 @@
 import { computeLevels } from '@bajeiros/evolution/compute'
-import { CATALOG_VERSION, criterionById } from '@bajeiros/evolution/catalog'
+import { CATALOG_MODE, CATALOG_VERSION, criterionById } from '@bajeiros/evolution/catalog'
 import { AREA_IDS } from '@bajeiros/evolution/areas'
 import { DESIGNATE_PROJECT_STEP } from '@bajeiros/evolution/destinations'
 import type {
   AreaId,
+  CatalogMode,
   Declaration,
   Evidence,
   EvidenceKind,
@@ -12,6 +13,9 @@ import type {
 import type { OrgSummary, ValidationSummary } from '@bajeiros/evolution/evidence'
 import type { RuleResult } from '@bajeiros/core/rules/b6'
 import type { DbClient } from '../../db'
+import { env } from '../../env'
+import { recordEvidence, type EvidenceInput } from './evidence'
+import { loadCommunity, loadOptIn, recomputeRank, type OptInState, type RankOutcome } from './rank'
 
 // Camada de aplicação do DF-13: grava evidência, recomputa níveis e sincroniza a
 // fila de passos. O CÁLCULO mora no pacote puro `@bajeiros/evolution` — aqui só
@@ -28,6 +32,7 @@ import type { DbClient } from '../../db'
 /** Kinds cujo ÚLTIMO registro é o estado (o resto é evento e conta acumulado). */
 const LATEST_KINDS: EvidenceKind[] = [
   'validation.summary',
+  'datasheet.summary',
   'org.summary',
   'knowledge.summary',
   'season.configured',
@@ -42,35 +47,15 @@ const EVENT_KINDS: EvidenceKind[] = [
   'kit.completed',
 ]
 
-export interface EvidenceInput {
-  teamId: string
-  source: 'projects' | 'teams' | 'knowledge' | 'evolution' | 'community' | 'web'
-  kind: EvidenceKind
-  payload: Record<string, unknown>
-  projectId?: string | null
-  snapshotSeq?: number | null
-  refKind?: string | null
-  refId?: string | null
-  actorUserId?: string | null
-}
+export { recordEvidence }
+export type { EvidenceInput }
 
-export async function recordEvidence(db: DbClient, ev: EvidenceInput): Promise<void> {
-  await db.query(
-    `INSERT INTO evolution_evidence
-       (team_id, source, kind, payload, project_id, snapshot_seq, ref_kind, ref_id, actor_user_id)
-     VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9)`,
-    [
-      ev.teamId,
-      ev.source,
-      ev.kind,
-      JSON.stringify(ev.payload),
-      ev.projectId ?? null,
-      ev.snapshotSeq ?? null,
-      ev.refKind ?? null,
-      ev.refId ?? null,
-      ev.actorUserId ?? null,
-    ],
-  )
+/**
+ * DF-19 AC-10 — o modo é do AMBIENTE, com o default do catálogo. Virar `'aferido'`
+ * liga as contraprovas do DF-20 sem migração nenhuma: é o mesmo dado, outro cálculo.
+ */
+export function catalogMode(): CatalogMode {
+  return env('EVOLUTION_MODE') === 'aferido' ? 'aferido' : CATALOG_MODE
 }
 
 async function loadEvidences(db: DbClient, teamId: string): Promise<Evidence[]> {
@@ -104,15 +89,41 @@ export function toEvidence(row: Record<string, unknown>): Evidence {
   }
 }
 
-export async function loadDeclarations(db: DbClient, teamId: string): Promise<Declaration[]> {
+interface StoredDeclaration extends Declaration {
+  divergent: boolean
+}
+
+export async function loadDeclarations(db: DbClient, teamId: string): Promise<StoredDeclaration[]> {
   const r = await db.query(
-    'SELECT criterion_id, declared_at FROM evolution_declarations WHERE team_id = $1',
+    `SELECT criterion_id, declared_at, season_label, divergent, link_ref,
+            reaffirmed_at, reaffirmed_season
+     FROM evolution_declarations WHERE team_id = $1`,
     [teamId],
   )
   return r.rows.map((row) => ({
     criterionId: row.criterion_id as string,
     declaredAt: new Date(row.declared_at as string),
+    seasonLabel: (row.season_label as string | null) ?? null,
+    divergent: row.divergent === true,
+    hasLink: !!row.link_ref,
+    reaffirmedAt: row.reaffirmed_at ? new Date(row.reaffirmed_at as string) : null,
+    reaffirmedSeason: (row.reaffirmed_season as string | null) ?? null,
   }))
+}
+
+/** Rótulo e protótipo da temporada — as duas coisas que o cálculo precisa saber. */
+export async function seasonContext(
+  db: DbClient,
+  teamId: string,
+): Promise<{ label: string | null; projectId: string | null }> {
+  const r = await db.query('SELECT label, season_project_id FROM team_season WHERE team_id = $1', [
+    teamId,
+  ])
+  const row = r.rows[0]
+  return {
+    label: (row?.label as string | null) ?? null,
+    projectId: (row?.season_project_id as string | null) ?? null,
+  }
 }
 
 export interface RecomputeOptions {
@@ -121,20 +132,48 @@ export interface RecomputeOptions {
   syncQueue?: boolean
 }
 
+export interface TeamEvolution {
+  result: EvolutionResult
+  optIn: OptInState
+  season: { label: string | null; projectId: string | null }
+  rank: RankOutcome | null
+}
+
 /**
- * Recomputa os níveis da equipe, grava `level.changed` por área que mudou e
- * sincroniza a fila. Idempotente: rodar de novo sem evidência nova não grava nada
- * — nem evento, nem passo duplicado (P-3.1).
+ * Recomputa os níveis da equipe, grava `level.changed` por área que mudou, resolve a
+ * patente (com a carência do DF-18 §3.5) e sincroniza a fila. Idempotente: rodar de
+ * novo sem evidência nova não grava nada — nem evento, nem passo duplicado (P-3.1).
+ *
+ * DF-18 RF-2.5 — **sem opt-in nada é persistido**: o cálculo roda (é ele que a
+ * ativação retroativa devolve na hora, RF-2.4), mas níveis, eventos, fila e patente
+ * não são escritos e não aparecem em resposta nenhuma de API (AC-DF18.2). A evidência
+ * continua sendo produzida por todos os produtores — é o que faz a ativação devolver
+ * resultado em vez de um painel zerado.
  */
-export async function recomputeTeam(
+export async function recomputeTeamFull(
   db: DbClient,
   teamId: string,
   opts: RecomputeOptions = {},
-): Promise<EvolutionResult> {
+): Promise<TeamEvolution> {
   const now = opts.now ?? new Date()
+  const mode = catalogMode()
+  const optIn = await loadOptIn(db, teamId)
+  const season = await seasonContext(db, teamId)
   const evidences = await loadEvidences(db, teamId)
   const declarations = await loadDeclarations(db, teamId)
-  const result = computeLevels({ evidences, declarations, now })
+  const community = mode === 'aferido' ? await loadCommunity(db, season.projectId) : undefined
+  const result = computeLevels({
+    evidences,
+    declarations,
+    now,
+    mode,
+    seasonLabel: season.label,
+    community,
+  })
+
+  if (!optIn.enabled) return { result, optIn, season, rank: null }
+
+  await persistDivergences(db, teamId, result, declarations)
 
   const stored = await db.query(
     'SELECT area, level, catalog_version FROM evolution_levels WHERE team_id = $1',
@@ -168,6 +207,11 @@ export async function recomputeTeam(
     const de = prev?.level ?? 0
     if (de === area.level) continue
     // Queda é sinal, não erro: o evento diz O QUE derrubou (DF-13 §3.5, P-1.3).
+    //
+    // `fromCatalog` separa os dois motivos de uma queda, que a equipe lê de formas
+    // MUITO diferentes: "perdemos evidência" × "o catálogo mudou a régua". Sem essa
+    // distinção, publicar o v2.0.0 enche a atividade de seis quedas que a equipe não
+    // causou e não entende — exatamente o delta que o DF-19 §7 manda explicar.
     await recordEvidence(db, {
       teamId,
       source: 'evolution',
@@ -177,14 +221,107 @@ export async function recomputeTeam(
         from: de,
         to: area.level,
         catalogVersion: result.catalogVersion,
+        fromCatalog: prev ? prev.version !== result.catalogVersion : false,
+        previousCatalogVersion: prev?.version ?? null,
         because: area.pending.slice(0, 3).map((p) => ({ id: p.id, reason: p.reason })),
       },
       actorUserId: opts.actorUserId ?? null,
     })
   }
 
+  if (mode === 'aferido') await narrateCounters(db, teamId, result, opts.actorUserId ?? null)
   if (opts.syncQueue !== false) await syncSteps(db, teamId, result)
-  return result
+
+  // A patente lê níveis JÁ calculados (DF-20 RF-1.4) e resolve a carência aqui —
+  // o recálculo diário do DF-13 RF-2.3 passa a cobrir o DF-18 RF-4.5 de graça.
+  const rank = await recomputeRank(db, teamId, result, {
+    now,
+    actorUserId: opts.actorUserId ?? null,
+    seasonLabel: season.label,
+    seasonProjectId: season.projectId,
+  })
+  return { result, optIn, season, rank }
+}
+
+/** Compatibilidade com os produtores, que só querem os níveis de volta. */
+export async function recomputeTeam(
+  db: DbClient,
+  teamId: string,
+  opts: RecomputeOptions = {},
+): Promise<EvolutionResult> {
+  return (await recomputeTeamFull(db, teamId, opts)).result
+}
+
+/**
+ * DF-20 RF-2.2 — disparo e cessação de contraprova viram evidência, e é ela que
+ * alimenta a narração de uma linha na atividade (RF-4.4).
+ *
+ * O estado "em contraprova" NÃO é coluna (RF-2.1): ele depende da evidência do
+ * momento. Para saber se é NOVIDADE, a comparação é com o próprio log — a última
+ * `counter.raised`/`counter.cleared` de cada critério. Uma query, e só em modo
+ * `aferido`: em modo declarado esta função nem é chamada.
+ */
+async function narrateCounters(
+  db: DbClient,
+  teamId: string,
+  result: EvolutionResult,
+  actorUserId: string | null,
+): Promise<void> {
+  const last = await db.query(
+    `SELECT DISTINCT ON (payload ->> 'criterionId')
+            payload ->> 'criterionId' AS criterion_id, kind
+     FROM evolution_evidence
+     WHERE team_id = $1 AND kind IN ('counter.raised', 'counter.cleared')
+     ORDER BY payload ->> 'criterionId', created_at DESC`,
+    [teamId],
+  )
+  const raised = new Set(
+    last.rows.filter((r) => r.kind === 'counter.raised').map((r) => r.criterion_id as string),
+  )
+
+  for (const c of result.areas.flatMap((a) => a.criteria)) {
+    const firing = !!c.counterCheck
+    if (firing === raised.has(c.id)) continue
+    await recordEvidence(db, {
+      teamId,
+      source: 'evolution',
+      kind: firing ? 'counter.raised' : 'counter.cleared',
+      payload: {
+        criterionId: c.id,
+        area: c.area,
+        label: c.label,
+        kind: c.counterCheck?.kind ?? null,
+        message: c.counterCheck?.message ?? null,
+        measured: c.counterCheck?.measured ?? null,
+      },
+      actorUserId,
+    })
+  }
+}
+
+/**
+ * DF-19 RF-1.3 — grava a divergência entre a resposta da equipe e a medida do
+ * portal. Um único statement, e só quando o conjunto MUDA: é dado de calibração do
+ * DF-20, não pode custar um UPDATE por critério no caminho quente do salvar.
+ */
+async function persistDivergences(
+  db: DbClient,
+  teamId: string,
+  result: EvolutionResult,
+  stored: StoredDeclaration[],
+): Promise<void> {
+  const before = new Map(stored.map((d) => [d.criterionId, d.divergent]))
+  const changed = result.areas
+    .flatMap((a) => a.criteria)
+    .filter((c) => before.has(c.id) && before.get(c.id) !== c.divergent)
+    .map((c) => ({ criterion_id: c.id, divergent: c.divergent }))
+  if (!changed.length) return
+  await db.query(
+    `UPDATE evolution_declarations d SET divergent = s.divergent
+     FROM jsonb_to_recordset($2::jsonb) AS s(criterion_id text, divergent boolean)
+     WHERE d.team_id = $1 AND d.criterion_id = s.criterion_id`,
+    [teamId, JSON.stringify(changed)],
+  )
 }
 
 /**
@@ -323,12 +460,18 @@ export async function orgSummary(db: DbClient, teamId: string): Promise<OrgSumma
      FROM team_members WHERE team_id = $1`,
     [teamId],
   )
+  // `unfilled_leads` sai do MESMO passe: o DF-20 precisa saber qual cargo está vago
+  // (DIN-1.1 fala de dinâmica e trem de força), não só quantos.
   const p = await db.query(
     `SELECT count(*)::int AS positions,
             count(*) FILTER (WHERE kind = 'lead')::int AS leads,
-            count(*) FILTER (WHERE kind = 'lead' AND occupied)::int AS leads_filled
+            count(*) FILTER (WHERE kind = 'lead' AND occupied)::int AS leads_filled,
+            coalesce(
+              jsonb_agg(name) FILTER (WHERE kind = 'lead' AND NOT occupied),
+              '[]'::jsonb
+            ) AS unfilled_leads
      FROM (
-       SELECT p.kind,
+       SELECT p.kind, p.name,
               EXISTS (SELECT 1 FROM team_members m WHERE m.position_id = p.id) AS occupied
        FROM team_positions p WHERE p.team_id = $1
      ) q`,
@@ -350,8 +493,54 @@ export async function orgSummary(db: DbClient, teamId: string): Promise<OrgSumma
     positions: Number(p.rows[0]?.positions ?? 0),
     leads: Number(p.rows[0]?.leads ?? 0),
     leadsFilled: Number(p.rows[0]?.leads_filled ?? 0),
+    unfilledLeads: asStringList(p.rows[0]?.unfilled_leads),
     lastApprovedUserId: (last.rows[0]?.user_id as string | undefined) ?? null,
   }
+}
+
+/** `jsonb_agg` chega como array no pg e como string no Data API. */
+function asStringList(value: unknown): string[] {
+  const raw = typeof value === 'string' ? safeParse(value) : value
+  return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === 'string') : []
+}
+
+function safeParse(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Produtor `datasheet` (DF-21 → DF-19 §5.1): a ficha é o SEGUNDO caminho do EST-1.1,
+ * e os dois valem igual. Sem este resumo, o portal mediria só quem usa o editor 3D —
+ * exatamente o que a RF-4.8 proíbe.
+ */
+export async function publishDatasheetSummary(
+  db: DbClient,
+  teamId: string,
+  projectId: string,
+  actorUserId: string | null,
+): Promise<void> {
+  const r = await db.query(
+    `SELECT count(*)::int AS filled, count(DISTINCT split_part(field_id, '.', 1))::int AS sections
+     FROM project_fields WHERE project_id = $1`,
+    [projectId],
+  )
+  await recordEvidence(db, {
+    teamId,
+    source: 'datasheet',
+    kind: 'datasheet.summary',
+    payload: {
+      projectId,
+      filled: Number(r.rows[0]?.filled ?? 0),
+      sections: Number(r.rows[0]?.sections ?? 0),
+    },
+    projectId,
+    actorUserId,
+  })
+  await recomputeTeam(db, teamId, { actorUserId })
 }
 
 /**

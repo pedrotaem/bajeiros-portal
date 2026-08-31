@@ -135,6 +135,7 @@ identity.get('/export', async (c) => {
       guides,
       trailCompletions,
       kits,
+      optIns,
     ] = await Promise.all([
       db.query('SELECT * FROM users WHERE id = $1', [sub]),
       db.query('SELECT * FROM consents ORDER BY occurred_at', []),
@@ -179,6 +180,13 @@ identity.get('/export', async (c) => {
         'SELECT * FROM team_handover_kits WHERE member_id = $1 OR created_by = $1 ORDER BY created_at',
         [sub],
       ),
+      // DF-18 AC-DF18.14: os atos de opt-in/opt-out em que o titular foi o ator.
+      // Eles também estão em `audit_events`, mas ali como metadata — aqui saem com
+      // as datas e a versão do texto aceito, que é o que a portabilidade pede.
+      db.query(
+        'SELECT * FROM evolution_optin WHERE enabled_by = $1 OR disabled_by = $1 ORDER BY enabled_at',
+        [sub],
+      ),
     ])
     await audit(db, {
       actorUserId: sub,
@@ -201,6 +209,7 @@ identity.get('/export', async (c) => {
       evolutionDeclarations: declarations.rows,
       evolutionSteps: steps.rows,
       evolutionEvidence: evidence.rows,
+      evolutionOptIns: optIns.rows,
       teamDecisions: decisions.rows,
       teamGuides: guides.rows,
       guideCompletions: trailCompletions.rows,
