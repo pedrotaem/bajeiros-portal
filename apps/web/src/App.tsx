@@ -1,7 +1,8 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { useStore } from './store'
+import { useStore, type CameraView } from './store'
 import { evaluate, removalImpact } from '@bajeiros/core/rules/b6'
 import { estimateMass } from '@bajeiros/core/model/mass'
+import { detectPlanes } from '@bajeiros/core/model/planes'
 import { viewport3d } from './tokens'
 import { Viewport } from './components/Viewport'
 import { RulePanel } from './components/RulePanel'
@@ -41,6 +42,8 @@ function ViewportToggles() {
   const setShowRedundant = useStore((s) => s.setShowRedundant)
   const showManikin = useStore((s) => s.showManikin)
   const setShowManikin = useStore((s) => s.setShowManikin)
+  const showPlanes = useStore((s) => s.showPlanes)
+  const setShowPlanes = useStore((s) => s.setShowPlanes)
   return (
     <>
       <button
@@ -58,12 +61,45 @@ function ViewportToggles() {
         Piloto
       </button>
       <button
+        className={showPlanes ? 'toggle active' : 'toggle'}
+        title="Planos formados por pontos denominados adjacentes (DF-22) — clique num plano para medir e editar ângulos"
+        onClick={() => setShowPlanes(!showPlanes)}
+      >
+        Planos
+      </button>
+      <button
         className={showRedundant ? 'toggle active' : 'toggle'}
         title="Destacar membros cuja remoção não infringe regras"
         onClick={() => setShowRedundant(!showRedundant)}
       >
         Redundância
       </button>
+    </>
+  )
+}
+
+/**
+ * Vistas canônicas (DF-23). São ações, não estados: depois do primeiro arrasto de
+ * câmera a vista já não é mais aquela, então nenhum botão fica "ativo". Clicar de
+ * novo no mesmo botão reenquadra.
+ */
+const VISTAS: { id: CameraView; label: string; title: string }[] = [
+  { id: 'lateral', label: 'Lateral', title: 'Vista lateral (nariz à direita) — enquadra a gaiola' },
+  { id: 'frontal', label: 'Frontal', title: 'Vista frontal (de frente para o nariz)' },
+  { id: 'superior', label: 'Topo', title: 'Vista superior (frente para cima)' },
+  { id: 'iso', label: 'Iso', title: 'Vista isométrica' },
+]
+
+function ViewButtons() {
+  const setCameraView = useStore((s) => s.setCameraView)
+  return (
+    <>
+      <span className="sep" />
+      {VISTAS.map((v) => (
+        <button key={v.id} className="toggle" title={v.title} onClick={() => setCameraView(v.id)}>
+          {v.label}
+        </button>
+      ))}
     </>
   )
 }
@@ -105,6 +141,7 @@ export default function App() {
   const cage = useStore((s) => s.cage)
   const selectedMember = useStore((s) => s.selectedMember)
   const selectedNode = useStore((s) => s.selectedNode)
+  const selectedPlane = useStore((s) => s.selectedPlane)
   const results = useMemo(() => evaluate(cage), [cage])
   const mass = useMemo(() => estimateMass(cage), [cage])
   // análise de remoção é ~40 avaliações; deferida para não pesar durante arrasto no 3D
@@ -115,6 +152,10 @@ export default function App() {
     for (const m of deferredCage.members) map[m.id] = removalImpact(deferredCage, m.id, base)
     return map
   }, [deferredCage])
+  // DF-22: a detecção varre cantos e faz um ajuste de plano por candidato — cabe
+  // no mesmo `useDeferredValue` da análise de remoção, e por isso não pesa no arrasto
+  const planeTolMm = useStore((s) => s.planeTolMm)
+  const planes = useMemo(() => detectPlanes(deferredCage, planeTolMm), [deferredCage, planeTolMm])
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const wizardActive = useStore((s) => s.wizardActive)
@@ -137,8 +178,8 @@ export default function App() {
   }, [sessionUser, page, setPage])
 
   useEffect(() => {
-    if (selectedMember || selectedNode) setRightOpen(true)
-  }, [selectedMember, selectedNode])
+    if (selectedMember || selectedNode || selectedPlane) setRightOpen(true)
+  }, [selectedMember, selectedNode, selectedPlane])
 
   useEffect(() => {
     if (wizardActive) setRightOpen(true)
@@ -242,9 +283,10 @@ export default function App() {
           </button>
         )}
         <div className="viewport-wrap">
-          <Viewport results={results} removalMap={removalMap} />
+          <Viewport results={results} removalMap={removalMap} planes={planes} />
           <div className="viewport-toolbar">
             <ViewportToggles />
+            <ViewButtons />
           </div>
           <div className="legend">
             <span>
@@ -276,7 +318,7 @@ export default function App() {
                 »
               </button>
             </div>
-            {wizardActive ? <Wizard /> : <Inspector removalMap={removalMap} />}
+            {wizardActive ? <Wizard /> : <Inspector removalMap={removalMap} planes={planes} />}
           </aside>
         ) : (
           <button

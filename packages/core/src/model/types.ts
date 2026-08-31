@@ -140,6 +140,9 @@ export interface Cage {
   secondarySection: TubeSection
   // Nós marcados pelo usuário como ponto denominado (além dos ids padrão A/B/C…)
   namedExtra?: NodeId[]
+  // Elementos travados no espaço (DF-23): ids de nós, ancoragens e pontos do volante.
+  // Decisão de projeto — vai para o JSON, como `namedExtra` e `manikin`.
+  locked?: string[]
   // Ancoragens da suspensão (bandejas e amortecedores)
   anchors?: Anchor[]
   // Passagens contínuas declaradas (DF-6): dois membros = uma peça física através do nó
@@ -166,6 +169,25 @@ export function isNamedNode(id: NodeId): boolean {
 /** Ponto denominado: id padrão do regulamento OU marcado pelo usuário. */
 export function isNamedIn(cage: Cage, id: NodeId): boolean {
   return isNamedNode(id) || (cage.namedExtra ?? []).includes(id)
+}
+
+/**
+ * Travado no espaço (DF-23): o elemento não se move por arrasto, por campo numérico,
+ * por cota, por giro de plano nem pelo espelho. Vale para nó, ancoragem e ponto do
+ * volante — os três tipos com posição própria.
+ */
+export function isLocked(cage: Cage, id: string): boolean {
+  return (cage.locked ?? []).includes(id)
+}
+
+/** Ids travados que ainda existem na gaiola — usado ao importar JSON. */
+export function sanitizeLocked(cage: Cage): string[] {
+  const known = new Set<string>([
+    ...Object.keys(cage.nodes ?? {}),
+    ...(cage.anchors ?? []).map((a) => a.id),
+    ...(cage.steering?.points ?? []).map((p) => p.id),
+  ])
+  return [...new Set(cage.locked ?? [])].filter((id) => known.has(id))
 }
 
 export function mirrorId(id: NodeId): NodeId | null {

@@ -65,6 +65,9 @@ body {
   flex: 1;
   min-width: 0;
   position: relative;
+  /* chrome absoluto (barra, legenda) e rótulo 3D do drei nunca vazam para o painel
+     vizinho — apareceu ao recolher o rail, que alarga o canvas sem avisar ninguém */
+  overflow: hidden;
 }
 
 .legend {
@@ -235,7 +238,11 @@ button.mini {
   position: absolute;
   top: 10px;
   left: 10px;
+  /* 8 botões não cabem num canvas estreito: a barra quebra em duas linhas em vez de
+     esconder botão atrás do painel (DF-24) */
+  max-width: calc(100% - 20px);
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   z-index: 5;
 }
@@ -251,6 +258,13 @@ button.mini {
 .viewport-toolbar .toggle:hover {
   filter: brightness(1.25);
 }
+/* separa os alternadores de cena dos botões de vista (DF-23) — por token, sem hex novo */
+.viewport-toolbar .sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 3px;
+  background: var(--bj-border-strong);
+}
 .viewport-toolbar .toggle.active {
   background: #24384d;
   color: #aecdf0;
@@ -260,6 +274,12 @@ button.mini {
 .node-label.anchor {
   color: #ffd7ab;
   border: 1px solid #fb923c;
+}
+
+/* rótulo do plano selecionado (DF-22) — token, este arquivo não ganha hex novo */
+.node-label.plane {
+  color: var(--bj-3d-selected);
+  border: 1px solid var(--bj-3d-selected);
 }
 
 .tabs {
