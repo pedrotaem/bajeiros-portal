@@ -1,6 +1,6 @@
 # Specs em Draft — Índice e ordem de desenvolvimento
 
-- **Status geral:** ✅ **todas as 7 features implementadas** (2026-08-16): DF-1 (US-6), DF-2 v1+v2 (US-7), DF-3 (US-8), DF-6 (US-9), DF-7 (US-10), DF-4 v1 (US-11), DF-5 (US-12). Pendências residuais registradas em cada draft (DF-4 v2 3D, AC-DF7.2 validação física, validação visual em browser).
+- **Status geral:** ✅ **todas as 9 features do validador implementadas**: DF-1 (US-6), DF-2 v1+v2 (US-7), DF-3 (US-8), DF-6 (US-9), DF-7 (US-10), DF-4 v1 (US-11), DF-5 (US-12) em 2026-08-16, e DF-22 (US-13/US-14) + DF-23 (US-15/US-16) em 2026-08-31. Pendências residuais registradas em cada draft (DF-4 v2 3D, AC-DF7.2 validação física, validação visual em browser).
 - **Documentos irmãos:** [spec.md](spec.md) (MVP), [design.md](design.md) (arquitetura), [rules.md](rules.md) (regras)
 - Cada feature tem spec própria em `drafts/` no formato spec-driven (contexto → objetivos →
   requisitos → modelo de dados → módulos → UI → critérios de aceite → questões em aberto →
@@ -22,6 +22,8 @@ antes das features maiores:
 | 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md) | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1      | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)           |
 | 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md) | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)   | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar      |
 | 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)   | Ancoragem do volante — **implementada**                  | DF-4 (opcional) | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                     |
+| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)      | Planos e cotas — **implementada**                        | —               | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                    |
+| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)    | Trava e vistas de câmera — **implementada**              | DF-22           | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique     |
 
 ## Grafo de dependências
 
@@ -72,6 +74,7 @@ graph LR
 - **DF-12 — Shell de navegação:** rail Início · Equipe · Ferramentas · Comunidade; Editor
   vira item do hub de Ferramentas (sem tocar a montagem do Viewport — ADR-009); equipe com
   4 abas (Evolução · Pessoas · Conhecimento · Projetos); rótulos do estudo §9.4.
+  Estendido pelo **DF-24** (rail recolhível + recursos da página no menu).
 - **DF-13 — Evolução da equipe:** maturidade 1–5 por área (6 áreas), critérios verificáveis
   (automáticos via evidência server-side; declarados auditáveis), fila de próximos passos
   derivada, faixa de temporada; motor puro `packages/evolution`. Realiza o RF-5.7 do DF-10.
@@ -98,6 +101,18 @@ graph LR
 - **DF-21 — Ficha do protótipo:** ~70 campos tipados por subsistema, todos preenchíveis à mão;
   o modelo 3D sugere seis deles e nunca sobrescreve; guarda sugerido × projetado × medido para
   registrar a divergência entre o carro idealizado e o construído.
+- **DF-22 — Planos e cotas:** a distância entre dois pontos vira entrada (não só leitura), e os
+  planos formados por pontos denominados adjacentes ganham toggle no viewport, ângulo medido na
+  aresta comum e edição desse ângulo por giro rígido na dobradiça. Derivado da geometria — nada
+  entra no `Cage`.
+- **DF-23 — Trava e vistas:** `Cage.locked` congela nó, ancoragem ou ponto do volante contra
+  TODAS as ações que movem (arrasto, campo, cota, giro, espelho), com marca de forma no 3D e o
+  motivo do bloqueio na tela antes da tentativa; mais quatro vistas canônicas de câmera que
+  também enquadram.
+- **DF-24 — Menu e marcas:** o rail recolhe a só-ícone (a variante `rail-compact` que estava
+  desenhada e bloqueada desde a fase 0), o destino selecionado abre embaixo os recursos dele
+  (ferramentas, abas de equipe e de comunidade) e as duas ferramentas ganham marca própria —
+  categoria à parte do inventário de ícones, com exceção escrita no design-system §8.6.1.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16)
 

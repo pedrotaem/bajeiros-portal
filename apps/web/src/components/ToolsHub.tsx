@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { AREA_LABELS } from '@bajeiros/evolution/areas'
 import type { AreaId } from '@bajeiros/evolution/types'
 import { useSession } from '../session'
-import { IconArrow, IconMessage, IconWrench } from '../icons/glyphs'
+import { IconArrow } from '../icons/glyphs'
+import { MarkAssistant, MarkCage } from '../icons/marks'
 import { StatusChip } from '../icons/statusIcon'
 
 /**
@@ -102,7 +103,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
       <div className="bj-cards">
         <article className="bj-card">
           <header>
-            <IconWrench size={20} />
+            <MarkCage size={20} />
             <h2>Validador de gaiola</h2>
           </header>
           <p>Modela a gaiola e confere as regras B6 enquanto você desenha.</p>
@@ -141,7 +142,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
 
         <article className="bj-card">
           <header>
-            <IconMessage size={20} />
+            <MarkAssistant size={20} />
             <h2>Assistente do regulamento</h2>
           </header>
           <p>Pergunta em português e recebe a resposta com a citação da seção.</p>

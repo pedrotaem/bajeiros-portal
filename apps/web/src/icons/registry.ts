@@ -3,11 +3,15 @@
  * importa o componente de `glyphs.tsx`; este arquivo existe para o guard
  * (`scripts/check-icons.mjs`), para a galeria e para o aviso de terceiros.
  *
- * TETO DE 24 FORMAS. Hoje são 21 (5 status + 16 utilitárias + **0 de domínio**): dos
- * 17 candidatos de domínio Baja, 14 caíram no portão de §8.9 e os 3 finalistas
- * perderam para glifos reais na tira de colisão a 16px. Um glifo novo só entra pelo
- * processo de §8.9, com doador único (Lucide) e geometria colada de §8.10 — nunca
- * desenhada à mão.
+ * TETO DE 24 FORMAS. Hoje são 23 (5 status + 15 utilitárias + 3 de destino do rail +
+ * **0 de domínio**): dos 17 candidatos de domínio Baja, 14 caíram no portão de §8.9 e
+ * os 3 finalistas perderam para glifos reais na tira de colisão a 16px. Um glifo novo
+ * só entra pelo processo de §8.9, com doador único (Lucide) e geometria colada de
+ * §8.10 — nunca desenhada à mão.
+ *
+ * `IconMessage` (balão) saiu no DF-24: seu único significado era "assistente", e o
+ * assistente passou a ter marca própria. Glifo sem call site não ocupa vaga (§8.4).
+ * As MARCAS de ferramenta são outra categoria e estão no fim deste arquivo.
  */
 export type IconRole = 'status' | 'acao' | 'navegacao' | 'objeto'
 
@@ -132,13 +136,6 @@ export const ICONS: readonly IconEntry[] = [
   },
 
   // objetos
-  {
-    name: 'IconMessage',
-    upstream: 'message-square.svg',
-    role: 'objeto',
-    license: 'ISC',
-    meaning: 'assistente',
-  },
   { name: 'IconUsers', upstream: 'users.svg', role: 'objeto', license: 'ISC', meaning: 'equipe' },
   { name: 'IconFiles', upstream: 'files.svg', role: 'objeto', license: 'ISC', meaning: 'projetos' },
   {
@@ -189,3 +186,31 @@ export const ICONS: readonly IconEntry[] = [
 
 /** Glifos herdados do Feather (MIT) — o aviso de terceiros os lista nominalmente. */
 export const FEATHER_DERIVED = ICONS.filter((i) => i.license === 'ISC + MIT').map((i) => i.name)
+
+/**
+ * MARCAS DE FERRAMENTA (DF-24) — categoria separada, **não entra na contagem de 24**.
+ * São obra própria do projeto (não há doador), identificam produto e não vocabulário,
+ * e nunca aparecem sem rótulo ao lado. Exceção escrita no design-system §8.6.
+ */
+export interface MarkEntry {
+  /** Nome do componente exportado por `marks.tsx`. */
+  name: string
+  /** O produto que a marca identifica — marca sem produto nomeado não entra. */
+  product: string
+  meaning: string
+}
+
+export const MARK_CEILING = 4
+
+export const MARKS: readonly MarkEntry[] = [
+  {
+    name: 'MarkCage',
+    product: 'Validador de Gaiola',
+    meaning: 'três pontos denominados, os tubos que os ligam e o ângulo no vértice',
+  },
+  {
+    name: 'MarkAssistant',
+    product: 'Assistente do Regulamento',
+    meaning: 'a folha do regulamento com o brilho de IA — sem balão de conversa',
+  },
+]

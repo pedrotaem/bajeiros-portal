@@ -1,8 +1,9 @@
 import { Svg, type SvgProps } from './Svg'
 
 /**
- * As 21 formas do inventário (design-system §8.5 e §8.10), COPIADAS LITERALMENTE do
- * Lucide 1.34.0 (commit 1a60fd28ed7111bbf6acedc0896f3d83cd73945a).
+ * As 23 formas do inventário (design-system §8.5 e §8.10), COPIADAS LITERALMENTE do
+ * Lucide 1.34.0 (commit 1a60fd28ed7111bbf6acedc0896f3d83cd73945a). As MARCAS de
+ * ferramenta (`marks.tsx`) são outra categoria e não entram aqui — §8.6.1.
  *
  * Por que copiadas e não instaladas como pacote: um bump menor do doador pode
  * redesenhar um glifo, e a forma dos cinco status é CONTRATO (CT-3). Copiar congela a
@@ -124,12 +125,6 @@ export const IconRotateCcw = (p: Props) => (
   <Svg {...p}>
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
     <path d="M3 3v5h5" />
-  </Svg>
-)
-
-export const IconMessage = (p: Props) => (
-  <Svg {...p}>
-    <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
   </Svg>
 )
 

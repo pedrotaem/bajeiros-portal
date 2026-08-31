@@ -1,11 +1,5 @@
-import {
-  IconArrow,
-  IconMessage,
-  IconShield,
-  IconTrophy,
-  IconUsers,
-  IconWrench,
-} from '../icons/glyphs'
+import { IconArrow, IconShield, IconTrophy, IconUsers } from '../icons/glyphs'
+import { MarkAssistant, MarkCage } from '../icons/marks'
 import { useSession } from '../session'
 
 /**
@@ -47,7 +41,7 @@ export function PublicHome() {
       <div className="bj-cards">
         <article className="bj-card">
           <header>
-            <IconWrench size={20} />
+            <MarkCage size={20} />
             <h3>Validador de gaiola</h3>
           </header>
           <p>
@@ -63,7 +57,7 @@ export function PublicHome() {
 
         <article className="bj-card">
           <header>
-            <IconMessage size={20} />
+            <MarkAssistant size={20} />
             <h3>Assistente do regulamento</h3>
           </header>
           <p>

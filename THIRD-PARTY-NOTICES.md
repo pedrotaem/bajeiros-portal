@@ -15,8 +15,10 @@ material de terceiros independentemente do licenciamento do resto.
 **Versão:** 1.34.0 · **commit:** `1a60fd28ed7111bbf6acedc0896f3d83cd73945a` ·
 **Origem:** https://github.com/lucide-icons/lucide
 
-As **21 formas** de `apps/web/src/icons/glyphs.tsx` são cópia literal da geometria do Lucide nessa
-tag. O pacote **não** é instalado como dependência: um _bump_ menor pode redesenhar um glifo, e a
+As **23 formas** de `apps/web/src/icons/glyphs.tsx` são cópia literal da geometria do Lucide nessa
+tag. (Eram 21 quando o inventário fechou; o DF-12 somou `house`, `wrench` e `trophy` e o DF-24 tirou
+`message-square`.) As duas **marcas de ferramenta** de `apps/web/src/icons/marks.tsx` NÃO estão aqui:
+são obra própria do projeto, sem doador e sem licença de terceiro — ver design-system §8.6.1. O pacote **não** é instalado como dependência: um _bump_ menor pode redesenhar um glifo, e a
 forma dos cinco ícones de status é contrato do design system (CT-3). Copiar congela a geometria sob
 revisão de PR.
 
@@ -25,7 +27,7 @@ primitivo `apps/web/src/icons/Svg.tsx`, não nos glifos.
 
 ### Glifos herdados do Feather (MIT)
 
-Onze das 21 formas descendem do Feather Icons e carregam **as duas** licenças (ISC do Lucide + MIT do
+Onze das 23 formas descendem do Feather Icons e carregam **as duas** licenças (ISC do Lucide + MIT do
 Feather):
 
 `IconCheck` (`check`) · `IconTriangleAlert` (`triangle-alert`, listado no `LICENSE` pelo nome antigo
@@ -33,8 +35,8 @@ Feather):
 (`chevron-right`) · `IconChevronsRight` (`chevrons-right`) · `IconX` (`x`) · `IconPlus` (`plus`) ·
 `IconTrash` (`trash`) · `IconDownload` (`download`) · `IconUpload` (`upload`).
 
-As outras dez (`ban`, `user`, `cloud-upload`, `rotate-ccw`, `message-square`, `users`, `files`,
-`sliders-horizontal`, `circle-user`, `shield`) são ISC pura.
+As outras doze (`ban`, `user`, `cloud-upload`, `rotate-ccw`, `users`, `files`,
+`sliders-horizontal`, `circle-user`, `shield`, `house`, `wrench`, `trophy`) são ISC pura.
 
 ### Licença ISC — Lucide
 

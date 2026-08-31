@@ -1025,15 +1025,19 @@ de 1440px) · `off-canvas` (< 1024px, rail vira barra inferior).
 ### C-02 — Item de navegação
 
 **Anatomia.** `<a>` ou `<button>` ocupando a largura do rail: ícone 20px · rótulo · contador opcional
-à direita. O ícone é **obrigatório**, não opcional: §8.5 nomeia um glifo por destino (`IconMessage`
-assistente · `IconUsers` equipes · `IconFiles` projetos · `IconSliders` admin · `IconAccount` no
-rodapé) porque em `rail-compact` ele é o único identificador na tela. **O destino Editor está sem
-glifo** — o `IconCage` que ocupava a vaga era desenho à mão e foi removido (§8.6). A vaga está aberta
-e registrada em §8.5, e **`rail-compact` não pode ir ao ar sem ela preenchida**: fechá-la é um glifo
-`ui` do Lucide escolhido pelo processo de §8.9, nunca um desenho novo.
+à direita. O ícone é **obrigatório**, não opcional: §8.5 nomeia um glifo por destino (`IconHouse`
+início · `IconUsers` equipe · `IconWrench` ferramentas · `IconTrophy` comunidade · `IconSliders`
+admin · `IconAccount` no rodapé) porque em `rail-compact` ele é o único identificador na tela.
+
+> **Emenda (DF-24, 2026-08-31): `rail-compact` foi ao ar, e a vaga do Editor não precisou ser
+> preenchida.** O texto anterior dizia que o destino Editor estava sem glifo e que isso bloqueava esta
+> variante. A premissa caiu: o Editor não é destino de primeiro nível desde o DF-12 e agora é
+> **sub-item** (variante `sub`), que **não é renderizado no rail compacto** — no compacto só ficam os
+> quatro destinos, todos com glifo do inventário. Detalhes e escopo em §8.6.1.
 
 **Variantes.** `rail` (padrão) · `rail-compact` (só ícone, rótulo em `.bj-sr-only` + tooltip) ·
-`sub` (nível 2, recuo de `--bj-space-5`).
+`sub` (nível 2, recuo de `--bj-space-5`; abre por **seleção** do destino pai, não por segundo clique,
+e mostra a marca da ferramenta quando o recurso é um produto nomeado — §8.6.1).
 
 **Estados.**
 
@@ -3012,6 +3016,14 @@ com dono e com regra:
 | 2    | —                                                                  | Livre. Sem call site. O padrão do sistema é não preencher (§8.4).                                                                                                                                                   |
 | 3    | —                                                                  | Livre. Sem call site.                                                                                                                                                                                               |
 
+> **Emenda (DF-12 e DF-24) — o que o código tem hoje.** As três vagas foram usadas pelo DF-12 nos
+> destinos do rail (`IconHouse`, `IconWrench`, `IconTrophy`), fechando o inventário em 24; o DF-24
+> tirou o `IconMessage` (balão) porque seu único significado, "assistente", virou marca de produto, e o
+> inventário está em **23/24** — a vaga livre é uma. A **vaga 1 acima deixou de bloquear** o
+> `rail-compact`: o Editor não é destino de primeiro nível, é sub-item, e sub-item não aparece no
+> compacto. A regra da linha continua valendo se ele um dia voltar a ser destino. As **marcas de
+> ferramenta** (`MarkCage`, `MarkAssistant`) não entram nesta contagem — categoria própria, §8.6.1.
+
 A contagem é de **formas distintas**, não de instâncias. Setas e chevrons contam **uma vez cada**: são
 um componente com rotação aplicada por CSS, não quatro arquivos (§8.8).
 
@@ -3283,6 +3295,45 @@ palavra "volante", que é o que o código já trata) · cota linear em mm (o nú
 menos) · os 21 tipos de membro individuais (21 formas distintas a 16px é impossível e colidiria dentro
 do próprio conjunto; os rótulos de tipo e o destaque no 3D resolvem) · lado esquerdo/direito isolados
 (só o par espelhado é conceito; "lado esquerdo" é palavra).
+
+### 8.6.1 Emenda (DF-24) — marcas de ferramenta, categoria à parte
+
+**Decisão do dono do produto, 2026-08-31:** as duas ferramentas do portal ganham marca própria —
+`MarkCage` (Validador de Gaiola: três pontos denominados, os tubos que os ligam e o arco do ângulo no
+vértice) e `MarkAssistant` (Assistente do Regulamento: a folha do regulamento com o brilho de IA).
+São **desenho novo**, o que §8.6 fecha para glifo. A exceção está aqui, escrita, com escopo e trava.
+
+**Por que não contradiz §8.6.** O que §8.6 proibiu foi desenhar **vocabulário**: glifo de domínio que
+entraria no inventário de §8.5 para significar um conceito genérico ("gaiola", "manequim",
+"ancoragem"), competindo a 16px com 21 formas de um doador único. Marca é outra coisa: **identifica um
+produto nomeado**, do mesmo jeito que um logo. E o motivo pelo qual a "gaiola" morreu em §8.6 continua
+valendo e agora joga a favor: _o conceito literal retorna zero em 220 conjuntos abertos_ — não existe
+o que copiar, e o dono do produto pediu a forma. As alternativas honestas eram duas: seguir usando a
+chave inglesa (o mesmo glifo do destino Ferramentas — signo repetido, que §8.5 proíbe: um significado,
+um glifo) ou o balão de conversa para um assistente que não é chat. Nenhuma das duas descreve a
+ferramenta.
+
+**Trava do escopo — o que a exceção NÃO abre:**
+
+| Regra                                                                                                                     | Onde é cobrada                             |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Marca mora em `icons/marks.tsx`, **fora** do inventário de §8.5; não entra na contagem de 24 nem no teto de formas        | `check-icons.mjs` (listas não se misturam) |
+| Teto próprio de **4** marcas; cada uma precisa nomear o **produto** que identifica no registro                            | `check-icons.mjs`                          |
+| Mesma geometria de §8.10: primitivo `Svg`, traço 1.6, `currentColor`, sem `fill`, sem cor literal, sem `<g>`, sem `url()` | `check-icons.mjs` + `check-tokens.mjs`     |
+| **Nunca aparece sem rótulo ao lado** — marca não é identificador único de destino em lugar nenhum                         | revisão de PR                              |
+| **Nunca carrega status** (§8.7): marca não fica vermelha para dizer infração                                              | revisão de PR                              |
+| O inventário de ícones continua com **doador único (Lucide), zero desenho à mão**                                         | §8.2, intocado                             |
+
+**Efeito colateral registrado:** `IconMessage` (balão) saiu do inventário. Seu único significado era
+"assistente", o assistente passou a ter marca, e glifo sem call site não ocupa vaga (§8.4). O
+inventário caiu de 24 para **23 formas**.
+
+**A vaga 1 de §8.5 deixou de bloquear o `rail-compact`, e não foi preenchida.** A premissa dela era
+que o **Editor é destino do rail** e, no compacto, precisaria de glifo como único identificador. Não é
+mais: desde o DF-12 o Editor vive dentro de Ferramentas, e no DF-24 ele é **sub-item** — nível 2 que
+**some no rail compacto**, onde só os quatro destinos (casa, silhuetas, chave, troféu) permanecem, todos
+com glifo do inventário. A vaga continua aberta e livre; se algum dia o Editor voltar a ser destino de
+primeiro nível, a regra antiga volta a valer inteira.
 
 ### 8.7 Regra de ícone + texto para status
 
