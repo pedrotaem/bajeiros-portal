@@ -29,8 +29,26 @@ export interface OrgSummary {
   /** Cargos `lead` do organograma e quantos têm ocupante. */
   leads: number
   leadsFilled: number
+  /**
+   * Nomes dos cargos de liderança SEM ocupante. O DF-20 precisa saber QUAL cargo
+   * está vago para contradizer o DIN-1.1 ("responsáveis por suspensão/direção e trem
+   * de força"): uma contagem agregada diria só que falta alguém, em algum lugar.
+   */
+  unfilledLeads: string[]
   /** Último membro aprovado (entrada confirmada) — base de CON-3.1. */
   lastApprovedUserId: string | null
+}
+
+/**
+ * Produtor `datasheet` (DF-21): a ficha do protótipo da temporada. Existe porque o
+ * `EST-1.1` tem DOIS caminhos que valem igual — gaiola modelada OU ficha com
+ * conteúdo (DF-19 §5.1) —, e sem este resumo o portal só enxergaria um deles.
+ */
+export interface DatasheetSummary {
+  projectId: string
+  /** Campos preenchidos (qualquer seção, projetado ou medido). */
+  filled: number
+  sections: number
 }
 
 /**
