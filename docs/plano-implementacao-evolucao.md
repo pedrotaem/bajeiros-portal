@@ -26,35 +26,61 @@ novo), o que **reduz** a dívida que o plano de design está pagando, em vez de 
    DF-12. O gate da fase 6 (câmera preservada, reflow a 200%) vale integralmente. As fases 2–5 e
    7–12 do plano de design seguem no próprio ritmo, sem dependência daqui (exceto onde marcado).
 
-## Estado da execução (2026-08-30)
+## Estado da execução (2026-08-31)
 
-**EV-0 a EV-8 implementadas**, em commits separados por fase, sobre a fase 0 do plano de
+**EV-0 a EV-11 implementadas**, em commits separados por fase, sobre a fase 0 do plano de
 design (que entrou junto por ser pré-requisito duro de toda UI nova). O que a tabela
 abaixo descreve está no código; o que falta é a parte que não é código:
 
-| Fase | Estado | Onde                                                                      |
-| ---- | ------ | ------------------------------------------------------------------------- |
-| EV-0 | ✅     | `packages/evolution` — catálogo v1.0.0, `computeLevels()`, 44 testes      |
-| EV-1 | ✅     | migração `0005`, módulo `evolution`, produtores em `projects` e `teams`   |
-| EV-2 | ✅     | migração `0006`, módulo `knowledge`, `knowledge.summary`                  |
-| EV-3 | ✅     | `Shell.tsx` + rail + hub + "Sobre" + equipe com 4 abas                    |
-| EV-4 | ✅     | `EvolutionTab.tsx`                                                        |
-| EV-5 | ✅     | `KnowledgeTab.tsx`                                                        |
-| EV-6 | ✅     | `GET /me/home` + `HomePage.tsx`                                           |
-| EV-7 | ✅     | migração `0007`, módulo `community`, ingestão em dry-run, `CommunityPage` |
-| EV-8 | ✅     | benchmark por prova com piso de coorte e "transformar em meta"            |
+| Fase  | Estado | Onde                                                                                         |
+| ----- | ------ | -------------------------------------------------------------------------------------------- |
+| EV-0  | ✅     | `packages/evolution` — catálogo, `computeLevels()`                                           |
+| EV-1  | ✅     | migração `0005`, módulo `evolution`, produtores em `projects` e `teams`                      |
+| EV-2  | ✅     | migração `0006`, módulo `knowledge`, `knowledge.summary`                                     |
+| EV-3  | ✅     | `Shell.tsx` + rail + hub + "Sobre" + equipe com 4 abas                                       |
+| EV-4  | ✅     | `EvolutionTab.tsx`                                                                           |
+| EV-5  | ✅     | `KnowledgeTab.tsx`                                                                           |
+| EV-6  | ✅     | `GET /me/home` + `HomePage.tsx`                                                              |
+| EV-7  | ✅     | migração `0007`, módulo `community`, ingestão em dry-run, `CommunityPage`                    |
+| EV-8  | ✅     | benchmark por prova com piso de coorte e "transformar em meta"                               |
+| EV-9  | ✅     | catálogo **v2.0.0** (DF-19), `ranks.ts`, migração `0008`, opt-in, carência, faixa e cartaz   |
+| EV-10 | ✅     | `counter.ts` (DF-20), migração `0010`, reafirmação, `counter.*` na atividade, UI do suspenso |
+| EV-11 | ✅     | `packages/datasheet`, migração `0009`, módulo `datasheet`, `DatasheetTab`                    |
+
+### O que a virada do DF-19 mudou em tudo que veio antes
+
+O catálogo `2.0.0` é **autodeclarativo** (`CATALOG_MODE = 'declarado'`): o critério `auto`
+**deixou de ser satisfeito pela evidência**. Quem satisfaz é a resposta da capitania; a
+evidência virou a MEDIDA exibida ao lado (`measured`), e a discordância vira `divergent` —
+o conjunto que vai calibrar a aferição antes de ela existir (DF-19 RF-1.3).
+
+Consequência prática para quem lê a suíte antiga: o que se afirmava em `satisfied` passou a
+ser afirmado em `measured`. Nenhum critério sumiu — os dois `oculto` do v1.0.0 viraram
+declarados e o denominador é **51 visíveis**.
+
+E a virada do DF-18: **sem opt-in da capitania, nenhuma resposta de API traz nível ou
+patente** (AC-DF18.2). `GET /teams/:id/evolution` devolve o painel de ativação no lugar, e
+`/me/home` devolve `evolution: null`. Medir sem pedir transforma ferramenta em auditoria.
 
 **Pendências que continuam abertas** (nenhuma é implementação):
 
-1. **Gate de piloto** com 2–3 equipes reais por ≥ 3 semanas — o catálogo v1 só congela
+1. **Gate de piloto** com 2–3 equipes reais por ≥ 3 semanas — o catálogo só congela
    depois dele. É o mitigador do risco nº 1 da feature (P-1.1, calibração de gabinete).
-2. **ADR-010 em `proposto`** — a revisão do product owner o promove a `aceito`.
+2. **ADR-010 e ADR-011 em `proposto`** — a revisão do product owner os promove a `aceito`.
 3. **Recálculo diário**: o corpo existe (`POST /admin/evolution/recompute`); falta o
    gatilho de infraestrutura (EventBridge → Lambda). Enquanto isso, o `GET` da evolução
-   recompute por equipe, o que cobre quem abre a tela mas não quem não abre.
+   recompute por equipe, o que cobre quem abre a tela mas não quem não abre. **Isto agora
+   pesa mais**: é o mesmo caminho que resolve a carência da patente (DF-18 RF-4.5) — a queda
+   de quem nunca abre a tela fica pendurada até alguém abrir.
 4. **Ingestão do acervo** (DF-15): rodada só em dry-run. O `--apply` exige `--admin` e a
-   conferência do diff no PR.
-5. **Vocabulário fail/manual** (DF-12 RF-4.2) e **base legal do conteúdo pós-exclusão**
+   conferência do diff no PR. Sem ele, nenhuma equipe passa da patente 5 (trava 2).
+5. **Calibração numérica**, toda marcada como gabinete nas specs: os 8 pares (média, piso)
+   do DF-18 §3.4; os pisos do DF-19 (`CON-2.1` 10 decisões e 2 guias, `GES-4.2` 2 parcerias,
+   `CON-3.2` 3 áreas em 6 meses); o limiar de 50% do indício de massa (DF-20 §8.2).
+6. **Licença da arte** (DF-18 RF-8.3): CC BY-NC vale enquanto o portal for gratuito. O marco
+   M3 prevê assinaturas — antes de cobrar, permissão dos dois autores **ou** a escada de nomes
+   livres, que já vive no catálogo (`RankDef.nomeLivre`) e é trocar uma coluna.
+7. **Vocabulário fail/manual** (DF-12 RF-4.2) e **base legal do conteúdo pós-exclusão**
    (DF-14 §8.3) seguem como decisões de gente.
 
 ## Tabela-resumo das fases
@@ -176,14 +202,16 @@ revisados (gate legal de marca junto).
 Lote do [ADR-011](adr/011-patentes-gamificacao.md). Entra **depois** do lote DF-12…DF-16 estar
 mergeado, porque lê os níveis que ele calcula.
 
-| Sub    | Entrega                                                                                                           |
-| ------ | ----------------------------------------------------------------------------------------------------------------- |
-| EV-9.1 | Catálogo **v2.0.0** (DF-19: enunciados, `CATALOG_MODE`, fim dos `oculto`) + `computeRank()` + tabela `RANKS`      |
-| EV-9.2 | Migração `0008`, opt-in retroativo, carência de 30 dias no recálculo diário, patente em `/evolution` e `/me/home` |
-| EV-9.3 | Painel de ativação, faixa da patente, painel "para chegar em …", aviso de promoção                                |
-| EV-9.4 | Cartaz PNG no cliente, chave de vitrine, emblema no perfil público                                                |
+| Sub    | Entrega                                                                                                      | Estado          |
+| ------ | ------------------------------------------------------------------------------------------------------------ | --------------- |
+| EV-9.1 | Catálogo **v2.0.0** (DF-19: enunciados, `CATALOG_MODE`, fim dos `oculto`) + `computeRank()` + tabela `RANKS` | ✅ implementada |
+| EV-9.2 | Migração `0008`, opt-in retroativo, carência de 30 dias no recálculo, patente em `/evolution` e `/me/home`   | ✅ implementada |
+| EV-9.3 | Painel de ativação, faixa da patente, painel "para chegar em …", aviso de promoção                           | ✅ implementada |
+| EV-9.4 | Cartaz PNG no cliente, chave de vitrine, vitrine do perfil público (`team_rank_showcase`)                    | ⚠️ ver nota     |
 
-- **Aceite:** ACs DF-18.1–18.14 e DF-19.1–19.10.
+- **Aceite:** ACs DF-18.1–18.14 e DF-19.1–19.10, cobertos por
+  `packages/evolution/src/{catalog,ranks}.test.ts`, `apps/api/src/test/patentes.test.ts` e
+  `apps/api/src/test/evolution.test.ts`.
 - **Ordem obrigatória:** EV-9.1 antes de tudo — publicar o catálogo v2.0.0 recalcula níveis
   existentes e o delta precisa aparecer na atividade antes de a patente entrar em cena.
 - **Gate de licença:** a arte é CC BY-NC (DF-18 §8). Se o marco M3 de assinaturas estiver no
@@ -191,22 +219,53 @@ mergeado, porque lê os níveis que ele calcula.
   vitrine — é a superfície que leva o emblema para fora do portal.
 - **Risco próprio:** ninguém ativar. Mitigado pela retroatividade (RF-2.4) e medido como sinal.
 
+**Nota da EV-9.4.** O cartaz e a chave de vitrine estão prontos, e o back da vitrine também
+(`GET /community/teams/:id` devolve o bloco `rank` quando `teams.rank_public` está ligada,
+por `team_rank_showcase()`). O que **não** foi feito é o emblema na tela da Comunidade: a web
+só tem a LISTA de equipes do acervo, e a RF-6.3 proíbe exibir patente de terceiro em qualquer
+agregado — listagem inclusa. O emblema entra quando existir a tela de PERFIL da equipe, que é
+outra superfície e não está nesta spec. Preferi deixar a rota pronta e a tela de fora a furar
+a RF-6.3 por conveniência.
+
+**Duas decisões de implementação que a spec não fixou:**
+
+1. **"Colocar os N na fila" virou "ver os N na fila".** O §7 pede o botão, mas passo de
+   critério é DERIVADO (DF-13 RF-4.1): ele já nasce na fila quando o critério fica pendente.
+   O botão que "coloca" seria um no-op com nome de ação. O painel rola até a fila e mostra os
+   passos que já estão lá.
+2. **A mediana da coorte em emblema é só de MATURIDADE** e para no teto da patente 5. O
+   benchmark do DF-13 devolve a mediana das médias, não os resultados de competição das outras
+   equipes — que o produto não pode cruzar por equipe (RF-6.3/RF-7.3). Chamar o resultado de
+   "patente da coorte" sem esse recorte seria inventar um número que ninguém mediu; a tela diz
+   "pela maturidade".
+
 ### EV-10 — Aferição das declarações
 
-Só depois de **ao menos uma temporada de v1 autodeclarativa** — sem esse período não há divergência
-acumulada para calibrar as mensagens.
+O CÓDIGO está pronto; o que espera é o **gate de produto**: ao menos uma temporada de v1
+autodeclarativa, porque sem esse período não há divergência acumulada para calibrar as
+mensagens. O gate mora numa variável de ambiente, não num deploy.
 
-| Sub     | Entrega                                                                    |
-| ------- | -------------------------------------------------------------------------- |
-| EV-10.1 | `counterCheck` no motor + as 19 contraprovas da onda V1 + fixtures         |
-| EV-10.2 | Estados na API, reafirmação, evidências `counter.*`, narração na atividade |
-| EV-10.3 | UI do critério suspenso, piso de atividade, atalhos de conserto            |
-| EV-10.4 | Onda V2 — **bloqueada** pela classe de projeto (DF-20 §8.1)                |
+| Sub     | Entrega                                                                     | Estado          |
+| ------- | --------------------------------------------------------------------------- | --------------- |
+| EV-10.1 | `counterCheck` no motor + as 19 contraprovas da onda V1 + fixtures          | ✅ implementada |
+| EV-10.2 | Estados na API, reafirmação, evidências `counter.*`, narração na atividade  | ✅ implementada |
+| EV-10.3 | UI do critério suspenso, piso de atividade, atalhos de conserto             | ✅ implementada |
+| EV-10.4 | Onda V2 do `DIN-3.x` — massa × mediana da MESMA CLASSE (destravada pelo 11) | ✅ implementada |
 
-- **Aceite:** ACs DF-20.1–20.10.
+- **O gate é `EVOLUTION_MODE`.** Default `declarado` (a v1 do produto). Virar para `aferido`
+  liga as contraprovas e **não exige migração** (AC-DF19.10): é o mesmo dado, outro cálculo.
+  `apps/api/src/test/afericao.test.ts` roda a suíte inteira com o modo ligado, de ponta a ponta.
+- **Aceite:** ACs DF-20.1–20.12. AC-DF20.6 (piso de atividade) é coberta no motor
+  (`counter.test.ts`) e não pela API: toda equipe do portal nasce com organograma semeado, e a
+  segunda condição do piso — organograma inexistente — não acontece por caminho de produto.
 - **Entrada:** relatório do piloto com a taxa de divergência declaração × medida por área,
-  coletada de graça pelo pré-preenchimento do DF-19 RF-1.3.
-- **Onda V2 depende da EV-11** (classe de projeto vem da ficha).
+  coletada de graça pelo pré-preenchimento do DF-19 RF-1.3, e agora gravada em
+  `evolution_declarations.divergent`.
+- **A onda V2 do `DIN-3.x` deixou de estar bloqueada.** A questão aberta §8.1 — comparar massa
+  entre projetos incomparáveis — foi resolvida pela ficha (DF-21 §5.1: ocupantes + tração são
+  campos comparáveis). `evolution_mass_median(classe)` (migração `0010`) cruza só protótipos da
+  MESMA classe, com piso de 8; sem classe declarada não há comparação e a contraprova não
+  existe. O limiar de 50% acima da mediana segue sendo o número do §8.2 — proposto, não medido.
 
 ### EV-11 — Ficha do protótipo
 

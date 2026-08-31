@@ -74,6 +74,54 @@ e-mail+senha — nada no banco depende da vinculação.
 **Rotação do client secret:** gerar novo no Google Console, `terraform apply` com o
 `TF_VAR_google_client_secret` novo, invalidar o antigo no Google.
 
+## Ligar a aferição das declarações (DF-20)
+
+A avaliação de maturidade nasce **autodeclarativa** (DF-19): a equipe responde, o portal
+registra, mostra o que também mede e **não discute**. A aferição (DF-20) confronta cada
+declaração com o que o portal mede — contradição direta derruba, indício pergunta.
+
+Virar o modo **não exige migração nenhuma** (AC-DF19.10): é o mesmo dado, outro cálculo.
+Isto é uma variável, não um deploy.
+
+```bash
+cd infra/envs/staging
+TF_VAR_evolution_mode=aferido terraform apply   # default: declarado
+```
+
+**O gate é de produto, não técnico.** A spec pede **ao menos uma temporada de v1
+autodeclarativa** antes de ligar: sem esse período não há divergência acumulada para
+calibrar as mensagens, e uma contraprova injusta destrói a confiança na feature inteira
+(P-1.1). A divergência já está sendo coletada de graça — `evolution_declarations.divergent`
+guarda todo critério em que a equipe respondeu "sim" onde o portal mede "não".
+
+Consulta para o relatório de calibração (área com divergência alta é onde a contraprova mais
+importa, e onde a mensagem precisa estar melhor escrita):
+
+```sql
+SELECT substring(criterion_id from 1 for 3) AS area,
+       count(*) FILTER (WHERE divergent) AS divergentes,
+       count(*) AS declaradas
+FROM evolution_declarations GROUP BY 1 ORDER BY 2 DESC;
+```
+
+**Reverter é simétrico e imediato:** `TF_VAR_evolution_mode=declarado terraform apply`. As
+declarações não são apagadas nem alteradas — só voltam a valer sozinhas.
+
+## Ativar a avaliação numa equipe (DF-18 opt-in)
+
+Não há passo de operação: **é a capitania que ativa**, em Equipe · Evolução, e nada existe
+antes disso (AC-DF18.2). Medir sem pedir transforma ferramenta em auditoria — o risco nº 1 do
+ADR-010. A taxa de ativação é o primeiro sinal honesto de que o modelo serve para alguém;
+baixa é resposta, não bug.
+
+Duas coisas que dependem de operação e que travam a escada:
+
+- **Sem o acervo do DF-15 ingerido**, nenhuma equipe passa da patente 5 — as quatro
+  superiores exigem resultado oficial, e sem vínculo aprovado a trava é falsa (RF-3.1).
+- **A carência de 30 dias** (queda amortecida) é resolvida no mesmo caminho do recálculo
+  diário: `POST /api/v1/admin/evolution/recompute`. Enquanto o gatilho do EventBridge não
+  existe, a queda de quem nunca abre a tela fica pendurada até alguém abrir.
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.
