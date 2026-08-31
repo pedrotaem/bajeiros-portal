@@ -93,9 +93,10 @@ describe('createAuthClient', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await client.handleCallback()
-    expect(result).not.toBeNull()
-    expect(result!.tokens.idToken).toBe('ID.TOKEN')
-    expect(result!.appState).toEqual({ invite: 'tok123' })
+    expect(result.status).toBe('ok')
+    if (result.status !== 'ok') throw new Error('esperado ok')
+    expect(result.tokens.idToken).toBe('ID.TOKEN')
+    expect(result.appState).toEqual({ invite: 'tok123' })
     expect(client.getIdToken()).toBe('ID.TOKEN')
 
     const [url, init] = fetchMock.mock.calls[0]
@@ -116,14 +117,14 @@ describe('createAuthClient', () => {
     setUrl('?code=abc&state=OUTRO')
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
-    expect(await client.handleCallback()).toBeNull()
+    expect((await client.handleCallback()).status).toBe('none')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('handleCallback devolve null sem params (aba nova sem verifier)', async () => {
+  it('handleCallback devolve none sem params (aba nova sem verifier)', async () => {
     const client = createAuthClient(CFG)
     setUrl('')
-    expect(await client.handleCallback()).toBeNull()
+    expect((await client.handleCallback()).status).toBe('none')
   })
 
   it('refresh usa o refresh_token e falha vira null (descarta sessão)', async () => {
@@ -154,6 +155,93 @@ describe('createAuthClient', () => {
     expect(await client.refresh()).toBeNull()
     expect(client.getIdToken()).toBeNull()
     expect(await client.refresh()).toBeNull() // refresh descartado, não insiste
+  })
+
+  // ---------- DF-17: IdP social e erros no callback ----------
+
+  it('login com identityProvider vai direto ao Google, sem passar pelo Managed Login', async () => {
+    const client = createAuthClient(CFG)
+    await client.login({}, { identityProvider: 'Google' })
+    const p = new URL(assigned[0]).searchParams
+    expect(p.get('identity_provider')).toBe('Google')
+    expect(p.get('prompt')).toBe('select_account')
+    expect(p.get('code_challenge_method')).toBe('S256')
+  })
+
+  it('login sem identityProvider não manda identity_provider nem prompt', async () => {
+    const client = createAuthClient(CFG)
+    await client.login()
+    const p = new URL(assigned[0]).searchParams
+    expect(p.has('identity_provider')).toBe(false)
+    expect(p.has('prompt')).toBe(false)
+  })
+
+  it('hasCallbackParams reconhece o retorno de erro do provedor', async () => {
+    const client = createAuthClient(CFG)
+    setUrl('?error=access_denied&error_description=nope')
+    expect(client.hasCallbackParams()).toBe(true)
+  })
+
+  it('callback com erro devolve o motivo, limpa a URL e não chama o token endpoint', async () => {
+    const client = createAuthClient(CFG)
+    await client.login({}, { identityProvider: 'Google' })
+    setUrl('?error=access_denied&error_description=User%20cancelled')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await client.handleCallback()
+    expect(result.status).toBe('error')
+    if (result.status !== 'error') throw new Error('esperado error')
+    expect(result.message).toBe('Entrada cancelada no provedor.')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(replaced.at(-1)).toBe('/')
+    expect(assigned).toHaveLength(1) // nenhuma reautorização
+  })
+
+  it('AliasExists (conta recém-vinculada) refaz o authorize uma vez, pelo mesmo IdP', async () => {
+    const client = createAuthClient(CFG)
+    await client.login({ invite: 'tok123' }, { identityProvider: 'Google' })
+    setUrl('?error=invalid_request&error_description=Already+found+an+entry+for+username+google_1')
+
+    const result = await client.handleCallback()
+    expect(result.status).toBe('retrying')
+    expect(assigned).toHaveLength(2)
+    const p = new URL(assigned[1]).searchParams
+    expect(p.get('identity_provider')).toBe('Google')
+    // o convite pendente sobrevive à reautorização
+    expect(sessionStorage.getItem('bajeiros:auth:app-state')).toBe('{"invite":"tok123"}')
+  })
+
+  it('AliasExists duas vezes seguidas vira erro — sem laço de redirect', async () => {
+    const client = createAuthClient(CFG)
+    await client.login({}, { identityProvider: 'Google' })
+    const erro = '?error=invalid_request&error_description=Already+found+an+entry+for+username+g_1'
+    setUrl(erro)
+    expect((await client.handleCallback()).status).toBe('retrying')
+    setUrl(erro)
+
+    const result = await client.handleCallback()
+    expect(result.status).toBe('error')
+    expect(assigned).toHaveLength(2) // login + 1 retentativa, nada além
+  })
+
+  it('entrada bem-sucedida rearma a sentinela p/ uma vinculação futura', async () => {
+    const client = createAuthClient(CFG)
+    await client.login({}, { identityProvider: 'Google' })
+    setUrl('?error=invalid_request&error_description=Already+found+an+entry+for+username+g_1')
+    await client.handleCallback()
+    expect(sessionStorage.getItem('bajeiros:auth:link-retry')).toBe('1')
+
+    setUrl(`?code=abc&state=${sessionStorage.getItem('bajeiros:auth:state')}`)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ id_token: 'ID.TOKEN', expires_in: 3600 }),
+      }),
+    )
+    expect((await client.handleCallback()).status).toBe('ok')
+    expect(sessionStorage.getItem('bajeiros:auth:link-retry')).toBeNull()
   })
 
   it('logout limpa tokens e redireciona ao /logout', async () => {
