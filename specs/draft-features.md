@@ -118,7 +118,7 @@ aprovado no canvas
 | 6 📝  | [DF-18](drafts/df18-patentes-prototipo.md)    | DF-13, DF-15, DF-19    | A patente é o rosto do modelo; sem ela nada é contável   |
 | 7 📝  | [DF-19](drafts/df19-catalogo-maturidade.md)   | DF-13                  | Define o que alimenta os níveis na v1 — vem com o DF-18  |
 | 8 📝  | [DF-20](drafts/df20-afericao-declaracoes.md)  | DF-19, DF-13, DF-14    | Saída do autodeclarativo; só depois de 1 temporada de v1 |
-| 9 📝  | [DF-21](drafts/df21-ficha-prototipo.md)       | DF-12, motor B6        | Independente; destrava a onda V2 do DF-20 e o Anexo B    |
+| 9 ✅  | [DF-21](drafts/df21-ficha-prototipo.md)       | DF-12, motor B6        | Independente; destrava a onda V2 do DF-20 e o Anexo B    |
 
 ## Lote das patentes (DF-18…DF-20) — proposto em 2026-08-30
 
@@ -155,6 +155,13 @@ produto**, não ruído. Histórico por campo e exportação. Vale por si — ins
 seguinte, comparação com a comunidade. Efeitos colaterais: destrava a onda V2 do DF-20 (classe de
 projeto), tira `EST-4.1`/`DOC-4.2` da condição de "ferramenta futura" e dá conteúdo concreto aos
 kits de passagem do DF-14. Fase **EV-11**, executável antes do EV-10.
+
+**Estado (2026-08-30): implementada** — `packages/datasheet` (catálogo v1.0.0 com 78 campos em 9
+seções, sugestões, validação e progresso), migração `0009`, módulo `datasheet` na API (leitura,
+escrita parcial com lock por campo, histórico, dispensas, exportação Markdown/CSV) e a página de
+projeto com as três abas. Fora da entrega, por dependerem de decisão ou de outra spec: kit de
+passagem por cargo (a amarração seção → cargo é a questão aberta §12.5), catálogo de maturidade
+`2.1.0` (o v2.0.0 do DF-19 ainda não existe em código) e as medianas por classe da comunidade.
 
 **Estado (2026-08-30): as cinco specs implementadas de ponta a ponta** — motor puro,
 banco, API, produtores de evidência e todas as superfícies, sobre a fase 0 do plano de

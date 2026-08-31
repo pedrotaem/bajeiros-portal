@@ -214,14 +214,24 @@ Feature **independente do lote das patentes** — a ficha se paga por inspeção
 e comparação de comunidade, sem citar maturidade. Executável **antes** da EV-10, e é o que
 destrava a onda V2 da aferição.
 
-| Sub     | Entrega                                                                               |
-| ------- | ------------------------------------------------------------------------------------- |
-| EV-11.1 | `packages/datasheet` — catálogo v1, tipos, `suggestFrom()` sobre o motor B6, fixtures |
-| EV-11.2 | Migração `0009`, módulo `datasheet` na API, revisões com origem, dispensas, RLS       |
-| EV-11.3 | Página de projeto com 3 abas + aba Ficha (sugestões, três colunas, avisos)            |
-| EV-11.4 | Exportação Markdown/CSV, kit de passagem por cargo, catálogo de maturidade `2.1.0`    |
+| Sub     | Entrega                                                                               | Estado                        |
+| ------- | ------------------------------------------------------------------------------------- | ----------------------------- |
+| EV-11.1 | `packages/datasheet` — catálogo v1, tipos, `suggestFrom()` sobre o motor B6, fixtures | ✅ implementada               |
+| EV-11.2 | Migração `0009`, módulo `datasheet` na API, revisões com origem, dispensas, RLS       | ✅ implementada               |
+| EV-11.3 | Página de projeto com 3 abas + aba Ficha (sugestões, três colunas, avisos)            | ✅ implementada               |
+| EV-11.4 | Exportação Markdown/CSV, kit de passagem por cargo, catálogo de maturidade `2.1.0`    | ⚠️ só a exportação — ver nota |
 
 - **Aceite:** ACs DF-21.1–21.12.
+- **O que ficou de fora da EV-11.4, e por quê** (registrado na implementação de 2026-08-30):
+  - **Kit de passagem por cargo (RF-6.2)** depende de uma amarração seção → cargo do organograma
+    que a própria spec deixa **em aberto** (DF-21 §12.5: "amarrar seção ao cargo seria elegante e
+    provavelmente cedo demais"). Implementar exigiria inventar o mapa que a decisão de produto
+    ainda não tomou. `COMPARABLE_FIELDS` e o catálogo já expõem o que o kit precisaria consumir.
+  - **Catálogo de maturidade `2.1.0`** não se aplica ainda: o catálogo em código é o **v1.0.0** do
+    DF-13 — o v2.0.0 do DF-19 não foi implementado. A edição do campo "onde registrar" acontece
+    quando o DF-19 entrar.
+  - **Medianas por classe na comunidade (RF-6.4)** ficam para quando houver acervo: o gancho já
+    existe (`comparable` no catálogo), a agregação não.
 - **Ordem interna:** EV-11.3 exige a página de projeto, que é a primeira tela de detalhe de
   projeto do produto — hoje projetos vivem num modal. Vale conferir com o plano de design antes de
   abrir o PR de UI.
