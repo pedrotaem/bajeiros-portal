@@ -29,3 +29,11 @@ await build({
   entryPoints: ['scripts/migrate-data-api.mjs'],
   outfile: 'dist/lambda/migrate.bundle.mjs',
 })
+
+// Trigger PreSignUp do Cognito (DF-17): função separada, zip separado — não carrega
+// o app nem o `env.ts` da API, então não herda o fail-fast de DATABASE_URL.
+await build({
+  ...shared,
+  entryPoints: ['src/idp/pre-sign-up.ts'],
+  outfile: 'dist/idp-link/index.mjs',
+})

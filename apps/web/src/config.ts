@@ -7,6 +7,8 @@ export interface AppConfig {
   cognito?: {
     domain: string
     clientId: string
+    // IdPs sociais habilitados no pool (DF-17). Ausente/vazio = só e-mail e senha.
+    providers?: 'google'[]
   }
 }
 

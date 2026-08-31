@@ -29,7 +29,12 @@ export async function verifyToken(token: string): Promise<AuthClaims> {
       clockTolerance: 60,
     })
     if (payload.token_use !== 'id') throw new Error('esperado ID token (token_use=id)')
-    if (payload.email_verified !== true) throw new Error('e-mail não verificado')
+    // Usuário local: boolean. Usuário federado (DF-17): o atributo vem mapeado do IdP
+    // e o Cognito pode emitir a STRING "true". Aceitar as duas formas exatas — nunca
+    // truthy, que deixaria passar "false".
+    if (payload.email_verified !== true && payload.email_verified !== 'true') {
+      throw new Error('e-mail não verificado')
+    }
     return {
       sub: String(payload.sub),
       email: String(payload.email ?? ''),

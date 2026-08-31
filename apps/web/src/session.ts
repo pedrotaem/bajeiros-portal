@@ -106,6 +106,8 @@ interface SessionState {
   clearInviteNotice: () => void
   // dev: exige email+name (form local); cognito: ignora args e redireciona
   login: (email?: string, name?: string) => Promise<void>
+  // cognito: vai direto ao IdP social (DF-17), pulando a tela do Managed Login
+  loginWithProvider: (provider: string) => Promise<void>
   logout: () => void
   api: <T = unknown>(path: string, init?: RequestInit) => Promise<T>
   setUser: (u: UserInfo | null) => void
@@ -193,6 +195,26 @@ export function authMode(): AppConfig['authMode'] {
   return appConfig.authMode
 }
 
+// IdPs sociais habilitados neste ambiente (DF-17); vazio = só e-mail e senha.
+export function authProviders(): NonNullable<NonNullable<AppConfig['cognito']>['providers']> {
+  return appConfig.cognito?.providers ?? []
+}
+
+// Como esta sessão entrou (claim `identities` do ID token), SÓ para rotular a UI
+// (DF-17 RF-4.5). Não é verificação de nada: quem valida o token é a API.
+export function identityProviderOf(token: string | null): string | null {
+  if (!token) return null
+  try {
+    const raw = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(raw.padEnd(Math.ceil(raw.length / 4) * 4, '='))) as {
+      identities?: { providerName?: string }[]
+    }
+    return payload.identities?.[0]?.providerName ?? null
+  } catch {
+    return null
+  }
+}
+
 // Refresh único mesmo com chamadas 401 concorrentes.
 let refreshInFlight: Promise<string | null> | null = null
 function refreshOnce(): Promise<string | null> {
@@ -221,7 +243,13 @@ export async function initSession(config: AppConfig): Promise<void> {
   if (!authClient.hasCallbackParams()) return
 
   const result = await authClient.handleCallback()
-  if (!result) return // state/verifier ausentes ou troca falhou → segue deslogado no Início público
+  // 'retrying' = reautorização em curso (vinculação Google, DF-17 §3.4): a navegação
+  // já saiu da página. 'none' = state/verifier ausentes → segue no Início público.
+  if (result.status === 'retrying' || result.status === 'none') return
+  if (result.status === 'error') {
+    useSession.setState({ panel: 'login', authNotice: result.message })
+    return
+  }
 
   useSession.setState({ token: result.tokens.idToken, page: 'inicio' })
   try {
@@ -372,6 +400,13 @@ export const useSession = create<SessionState>((set, get) => ({
       set({ inviteToken: null })
       await acceptPendingInvite(invite)
     }
+  },
+
+  loginWithProvider: async (provider) => {
+    if (appConfig.authMode !== 'cognito' || !authClient) return
+    set({ authNotice: null })
+    const invite = get().inviteToken
+    await authClient.login(invite ? { invite } : {}, { identityProvider: provider })
   },
 
   logout: () => {
