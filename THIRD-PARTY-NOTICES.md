@@ -84,3 +84,37 @@ de ícone não é exigido por nenhuma das duas licenças.
 
 **Doador único.** Não entra Tabler, nem Apache 2.0, nem CC BY. `npm run check-icons` falha se o
 registro apontar para outra origem.
+
+---
+
+## Emblemas das patentes — "MAD MAX Fury Road" (pixel art)
+
+Os nove GIFs em `apps/web/public/patentes/` são obra de terceiro, usados como emblemas das
+patentes de maturidade (proposta de 2026-08-30).
+
+| Papel      | Autor                              |
+| ---------- | ---------------------------------- |
+| Ilustração | **Evgeniy Yudin** — _Mazok Pixels_ |
+| Animação   | **Misha Petrick**                  |
+
+Obra: **"MAD MAX Fury Road"** — <https://www.behance.net/gallery/26428843/MAD-MAX-Fury-Road>
+
+Licença: **Creative Commons Atribuição-NãoComercial 4.0 Internacional (CC BY-NC 4.0)** —
+<https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br>
+
+Permite copiar, redistribuir e adaptar **com atribuição** e **sem finalidade comercial**.
+
+**Este crédito aparece na tela**, ao contrário dos ícones do Lucide: a licença exige atribuição
+"de forma razoável", e o rodapé da tela de patentes é onde ela é razoável. Não remover.
+
+**Restrição a monitorar — a cláusula NC.** Vale enquanto o portal for gratuito. O marco M3 do
+`docs/plano-producao-v2.md` prevê assinaturas: antes de qualquer cobrança é preciso obter
+permissão direta dos dois autores **ou** substituir por arte original. A escada de nomes livres de
+marca (Enxame · Aríete · Colosso · Marreta · Ligeiro · Brasa · Gaiola 9 · Ponta de Lança) existe
+para esse caso.
+
+**Marca.** Os veículos são do filme homônimo; a marca é de terceiro e o portal não a reivindica.
+Nenhum uso da identidade "SAE" está envolvido (restrição de `specs/spec.md` §1).
+
+Fora do design system: são ativos coloridos e não recoloríveis, servidos como imagem
+(`img-src 'self'`), não passam por `check-icons` nem por `check-tokens`.

@@ -1,4 +1,4 @@
-# Plano de implementação — evolução das equipes (DF-12…DF-16)
+# Plano de implementação — evolução das equipes (DF-12…DF-16, DF-18…DF-21)
 
 **Data:** 2026-08-29 · **Versão:** 1.0 (rascunho para revisão)
 **Escopo:** as cinco specs do lote evolução — [DF-12 shell/navegação](../specs/drafts/df12-shell-navegacao.md),
@@ -10,8 +10,9 @@
 ["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b).
 **Não supersede nada.** Corre em paralelo ao
 [`plano-implementacao-design.md`](plano-implementacao-design.md) (13 fases, numeração canônica
-"fase N"), com dois pontos de amarração declarados abaixo. Numeração deste plano: **EV-0…EV-8**,
-uma fase = um PR mergeável.
+"fase N"), com dois pontos de amarração declarados abaixo. Numeração deste plano: **EV-0…EV-11**,
+uma fase = um PR mergeável. **EV-9…EV-11** entraram em 2026-08-30 com o lote das patentes
+([ADR-011](adr/011-patentes-gamificacao.md)) e a ficha do protótipo (DF-21).
 **Premissa de execução:** uma pessoa, incremental, sem congelar o produto. Backend primeiro
 (evidência fluindo sem UI), depois as superfícies — cada tela nasce tokenizada (`bj-*`, zero hex
 novo), o que **reduz** a dívida que o plano de design está pagando, em vez de aumentá-la.
@@ -58,21 +59,27 @@ abaixo descreve está no código; o que falta é a parte que não é código:
 
 ## Tabela-resumo das fases
 
-| Fase | Entrega                                             | Branch                   | Esforço | Marco | Gate resumido                                                                       |
-| ---- | --------------------------------------------------- | ------------------------ | ------- | ----- | ----------------------------------------------------------------------------------- |
-| EV-0 | Motor puro `packages/evolution` (catálogo + níveis) | `feat/df13-motor`        | M       |       | Fixtures → níveis esperados; catálogo versionado; zero IO                           |
-| EV-1 | Banco + API `evolution` + produtores de evidência   | `feat/df13-api`          | G       | EV-M1 | Salvar snapshot do projeto da temporada muda nível sem UI; RLS testada              |
-| EV-2 | Banco + API `knowledge` (DF-14)                     | `feat/df14-api`          | G       |       | Decisão/guia/trilha/kit geram evidência; export LGPD ampliado                       |
-| EV-3 | Shell novo (DF-12 = fase 6 do design)               | `feat/df11-rail` (mesma) | G       |       | 4 destinos + Ferramentas hub; câmera preservada; paridade DF-10                     |
-| EV-4 | Tela Equipe · Evolução (DF-13 UI)                   | `feat/df13-ui`           | G       |       | Ciclo completo: evidência → nível → critério → passo → conclusão, no browser        |
-| EV-5 | Tela Equipe · Conhecimento (DF-14 UI) + busca       | `feat/df14-ui`           | M       | EV-M2 | Registrar decisão em ≤ 30 s a partir do editor; kits operáveis                      |
-| EV-6 | Início (DF-16) + `GET /me/home`                     | `feat/df16-inicio`       | M       |       | 1 chamada alimenta a página; estados vazio/bootstrap/erro                           |
-| EV-7 | Comunidade (DF-15): ingestão + resultados + claim   | `feat/df15-comunidade`   | G       | EV-M3 | Acervo 2021–2026 publicado e conferido; claim manual; correções auditadas           |
-| EV-8 | Benchmark + metas → fila + polimento do ciclo       | `feat/df15-benchmark`    | M       |       | Mediana com piso de 8; "transformar em meta" cria passo; leitura editorial revisada |
+| Fase  | Entrega                                             | Branch                   | Esforço | Marco | Gate resumido                                                                          |
+| ----- | --------------------------------------------------- | ------------------------ | ------- | ----- | -------------------------------------------------------------------------------------- |
+| EV-0  | Motor puro `packages/evolution` (catálogo + níveis) | `feat/df13-motor`        | M       |       | Fixtures → níveis esperados; catálogo versionado; zero IO                              |
+| EV-1  | Banco + API `evolution` + produtores de evidência   | `feat/df13-api`          | G       | EV-M1 | Salvar snapshot do projeto da temporada muda nível sem UI; RLS testada                 |
+| EV-2  | Banco + API `knowledge` (DF-14)                     | `feat/df14-api`          | G       |       | Decisão/guia/trilha/kit geram evidência; export LGPD ampliado                          |
+| EV-3  | Shell novo (DF-12 = fase 6 do design)               | `feat/df11-rail` (mesma) | G       |       | 4 destinos + Ferramentas hub; câmera preservada; paridade DF-10                        |
+| EV-4  | Tela Equipe · Evolução (DF-13 UI)                   | `feat/df13-ui`           | G       |       | Ciclo completo: evidência → nível → critério → passo → conclusão, no browser           |
+| EV-5  | Tela Equipe · Conhecimento (DF-14 UI) + busca       | `feat/df14-ui`           | M       | EV-M2 | Registrar decisão em ≤ 30 s a partir do editor; kits operáveis                         |
+| EV-6  | Início (DF-16) + `GET /me/home`                     | `feat/df16-inicio`       | M       |       | 1 chamada alimenta a página; estados vazio/bootstrap/erro                              |
+| EV-7  | Comunidade (DF-15): ingestão + resultados + claim   | `feat/df15-comunidade`   | G       | EV-M3 | Acervo 2021–2026 publicado e conferido; claim manual; correções auditadas              |
+| EV-8  | Benchmark + metas → fila + polimento do ciclo       | `feat/df15-benchmark`    | M       |       | Mediana com piso de 8; "transformar em meta" cria passo; leitura editorial revisada    |
+| EV-9  | **Patentes do protótipo** (DF-18 + catálogo DF-19)  | `feat/df18-patentes`     | G       | EV-M4 | Opt-in retroativo; patente derivada; carência de 30 dias; vitrine desligada por padrão |
+| EV-10 | **Aferição** das declarações (DF-20)                | `feat/df20-afericao`     | M       |       | Onda V1 (19 contraprovas) sem ferramenta nova; indício pergunta, não derruba           |
+| EV-11 | **Ficha do protótipo** (DF-21)                      | `feat/df21-ficha`        | G       | EV-M5 | Campos tipados por subsistema; ficha 100% preenchível sem gaiola; usada no relatório   |
 
 Marcos: **EV-M1** = a evidência flui de ponta a ponta sem UI (fim da EV-1) · **EV-M2** = uma
 equipe vive o ciclo completo no produto (Evolução + Conhecimento + Início; fim da EV-5/6) ·
-**EV-M3** = Comunidade no ar com o acervo publicado (fim da EV-7).
+**EV-M3** = Comunidade no ar com o acervo publicado (fim da EV-7) · **EV-M4** = uma equipe real
+ativa a avaliação e recebe uma patente que faz sentido para ela (fim da EV-9) · **EV-M5** = uma
+equipe preenche a ficha do protótipo e usa a exportação no relatório, sem que ninguém tenha
+mencionado maturidade (fim da EV-11).
 
 **Gate de produto (entre EV-M2 e o GA):** piloto com 2–3 equipes reais convidadas (uma iniciante,
 uma intermediária) por ≥ 3 semanas, com os itens de observação listados nas specs (calibração do
@@ -163,6 +170,65 @@ Coortes (tercis por resultados), medianas com piso de 8, bloco "sua equipe no co
 revisados (gate legal de marca junto).
 
 - **Aceite:** ACs DF-15.4/15.5/15.9, DF-13.8; revisão dos textos contra a restrição de marca.
+
+### EV-9 — Patentes do protótipo
+
+Lote do [ADR-011](adr/011-patentes-gamificacao.md). Entra **depois** do lote DF-12…DF-16 estar
+mergeado, porque lê os níveis que ele calcula.
+
+| Sub    | Entrega                                                                                                           |
+| ------ | ----------------------------------------------------------------------------------------------------------------- |
+| EV-9.1 | Catálogo **v2.0.0** (DF-19: enunciados, `CATALOG_MODE`, fim dos `oculto`) + `computeRank()` + tabela `RANKS`      |
+| EV-9.2 | Migração `0008`, opt-in retroativo, carência de 30 dias no recálculo diário, patente em `/evolution` e `/me/home` |
+| EV-9.3 | Painel de ativação, faixa da patente, painel "para chegar em …", aviso de promoção                                |
+| EV-9.4 | Cartaz PNG no cliente, chave de vitrine, emblema no perfil público                                                |
+
+- **Aceite:** ACs DF-18.1–18.14 e DF-19.1–19.10.
+- **Ordem obrigatória:** EV-9.1 antes de tudo — publicar o catálogo v2.0.0 recalcula níveis
+  existentes e o delta precisa aparecer na atividade antes de a patente entrar em cena.
+- **Gate de licença:** a arte é CC BY-NC (DF-18 §8). Se o marco M3 de assinaturas estiver no
+  horizonte quando a EV-9.4 começar, resolver permissão ou arte original **antes** de publicar a
+  vitrine — é a superfície que leva o emblema para fora do portal.
+- **Risco próprio:** ninguém ativar. Mitigado pela retroatividade (RF-2.4) e medido como sinal.
+
+### EV-10 — Aferição das declarações
+
+Só depois de **ao menos uma temporada de v1 autodeclarativa** — sem esse período não há divergência
+acumulada para calibrar as mensagens.
+
+| Sub     | Entrega                                                                    |
+| ------- | -------------------------------------------------------------------------- |
+| EV-10.1 | `counterCheck` no motor + as 19 contraprovas da onda V1 + fixtures         |
+| EV-10.2 | Estados na API, reafirmação, evidências `counter.*`, narração na atividade |
+| EV-10.3 | UI do critério suspenso, piso de atividade, atalhos de conserto            |
+| EV-10.4 | Onda V2 — **bloqueada** pela classe de projeto (DF-20 §8.1)                |
+
+- **Aceite:** ACs DF-20.1–20.10.
+- **Entrada:** relatório do piloto com a taxa de divergência declaração × medida por área,
+  coletada de graça pelo pré-preenchimento do DF-19 RF-1.3.
+- **Onda V2 depende da EV-11** (classe de projeto vem da ficha).
+
+### EV-11 — Ficha do protótipo
+
+Feature **independente do lote das patentes** — a ficha se paga por inspeção, relatório, sucessão
+e comparação de comunidade, sem citar maturidade. Executável **antes** da EV-10, e é o que
+destrava a onda V2 da aferição.
+
+| Sub     | Entrega                                                                               |
+| ------- | ------------------------------------------------------------------------------------- |
+| EV-11.1 | `packages/datasheet` — catálogo v1, tipos, `suggestFrom()` sobre o motor B6, fixtures |
+| EV-11.2 | Migração `0009`, módulo `datasheet` na API, revisões com origem, dispensas, RLS       |
+| EV-11.3 | Página de projeto com 3 abas + aba Ficha (sugestões, três colunas, avisos)            |
+| EV-11.4 | Exportação Markdown/CSV, kit de passagem por cargo, catálogo de maturidade `2.1.0`    |
+
+- **Aceite:** ACs DF-21.1–21.12.
+- **Ordem interna:** EV-11.3 exige a página de projeto, que é a primeira tela de detalhe de
+  projeto do produto — hoje projetos vivem num modal. Vale conferir com o plano de design antes de
+  abrir o PR de UI.
+- **Guarda de conceito:** o validador é meio, não porta de entrada (DF-21 §3.2). A EV-11.1 inclui o
+  teste que percorre o catálogo e falha se algum campo não aceitar escrita, e a EV-11.3 só é aceita
+  com um projeto **sem nenhuma gaiola salva** chegando a 100% de preenchimento.
+- **Risco próprio:** 70 campos assustam. Mitigado pelas sugestões e por nada ser obrigatório.
 
 ## Riscos transversais
 

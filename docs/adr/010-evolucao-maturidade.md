@@ -4,6 +4,13 @@
 ["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b);
 vira "aceito" com o merge das specs DF-12…DF-16)
 
+> **Emendado pelo [ADR-011](011-patentes-gamificacao.md)** (2026-08-30) nas decisões **1** e **2**.
+> A rejeição a pontos, moedas, _streaks_ e ranking público **continua valendo**; o que passa a ser
+> aceito é uma representação nomeada e derivada do nível já calculado (a patente do protótipo),
+> privada por padrão e sob opt-in da capitania. E a ordem "evidência primeiro" se inverte **na v1**
+> por escolha de escopo: a avaliação nasce autodeclarativa, com a aferição desenhada como saída.
+> As decisões **3** e **4** deste ADR permanecem inteiras.
+
 **Documentos de apoio:** [`specs/drafts/df13-evolucao-maturidade.md`](../../specs/drafts/df13-evolucao-maturidade.md)
 (o modelo e o catálogo), [`specs/drafts/df12-shell-navegacao.md`](../../specs/drafts/df12-shell-navegacao.md),
 [`specs/drafts/df14-conhecimento.md`](../../specs/drafts/df14-conhecimento.md),
@@ -57,6 +64,9 @@ _Alternativas:_
 - **Pontos/badges/gamificação:** engajamento barato; rejeitada porque o incentivo degenera em
   farmar métrica, e badge público constrange exatamente o público-alvo (46 das 91 equipes na
   faixa iniciante).
+  _(Recortado pelo [ADR-011](011-patentes-gamificacao.md): pontos, moedas, streaks e ranking
+  público seguem rejeitados; uma representação nomeada e derivada do nível — sem métrica própria,
+  privada por padrão — passa a ser aceita.)_
 
 **Melhor argumento contra a decisão:** níveis com critérios são o modelo mais caro de calibrar —
 mal escritos, viram burocracia que nenhum estudante voluntário preenche, e o portal ganha a cara
@@ -66,6 +76,13 @@ mostrar rejeição, a degradação honesta é recuar para C (a fila sobrevive so
 o motor.
 
 ### 2. Evidência primeiro; declaração auditável onde a ferramenta não alcança; nada crítico vem do cliente
+
+> **Invertida na v1 pelo [ADR-011](011-patentes-gamificacao.md) dec. 3:** a primeira versão é
+> autodeclarativa (catálogo v2.0.0, `CATALOG_MODE = 'declarado'`). A evidência continua sendo
+> produzida e gravada, e aparece ao lado da resposta como valor medido; ela volta a decidir na
+> aferição do [DF-20](../../specs/drafts/df20-afericao-declaracoes.md), cuja onda V1 não precisa de
+> nenhuma ferramenta nova. O restante desta decisão — auditoria, autoria, nada crítico vindo do
+> cliente — permanece.
 
 Critério automático é satisfeito por evidência produzida **no servidor** (o `evaluate()` que já
 roda ao salvar snapshot; o resumo do organograma do DF-10; os contadores do DF-14). Critério
