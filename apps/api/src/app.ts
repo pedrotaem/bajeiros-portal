@@ -5,6 +5,7 @@ import { requireAuth } from './auth/middleware'
 import { devIssuer } from './auth/dev-issuer'
 import { identity } from './modules/identity/routes'
 import { projects } from './modules/projects/routes'
+import { datasheet } from './modules/datasheet/routes'
 import { teams, invites } from './modules/teams/routes'
 import { admin } from './modules/admin/routes'
 import { assistant } from './modules/assistant/routes'
@@ -29,6 +30,9 @@ app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
 app.route('/api/v1/me', identity)
 app.route('/api/v1/me', home) // DF-16: GET /me/home (agregador único)
 app.route('/api/v1/projects', projects)
+// DF-21: a ficha do protótipo mora no MESMO prefixo, em módulo próprio (o Hono casa
+// as duas árvores) — o validador não vira dono dos dados do carro
+app.route('/api/v1/projects', datasheet)
 app.route('/api/v1/teams', teams)
 // DF-13: rotas por equipe em módulo próprio, montadas no MESMO prefixo (o Hono
 // casa as duas árvores) — a evolução não incha o módulo de gestão de equipe
