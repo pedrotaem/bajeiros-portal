@@ -47,11 +47,25 @@ export type PanelId = 'login' | 'profile' | 'projects' | null
 // montado com `display: none` quando outra página está ativa; desmontá-lo perderia a
 // câmera, porque não há estado de câmera no store para restaurar.
 export type PageId =
-  'inicio' | 'equipe' | 'ferramentas' | 'comunidade' | 'editor' | 'assistant' | 'admin' | 'sobre'
+  | 'inicio'
+  | 'equipe'
+  | 'ferramentas'
+  | 'comunidade'
+  | 'editor'
+  | 'assistant'
+  | 'admin'
+  | 'sobre'
+  | 'projeto'
 
 /** Abas do espaço da equipe (DF-12 O2). Sub-estado no store, nunca `useState` local. */
 export type TeamTab = 'evolucao' | 'pessoas' | 'conhecimento' | 'projetos'
 export type CommunityTab = 'resultados' | 'equipes'
+
+/**
+ * Abas da página de projeto (DF-21 §3.5). A Ficha é a primeira porque ela vale sem o
+ * validador; a Validação pode ficar vazia a vida inteira sem afetar a Ficha em nada.
+ */
+export type ProjectTab = 'ficha' | 'versoes' | 'validacao'
 
 /** Ferramentas acesas quando o item Ferramentas está ativo (DF-12 RF-1.2/AC-DF12.4). */
 export const TOOL_PAGES: PageId[] = ['ferramentas', 'editor', 'assistant']
@@ -91,6 +105,7 @@ interface SessionState {
   page: PageId
   teamTab: TeamTab
   communityTab: CommunityTab
+  projectTab: ProjectTab
   activeTeamId: string | null
   inviteToken: string | null
   inviteNotice: string | null
@@ -99,6 +114,9 @@ interface SessionState {
   setPage: (p: PageId) => void
   setTeamTab: (t: TeamTab) => void
   setCommunityTab: (t: CommunityTab) => void
+  setProjectTab: (t: ProjectTab) => void
+  /** Abre a página do projeto na aba certa (DF-21 §3.5) — sem desmontar o editor. */
+  goToProject: (p: CurrentProject, tab?: ProjectTab) => void
   setActiveTeam: (id: string | null) => void
   /** Abre a equipe já na aba certa — usado pelos CTAs de passo do Início (DF-16). */
   goToTeam: (tab?: TeamTab) => void
@@ -304,6 +322,7 @@ export const useSession = create<SessionState>((set, get) => ({
   page: 'inicio',
   teamTab: 'evolucao',
   communityTab: 'resultados',
+  projectTab: 'ficha',
   activeTeamId: readActiveTeam(),
   // A home é o Início do shell, logado ou não (a apresentação pública mora nele).
   // Convite pendente pula direto para o login.
@@ -327,6 +346,14 @@ export const useSession = create<SessionState>((set, get) => ({
   setCommunityTab: (communityTab) => {
     track(`tab:comunidade:${communityTab}`)
     set({ communityTab })
+  },
+  setProjectTab: (projectTab) => {
+    track(`tab:projeto:${projectTab}`)
+    set({ projectTab })
+  },
+  goToProject: (currentProject, tab) => {
+    track('page:projeto')
+    set({ currentProject, page: 'projeto', ...(tab ? { projectTab: tab } : {}) })
   },
   setActiveTeam: (activeTeamId) => {
     try {

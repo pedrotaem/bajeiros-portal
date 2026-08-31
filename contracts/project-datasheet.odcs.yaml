@@ -1,0 +1,154 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:project-datasheet
+name: project-datasheet
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: >-
+    Ficha do protótipo (DF-21) — parâmetros, alvos e valores medidos do carro, por projeto.
+    Todo campo é preenchível à mão; o validador 3D facilita onde pode e nunca é condição
+    para registrar.
+  usage: >-
+    Gera a ficha da inspeção e o relatório da temporada, dá lastro a 17 critérios de
+    maturidade (DF-19) e alimenta as medianas por classe da comunidade (DF-15).
+  limitations: >-
+    Não guarda valor sugerido — a sugestão é computada na leitura a partir do último
+    snapshot de gaiola e nunca persiste. Resultado de validação (conformidade, pendências)
+    NÃO é campo de ficha, e sim estado da versão, que vive na aba Validação.
+schema:
+  - name: project_field
+    logicalType: object
+    physicalType: table
+    physicalName: project_fields
+    description: Valor vigente de um campo do catálogo, por projeto e por coluna.
+    properties:
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: field_id
+        logicalType: string
+        required: true
+        primaryKey: true
+        description: Id do campo no catálogo de packages/datasheet (fonte de verdade do tipo).
+      - name: kind
+        logicalType: string
+        required: true
+        primaryKey: true
+        description: design (o que a equipe assume como projeto) | measured (o que saiu da oficina).
+      - name: value
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: Valor tipado pelo catálogo na borda; jsonb porque campo novo não é migração.
+      - name: updated_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem escreveu por último; anonimizado na exclusão de conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida do projeto; autoria anonimizada na exclusão da conta do titular
+      - name: updated_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+        description: Lock otimista por campo — dois membros em campos distintos não conflitam.
+  - name: project_field_revision
+    logicalType: object
+    physicalType: table
+    physicalName: project_field_revisions
+    description: Histórico append-only por campo, com valor anterior, novo, origem e autor.
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: field_id
+        logicalType: string
+        required: true
+      - name: kind
+        logicalType: string
+        required: true
+      - name: old_value
+        logicalType: object
+        physicalType: jsonb
+        required: false
+      - name: new_value
+        logicalType: object
+        physicalType: jsonb
+        required: false
+        description: Nulo quando o valor foi removido.
+      - name: source
+        logicalType: string
+        required: true
+        description: manual | suggestion — aceitar uma sugestão é escrita normal, só anotada.
+      - name: changed_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Autoria da revisão; anonimizada na exclusão de conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida do projeto; autoria anonimizada na exclusão da conta do titular
+      - name: changed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+  - name: project_section_waiver
+    logicalType: object
+    physicalType: table
+    physicalName: project_section_waivers
+    description: Seção marcada como "não se aplica a este protótipo"; sai do denominador do progresso.
+    properties:
+      - name: project_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: section_id
+        logicalType: string
+        required: true
+        primaryKey: true
+      - name: reason
+        logicalType: string
+        required: false
+        description: Motivo curto (≤ 280). Exigido pela API — dispensa sem motivo é atalho para inflar progresso.
+      - name: waived_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem dispensou a seção; anonimizado na exclusão de conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida do projeto; autoria anonimizada na exclusão da conta do titular
+      - name: waived_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: catalogVersion
+    value: DATASHEET_VERSION em packages/datasheet — rótulo, unidade e tipo são canônicos lá
+  - property: suggestion
+    value: não persiste; computada na leitura do último cage_snapshot (DF-21 §6)
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

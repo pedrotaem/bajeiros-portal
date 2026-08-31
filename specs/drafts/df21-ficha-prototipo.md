@@ -562,3 +562,33 @@ que destrava a onda V2 da aferição.
 **Marco EV-M5:** uma equipe real preenche a ficha do protótipo até o fim de uma seção e usa a
 exportação no relatório — sem que ninguém tenha mencionado maturidade, e **sem ter aberto o editor
 3D**.
+
+### Estado da implementação (2026-08-30)
+
+EV-11.1 a EV-11.3 implementadas; da EV-11.4, só a exportação.
+
+| Onde                                       | O que entrou                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `packages/datasheet`                       | catálogo v1.0.0 (9 seções, 78 campos, 6 com sugestão), `suggestFrom()`, validação de faixa, progresso, export |
+| `apps/api/migrations/0009_datasheet.sql`   | as três tabelas do §6, RLS herdada de `projects`, revisões append-only por GRANT                              |
+| `apps/api/src/modules/datasheet/routes.ts` | as seis rotas do §7, lock otimista por campo, auditoria `datasheet.update` / `datasheet.waiver`               |
+| `apps/web/src/components/ProjectPage.tsx`  | página de projeto com Ficha · Versões · Validação                                                             |
+| `apps/web/src/components/DatasheetTab.tsx` | acordeão por seção, três colunas, linha de sugestão com "usar", avisos, histórico por campo                   |
+
+Dois desvios conscientes, ambos a favor do §3.2:
+
+1. **`suggestFrom(cage, ctx)` não recebe `rulesResult`** (RF-1.3 previa). Os seis palpites saem de
+   geometria e massa; receber o resultado das regras só para ignorá-lo convidaria, na primeira
+   manutenção, a derivar campo de veredito — o que a spec proíbe. O contexto carrega a versão do
+   snapshot, que é o que a tela mostra.
+2. **A faixa típica é de gabinete e está marcada como tal no código** (questão aberta §12.3). Ela
+   nunca bloqueia; trocar um par é edição de catálogo.
+
+Não implementado, com motivo:
+
+- **RF-6.2 (kit de passagem por cargo)** — exige a amarração seção → cargo do organograma, que é
+  justamente a **questão aberta §12.5**. Fica para quando a decisão de produto existir.
+- **RF-6.3 (Anexo B)** e **catálogo de maturidade `2.1.0`** — dependem, respectivamente, da
+  ferramenta da ficha oficial e do catálogo v2.0.0 do DF-19, que ainda não existe em código.
+- **RF-6.4 (medianas por classe)** — o gancho está no catálogo (`comparable`); a agregação na
+  comunidade fica para quando houver acervo acima do piso de 8.

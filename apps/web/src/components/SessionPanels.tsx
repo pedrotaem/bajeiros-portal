@@ -321,7 +321,7 @@ interface SnapshotRow {
 }
 
 function ProjectsPanel() {
-  const { api, setPanel, currentProject, setCurrentProject } = useSession()
+  const { api, setPanel, currentProject, setCurrentProject, goToProject } = useSession()
   const [projects, setProjects] = useState<ProjectRow[] | null>(null)
   const [newName, setNewName] = useState('')
   const [versionsOf, setVersionsOf] = useState<ProjectRow | null>(null)
@@ -450,6 +450,17 @@ function ProjectsPanel() {
                 </button>
                 <button className="account-btn" onClick={() => showVersions(p)}>
                   Versões
+                </button>
+                {/* DF-21: a ficha é o caminho que NÃO passa pelo editor — projeto sem
+                    gaiola nenhuma chega nela por aqui */}
+                <button
+                  className="account-btn"
+                  onClick={() => {
+                    goToProject({ id: p.id, name: p.name, seq: p.lastSeq ?? 0 }, 'ficha')
+                    setPanel(null)
+                  }}
+                >
+                  Ficha
                 </button>
                 <button className="account-btn danger" onClick={() => removeProject(p)}>
                   Excluir
