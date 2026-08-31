@@ -23,3 +23,30 @@ variable "deletion_protection" {
   type        = bool
   default     = false
 }
+
+# ---------- DF-17: login com Google ----------
+
+variable "google_enabled" {
+  description = "Liga o IdP Google + a trigger de vinculação (staging antes de prod)"
+  type        = bool
+  default     = false
+}
+
+variable "google_client_id" {
+  description = "OAuth client ID do Google Cloud (via TF_VAR_google_client_id)"
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "OAuth client secret do Google Cloud (via TF_VAR_google_client_secret)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "log_retention_days" {
+  description = "Retenção do log da Lambda de vinculação"
+  type        = number
+  default     = 30
+}

@@ -34,6 +34,8 @@ jobs:
           mkdir -p out/migrate/migrations
           (cd apps/api/dist/lambda && zip -q lambda.zip index.mjs)
           mv apps/api/dist/lambda/lambda.zip out/
+          (cd apps/api/dist/idp-link && zip -q idp-link.zip index.mjs)
+          mv apps/api/dist/idp-link/idp-link.zip out/
           cp apps/api/dist/lambda/migrate.bundle.mjs out/migrate/
           cp apps/api/migrations/*.sql out/migrate/migrations/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -44,7 +46,9 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lambda-${{ github.sha }}
-          path: out/lambda.zip
+          path: |
+            out/lambda.zip
+            out/idp-link.zip
           retention-days: 30 # rollback: republicar o zip de um SHA anterior (runbook)
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -98,10 +102,19 @@ jobs:
             --zip-file fileb://lambda/lambda.zip --publish --region sa-east-1
           aws lambda wait function-updated \
             --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" --region sa-east-1
+          # DF-17: a trigger PreSignUp só existe onde o Google está ligado
+          if [ -n "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" ]; then
+            aws lambda update-function-code \
+              --function-name "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" \
+              --zip-file fileb://lambda/idp-link.zip --publish --region sa-east-1
+            aws lambda wait function-updated \
+              --function-name "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" --region sa-east-1
+          fi
       - name: Gerar config.json do ambiente # build é único; config por env entra aqui
         run: |
-          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
-            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" > dist/config.json
+          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
+            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
+            '${{ vars.COGNITO_PROVIDERS || '[]' }}' > dist/config.json
       - name: Sync S3 (assets primeiro, index e config por último)
         run: |
           aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \
@@ -172,10 +185,19 @@ jobs:
             --zip-file fileb://lambda/lambda.zip --publish --region sa-east-1
           aws lambda wait function-updated \
             --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" --region sa-east-1
+          # DF-17: a trigger PreSignUp só existe onde o Google está ligado
+          if [ -n "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" ]; then
+            aws lambda update-function-code \
+              --function-name "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" \
+              --zip-file fileb://lambda/idp-link.zip --publish --region sa-east-1
+            aws lambda wait function-updated \
+              --function-name "${{ vars.LAMBDA_IDP_LINK_FUNCTION_NAME }}" --region sa-east-1
+          fi
       - name: Gerar config.json do ambiente
         run: |
-          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s"}}' \
-            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" > dist/config.json
+          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
+            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
+            '${{ vars.COGNITO_PROVIDERS || '[]' }}' > dist/config.json
       - name: Sync S3 (assets primeiro, index e config por último)
         run: |
           aws s3 sync dist/ "s3://${{ vars.SITE_BUCKET }}/" \

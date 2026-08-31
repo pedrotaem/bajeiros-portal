@@ -105,6 +105,24 @@ module "api" {
   gateway_url         = data.terraform_remote_state.ai_gateway.outputs.gateway.function_url
 }
 
+# DF-17 — credenciais do OAuth client do Google (criado à mão no Google Cloud
+# Console, ver runbook). Passar por TF_VAR_*, nunca em .tfvars versionado.
+variable "google_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "google_client_id" {
+  type    = string
+  default = ""
+}
+
+variable "google_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
 module "auth" {
   source    = "../../modules/auth"
   providers = { aws = aws.sa_east_1 }
@@ -122,6 +140,11 @@ module "auth" {
     "http://localhost:5173/",
     "http://localhost:5175/",
   ]
+
+  # DF-17 — staging liga primeiro; prod só depois dos cenários manuais da spec §9
+  google_enabled       = var.google_enabled
+  google_client_id     = var.google_client_id
+  google_client_secret = var.google_client_secret
 }
 
 output "auth" {
