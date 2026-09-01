@@ -190,12 +190,17 @@ for (const u of ufs) {
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const destino = path.join(root, 'apps', 'web', 'src', 'data', 'brasil-uf.ts')
 
+/* Literal de string do arquivo gerado. A contrabarra vai PRIMEIRO: escapar só a aspa
+ * deixaria um `\` do dado virar escape no arquivo emitido. Aspa simples porque o
+ * prettier do repo usa `singleQuote` e a saída é conferida pelo format:check. */
+const lit = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+
 const corpo = ufs
   .map(
     (u) =>
-      `  {\n    sigla: '${u.sigla}',\n    nome: '${u.nome.replace(/'/g, "\\'")}',\n` +
-      `    regiao: '${u.regiao}',\n    centro: [${u.centro[0]}, ${u.centro[1]}],\n` +
-      `    d: '${u.d}',\n  },`,
+      `  {\n    sigla: ${lit(u.sigla)},\n    nome: ${lit(u.nome)},\n` +
+      `    regiao: ${lit(u.regiao)},\n    centro: [${u.centro[0]}, ${u.centro[1]}],\n` +
+      `    d: ${lit(u.d)},\n  },`,
   )
   .join('\n')
 
