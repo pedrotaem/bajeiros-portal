@@ -214,12 +214,51 @@ export function Shell({ title, children }: { title: string; children: React.Reac
       <header className="bj-topbar">
         <h1 className="bj-page-title">{title}</h1>
         <p className="bj-disclaimer">{DISCLAIMER}</p>
+        <BotaoSugerir />
       </header>
 
       <main id="conteudo" className="bj-content" tabIndex={-1}>
         {children}
       </main>
     </div>
+  )
+}
+
+/**
+ * Motivo escrito quando quem não tem conta aperta o botão (DF-26 RF-DF26.3). Ele
+ * NÃO some para o visitante: sumir seria dizer que não existe canal. A conta é
+ * exigida pelo CICLO — sem ela não há para quem devolver o desfecho (§5.2).
+ */
+export const SUGERIR_EXIGE_CONTA =
+  'Para sugerir é preciso ter conta — é assim que dá para te avisar do que aconteceu com o seu pedido.'
+
+/**
+ * DF-26 — a ÚNICA entrada de sugestão do portal, e ela mora na topbar porque a
+ * topbar está em toda página. Botão de TEXTO: o padrão do design system é sem
+ * ícone (§8.4), e a única vaga de glifo que resta continua livre.
+ *
+ * A página de onde saiu não é digitada por ninguém — `contextoDaPagina()` lê do
+ * estado da sessão no momento em que o painel abre.
+ */
+function BotaoSugerir() {
+  const user = useSession((s) => s.user)
+  const setPanel = useSession((s) => s.setPanel)
+  return (
+    <button
+      type="button"
+      className="bj-sug-abrir"
+      onClick={() => {
+        if (user) {
+          setPanel('feedback')
+          return
+        }
+        // `loginReason`, não `authNotice`: isto é explicação, não falha (§5.2)
+        useSession.setState({ loginReason: SUGERIR_EXIGE_CONTA })
+        setPanel('login')
+      }}
+    >
+      Sugerir melhoria
+    </button>
   )
 }
 

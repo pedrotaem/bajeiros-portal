@@ -1,0 +1,106 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:feedback-item
+name: feedback_item
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Sugestão de melhoria, pedido de implementação ou relato de problema (DF-26), enviado
+    de dentro de uma página do portal.
+  usage: Fila privada triada na administração (DF-9). Não é mural público e não tem voto (DF-26
+    §5.4). O desfecho volta para quem pediu dentro do app — o portal não envia e-mail.
+schema:
+  - name: feedback_item
+    logicalType: object
+    physicalType: table
+    physicalName: feedback_items
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: author_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem enviou; anonimizado na exclusão da conta, e o texto permanece.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida do portal; autoria anonimizada na exclusão da conta do titular (base
+              legal da permanência do texto em revisão jurídica, mesma questão do DF-14 §8.3)
+      - name: kind
+        logicalType: string
+        required: true
+        description: '`melhoria` (muda o que existe), `implementacao` (o que não existe) ou
+          `problema` (o que está errado).'
+      - name: page
+        logicalType: string
+        required: true
+        description: Identificador da página de onde saiu (PageId conhecido, validado na borda).
+      - name: view
+        logicalType: string
+        required: false
+        description: Aba ativa dentro da página; nulo quando a página não tem abas.
+      - name: title
+        logicalType: string
+        required: true
+        description: Máximo de 120 caracteres.
+      - name: body
+        logicalType: string
+        required: true
+        classification: pii
+        description: Texto livre escrito pela pessoa, de 20 a 2000 caracteres. Pode conter dado
+          pessoal apesar do aviso na tela — é o campo mais arriscado do portal (DF-26 §9.4).
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: vida do portal; sem varredura automática — retenção mais curta para itens
+              fechados é a decisão prevista se o volume crescer
+      - name: context
+        logicalType: object
+        physicalType: jsonb
+        required: true
+        description: Só tamanho da janela e estado do menu (`{viewport, rail}`), mostrados na
+          tela antes do envio. Sem user-agent, captura de tela, console, rede, URL ou IP.
+      - name: status
+        logicalType: string
+        required: true
+        description: '`novo`, `em_analise`, `planejado`, `entregue`, `recusado`, `duplicado`.'
+      - name: resolution
+        logicalType: string
+        required: false
+        description: Resposta da triagem, ≤ 1000 caracteres. Obrigatória em `recusado` e
+          `duplicado` — garantida por CHECK, não por rota.
+      - name: duplicate_of
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Item original quando `duplicado`; nunca a própria linha.
+      - name: status_changed_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+      - name: seen_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        description: Quando o autor leu o desfecho. Zerado a cada triagem — é o "não lido".
+      - name: created_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+customProperties:
+  - property: ownership
+    value: conteúdo de quem enviou; a triagem é do dono do produto
+  - property: caps
+    value: 10 envios por pessoa em 24 h, 200 no total por pessoa
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

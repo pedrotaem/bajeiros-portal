@@ -54,6 +54,8 @@ interface Home {
   } | null
   continueEditor?: { projectId: string; projectName: string; seq: number } | null
   continueAssistant?: { question: string; at: string } | null
+  /** DF-26 RF-DF26.25 — `null` quando não há desfecho novo; Início não ganha bloco vazio. */
+  feedback?: { respondidas: number } | null
 }
 
 function saudacao(): string {
@@ -114,6 +116,23 @@ export function HomePage() {
 
   return (
     <div className="bj-page bj-inicio">
+      {/* DF-26 RF-DF26.27 — a MESMA linha serve para entregue e para recusado: as
+          duas coisas são o canal funcionando, e classificar pelo humor ensinaria
+          que só a boa notícia conta. */}
+      {d.feedback && (
+        <p className="bj-sug-recado">
+          {d.feedback.respondidas === 1
+            ? 'Uma sugestão sua teve desfecho.'
+            : `${d.feedback.respondidas} sugestões suas tiveram desfecho.`}{' '}
+          <button
+            type="button"
+            className="bj-link"
+            onClick={() => useSession.getState().setPanel('feedback')}
+          >
+            Ver
+          </button>
+        </p>
+      )}
       <header className="bj-inicio-saudacao">
         <h2>
           {saudacao()}

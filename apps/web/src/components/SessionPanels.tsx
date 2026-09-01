@@ -59,6 +59,7 @@ function LoginPanel() {
   const loginWithProvider = useSession((s) => s.loginWithProvider)
   const providers = authProviders()
   const authNotice = useSession((s) => s.authNotice)
+  const loginReason = useSession((s) => s.loginReason)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -84,6 +85,7 @@ function LoginPanel() {
       <>
         <Head title="Entrar" />
         <div className="modal-body">
+          {loginReason && <p className="bj-modal-aviso">{loginReason}</p>}
           {authNotice && <p className="modal-err">{authNotice}</p>}
           {err && <p className="modal-err">{err}</p>}
           {providers.includes('google') && (
@@ -125,6 +127,10 @@ function LoginPanel() {
     <>
       <Head title="Entrar" />
       <form className="modal-body" onSubmit={submit}>
+        {/* o motivo vem ANTES do texto do ambiente: quem chegou aqui por um botão
+            precisa saber por que, e isso vale nos dois modos de auth */}
+        {loginReason && <p className="bj-modal-aviso">{loginReason}</p>}
+        {authNotice && <p className="modal-err">{authNotice}</p>}
         <p className="modal-note">
           Ambiente de desenvolvimento local: informe e-mail e nome — a conta é criada/reaberta na
           hora (sem senha). Nos ambientes publicados o login real usa Cognito.
