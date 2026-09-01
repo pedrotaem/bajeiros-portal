@@ -121,6 +121,12 @@ graph LR
   escala a zero e a vitrine é a primeira pintura de quem chega). Terceira das quatro marcas de
   produto; inventário de ícones intocado em 23/24. Não reabre a decisão do DF-12: a vitrine mora
   **dentro** do shell.
+- **DF-26 — Sugestões:** melhoria, implementação ou problema pedidos de dentro de qualquer
+  página, com a página e o tamanho da janela presos ao envio **sozinhos** — e mostrados antes de
+  enviar, que é o que separa contexto de telemetria. Fila privada triada na administração, com
+  status honesto: recusar **exige** motivo. **Sem mural e sem voto na v1**, por evidência de viés
+  e por continuidade com o "benchmark nunca vira ranking" do DF-15. O ciclo fecha in-app, porque
+  o portal não manda e-mail.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16)
 
