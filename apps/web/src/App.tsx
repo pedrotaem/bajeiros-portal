@@ -19,21 +19,9 @@ import { PrecisaDeConta, PublicHome } from './components/PublicHome'
 import { ProjectPage } from './components/ProjectPage'
 import { About } from './components/About'
 import { Shell } from './components/Shell'
-import { useSession, track, type PageId } from './session'
+import { FeedbackPanel } from './components/FeedbackPanel'
+import { useSession, track, TITULO_PAGINA as TITULOS } from './session'
 import './shell.css'
-
-/** Título da topbar por destino (DF-12 RF-1.3: um `<h1>` por página). */
-const TITULOS: Record<PageId, string> = {
-  inicio: 'Início',
-  equipe: 'Equipe',
-  ferramentas: 'Ferramentas',
-  comunidade: 'Comunidade',
-  editor: 'Validador de gaiola',
-  assistant: 'Assistente do regulamento',
-  admin: 'Administração',
-  sobre: 'Sobre o portal',
-  projeto: 'Projeto',
-}
 
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
@@ -195,6 +183,9 @@ export default function App() {
     // um <h1> por página (DF-12 RF-1.3): na página de projeto ele é o nome do carro
     <Shell title={page === 'projeto' && currentProject ? currentProject.name : TITULOS[page]}>
       <SessionPanels />
+      {/* DF-26: painel próprio, não aba de SessionPanels — ele abre por cima de
+          QUALQUER página e não pode desmontar o editor (ADR-009 dec. 4) */}
+      <FeedbackPanel />
       {sessionUser && <AvisoDeMudanca />}
 
       {/* Sem conta NINGUÉM é redirecionado em silêncio: o Início tem versão pública e

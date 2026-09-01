@@ -13,6 +13,7 @@ import { evolution, evolutionRoot } from './modules/evolution/routes'
 import { knowledge } from './modules/knowledge/routes'
 import { community } from './modules/community/routes'
 import { home } from './modules/home/routes'
+import { feedback } from './modules/feedback/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -40,6 +41,7 @@ app.route('/api/v1/teams', evolution)
 app.route('/api/v1/teams', knowledge) // DF-14
 app.route('/api/v1/evolution', evolutionRoot)
 app.route('/api/v1/community', community) // DF-15
+app.route('/api/v1/feedback', feedback) // DF-26
 app.route('/api/v1/invites', invites)
 app.route('/api/v1/activity', activity)
 app.route('/api/v1/admin', admin)
