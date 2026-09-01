@@ -188,9 +188,12 @@ export const ICONS: readonly IconEntry[] = [
 export const FEATHER_DERIVED = ICONS.filter((i) => i.license === 'ISC + MIT').map((i) => i.name)
 
 /**
- * MARCAS DE FERRAMENTA (DF-24) — categoria separada, **não entra na contagem de 24**.
- * São obra própria do projeto (não há doador), identificam produto e não vocabulário,
- * e nunca aparecem sem rótulo ao lado. Exceção escrita no design-system §8.6.
+ * MARCAS DE PRODUTO (DF-24; ampliada pelo DF-25) — categoria separada, **não entra na
+ * contagem de 24**. São obra própria do projeto (não há doador), identificam produto e
+ * não vocabulário, e nunca aparecem sem rótulo ao lado. Exceção escrita no
+ * design-system §8.6.
+ *
+ * O teto de 4 continua o mesmo: 3 ocupadas, 1 livre.
  */
 export interface MarkEntry {
   /** Nome do componente exportado por `marks.tsx`. */
@@ -212,5 +215,10 @@ export const MARKS: readonly MarkEntry[] = [
     name: 'MarkAssistant',
     product: 'Assistente do Regulamento',
     meaning: 'a folha do regulamento com o brilho de IA — sem balão de conversa',
+  },
+  {
+    name: 'MarkPortal',
+    product: 'Portal Bajeiros',
+    meaning: 'o perfil octogonal do corta-fogo com o X das diagonais e os nós nos vértices',
   },
 ]

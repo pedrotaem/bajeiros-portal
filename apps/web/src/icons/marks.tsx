@@ -1,13 +1,14 @@
 import { Svg, type SvgProps } from './Svg'
 
 /**
- * MARCAS DE FERRAMENTA (DF-24) — categoria própria, **fora do inventário de ícones**.
+ * MARCAS DE PRODUTO (DF-24; ampliada pelo DF-25) — categoria própria, **fora do
+ * inventário de ícones**.
  *
  * Por que não são ícones: o inventário de §8.5 é vocabulário genérico de interface
  * (seta, lixeira, chevron), tem teto de 24 formas, doador único (Lucide) e a regra de
- * §8.6 "desenho à mão não é caminho permitido". Estas duas formas não são vocabulário:
- * **identificam dois produtos nomeados do portal** — o Validador de Gaiola e o
- * Assistente do Regulamento —, do mesmo jeito que um logo identifica um produto.
+ * §8.6 "desenho à mão não é caminho permitido". Estas formas não são vocabulário:
+ * **identificam produtos nomeados** — o Validador de Gaiola, o Assistente do
+ * Regulamento e o próprio portal —, do mesmo jeito que um logo identifica um produto.
  * Nenhum conjunto aberto tem "três pontos denominados com o ângulo marcado no vértice",
  * e o desenho foi PEDIDO pelo dono do produto. A exceção está escrita no
  * design-system §8.6; a decisão de manter o inventário intacto (24 formas, Lucide,
@@ -47,5 +48,27 @@ export const MarkAssistant = (p: Props) => (
     <path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5" />
     <path d="M7.5 8h4" />
     <path d="M17 9c.7 3.6 1.7 4.6 5 5.3-3.3.7-4.3 1.7-5 5.3-.7-3.6-1.7-4.6-5-5.3 3.3-.7 4.3-1.7 5-5.3Z" />
+  </Svg>
+)
+
+/**
+ * Marca do PORTAL (DF-25). O perfil octogonal do corta-fogo visto de frente, com o X
+ * das diagonais e os nós nos vértices — a geometria que o validador mede, que é o que
+ * o portal tem de mais próprio. Não é desenho de carro de propósito: carro montado é
+ * exatamente o que o portal NÃO valida (o mesmo motivo pelo qual `tabler/car-off-road`
+ * foi recusado no §8.6).
+ *
+ * Os nós são círculos SEM preenchimento, como no `MarkCage`: o contrato do primitivo
+ * proíbe `fill` — a 16px o traço fecha e lê como ponto.
+ */
+export const MarkPortal = (p: Props) => (
+  <Svg {...p}>
+    <path d="M7.5 3.5h9l3 6.5-2 10h-11l-2-10Z" />
+    <path d="M7.5 3.5 17.5 20" />
+    <path d="M16.5 3.5 6.5 20" />
+    <circle cx="7.5" cy="3.5" r="1.1" />
+    <circle cx="16.5" cy="3.5" r="1.1" />
+    <circle cx="6.5" cy="20" r="1.1" />
+    <circle cx="17.5" cy="20" r="1.1" />
   </Svg>
 )

@@ -1807,3 +1807,613 @@
   font-size: var(--bj-text-sm);
   line-height: var(--bj-leading-normal);
 }
+
+/* ---------- DF-25 — vitrine pública ---------- */
+
+/* A vitrine é a única página que sangra: as faixas ocupam a largura inteira do
+   `bj-content` e só o conteúdo de cada uma é preso a `--bj-page-w`. O `.bj-page`
+   normal continua valendo para todo o resto (DF-25 FR-DF25.2). */
+.bj-vitrine {
+  display: flex;
+  flex-direction: column;
+}
+.bj-faixa {
+  padding: var(--bj-space-7) var(--bj-space-5);
+}
+.bj-faixa-inner {
+  max-width: var(--bj-page-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-6);
+}
+.bj-faixa-funda {
+  background: var(--bj-bg-sunken);
+  border-top: 1px solid var(--bj-border);
+  border-bottom: 1px solid var(--bj-border);
+}
+
+.bj-faixa-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+}
+.bj-faixa-head h3 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-3xl);
+  font-weight: var(--bj-weight-medium);
+  line-height: var(--bj-leading-tight);
+}
+.bj-faixa-head p {
+  margin: 0;
+  color: var(--bj-fg-muted);
+}
+.bj-faixa-head-larga {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--bj-space-6);
+}
+.bj-faixa-head-larga > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+}
+.bj-faixa-head-larga > p {
+  max-width: 380px;
+  margin: 0;
+  color: var(--bj-fg-muted);
+  text-align: right;
+}
+
+/* Régua ocre: a marca de seção do design system. É o único ocre destas faixas além
+   do botão primário e dos números — o acento fica abaixo de 2% da tela (§1). */
+.bj-regua {
+  width: 40px;
+  height: 2px;
+  background: var(--bj-brand);
+  border-radius: var(--bj-radius-sm);
+}
+
+/* ---------- hero ---------- */
+
+.bj-vitrine-hero {
+  /* Grid técnico + brilho ocre no topo, herdados da landing antiga com os tokens
+     novos. `rgb(R G B / A%)` LITERAL, nunca `hsl(from …)`: o alvo é chrome107 e a
+     sintaxe de cor relativa exige 119 (design-system §1.6). */
+  background:
+    radial-gradient(ellipse 60% 70% at 50% -8%, rgb(200 145 35 / 12%), transparent 64%),
+    repeating-linear-gradient(0deg, transparent 0 47px, rgb(241 239 235 / 3%) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, rgb(241 239 235 / 3%) 47px 48px);
+  border-bottom: 1px solid var(--bj-border);
+}
+.bj-hero-inner {
+  align-items: center;
+  text-align: center;
+  gap: var(--bj-space-5);
+}
+/* A marca sai do primitivo com 24px; aqui ela é o elemento dominante e o tamanho é
+   da página, não do inventário. O CSS vence o atributo de apresentação do <svg>. */
+.bj-hero-marca {
+  width: 96px;
+  height: 96px;
+  color: var(--bj-brand);
+}
+.bj-hero-nome {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: 72px;
+  font-weight: var(--bj-weight-medium);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+}
+.bj-hero-lead {
+  max-width: 640px;
+  margin: 0;
+  font-size: var(--bj-text-xl);
+  line-height: var(--bj-leading-normal);
+  color: var(--bj-fg-secondary);
+  text-wrap: pretty;
+}
+.bj-hero-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--bj-space-3);
+}
+.bj-btn-lg {
+  min-height: var(--bj-control-h-lg);
+  padding: 0 var(--bj-space-5);
+  font-size: var(--bj-text-lg);
+}
+
+.bj-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--bj-space-4);
+  width: 100%;
+  margin: var(--bj-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bj-numeros li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bj-space-1);
+  padding: var(--bj-space-5) var(--bj-space-3);
+  background: var(--bj-bg-base);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-numeros strong {
+  font-family: var(--bj-font-display);
+  font-size: 52px;
+  font-weight: var(--bj-weight-medium);
+  line-height: 1;
+  color: var(--bj-brand);
+}
+.bj-numeros span {
+  color: var(--bj-fg-secondary);
+  text-align: center;
+}
+
+/* ---------- panorama: mapa + painel ---------- */
+
+.bj-panorama {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--bj-space-7);
+  align-items: start;
+}
+.bj-panorama-mapa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-5);
+}
+/* Mapa e localizador, nao cartaz: sem teto ele domina a faixa inteira quando a
+   secao empilha (o conteudo chega a ~1050px). Com teto, as duas larguras — coluna e
+   empilhado — mostram o mesmo desenho no mesmo tamanho. */
+.bj-mapa {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  align-self: center;
+}
+/* Duas leituras sobrepostas no mesmo desenho: o ESTADO e a forma e o tom (uma cor
+   so do sistema, opacidade derivada da contagem), a REGIAO e o recorte que acende. A
+   fronteira entre estados usa o fundo da faixa, entao ela separa sem virar grade. */
+.bj-uf {
+  fill: var(--bj-brand);
+  stroke: var(--bj-bg-sunken);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition:
+    fill-opacity var(--bj-dur-fast) var(--bj-ease),
+    stroke var(--bj-dur-fast) var(--bj-ease);
+}
+/* Estado sem equipe nao e o degrau mais baixo da escala: e outra categoria. Por isso
+   ele sai da rampa de marca e vai para o neutro, com a mesma fronteira. */
+.bj-uf-vazia {
+  fill: var(--bj-bg-raised);
+  fill-opacity: 1;
+}
+.bj-uf:hover {
+  filter: brightness(1.3);
+}
+/* A regiao selecionada acende pela BORDA, nao pelo preenchimento: mudar o tom
+   destruiria a leitura de quantas equipes cada estado tem, que e o dado. */
+.bj-uf-selecionada {
+  stroke: var(--bj-fg-primary);
+  stroke-width: 1.6;
+}
+
+.bj-mapa-sigla,
+.bj-mapa-num {
+  fill: var(--bj-fg-primary);
+  text-anchor: middle;
+  pointer-events: none;
+  /* Halo: o rotulo cruza fronteira e tom, e sem ele some sobre estado claro. */
+  paint-order: stroke fill;
+  stroke: var(--bj-bg-sunken);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.bj-mapa-sigla {
+  font-family: var(--bj-font-sans);
+  font-size: 12px;
+  font-weight: var(--bj-weight-bold);
+  letter-spacing: var(--bj-tracking-wide);
+}
+.bj-mapa-num {
+  font-family: var(--bj-font-display);
+  font-size: 28px;
+  font-weight: var(--bj-weight-medium);
+}
+
+.bj-panorama-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bj-space-2);
+}
+/* Altura e tipo do sistema, nao um tamanho inventado: com 6 opcoes os chips
+   precisam caber numa linha so — "Sul" sozinho numa segunda linha le como bug. */
+.bj-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--bj-control-h);
+  /* mesmo recuo lateral do chip de status (C-07): e o do sistema, nao um valor
+     inventado, e e o que faz os 6 caberem numa linha na coluna do mapa. */
+  padding: 0 var(--bj-space-2);
+  font-size: var(--bj-text-sm);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-pill);
+  color: var(--bj-fg-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+.bj-chip-btn:hover {
+  background: var(--bj-hover);
+}
+.bj-chip-btn-on {
+  background: var(--bj-brand);
+  border-color: var(--bj-brand-border);
+  color: var(--bj-on-brand);
+  font-weight: var(--bj-weight-medium);
+}
+
+.bj-panorama-painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-5);
+  padding: var(--bj-space-6);
+  background: var(--bj-bg-base);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-painel-topo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--bj-space-4);
+  padding-bottom: var(--bj-space-4);
+  border-bottom: 1px solid var(--bj-border);
+}
+.bj-painel-nome {
+  display: flex;
+  flex-direction: column;
+}
+.bj-painel-rotulo {
+  color: var(--bj-brand-dim);
+  font-size: var(--bj-text-sm);
+  font-weight: var(--bj-weight-medium);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+}
+.bj-painel-nome h4 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-3xl);
+  font-weight: var(--bj-weight-medium);
+  line-height: var(--bj-leading-tight);
+}
+.bj-painel-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--bj-space-2);
+  margin: 0;
+}
+.bj-painel-total strong {
+  font-family: var(--bj-font-display);
+  font-size: 56px;
+  font-weight: var(--bj-weight-medium);
+  line-height: 0.9;
+  color: var(--bj-brand);
+}
+.bj-painel-total span {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+
+.bj-coortes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+  margin: 0;
+}
+.bj-coorte {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--bj-space-2);
+}
+.bj-coorte dd {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-coorte-trilho {
+  grid-column: 1 / -1;
+  height: 6px;
+  background: var(--bj-bg-inset);
+  border-radius: var(--bj-radius-pill);
+  overflow: hidden;
+}
+.bj-coorte-barra {
+  height: 100%;
+  border-radius: var(--bj-radius-pill);
+}
+/* As três coortes descem em intensidade dentro da mesma família quente: a leitura é
+   uma escada, não três categorias sem ordem. */
+.bj-coorte-alta dd {
+  color: var(--bj-brand);
+}
+.bj-coorte-alta .bj-coorte-barra {
+  background: var(--bj-brand);
+}
+.bj-coorte-intermediaria dd {
+  color: var(--bj-brand-dim);
+}
+.bj-coorte-intermediaria .bj-coorte-barra {
+  background: var(--bj-brand-dim);
+}
+.bj-coorte-iniciante dd {
+  color: var(--bj-fg-muted);
+}
+.bj-coorte-iniciante .bj-coorte-barra {
+  background: var(--bj-fg-muted);
+}
+
+.bj-painel-metas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bj-space-3);
+}
+.bj-painel-metas p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--bj-space-3) var(--bj-space-4);
+  background: var(--bj-bg-sunken);
+  border-radius: var(--bj-radius);
+}
+.bj-painel-metas strong {
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-painel-metas span {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+.bj-painel-nota {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  line-height: var(--bj-leading-normal);
+  text-wrap: pretty;
+}
+/* A data e a origem vivem NA FAIXA (FR-DF25.13), não escondidas no rodapé: número
+   sem data é afirmação sobre hoje, e este é um instantâneo. */
+.bj-painel-fonte {
+  margin: 0;
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+
+/* ---------- cartões de número e tira de práticas ---------- */
+
+/* Uma seção chamada "Quatro partes" que mostra 3 + 1 le como bug. O auto-fill de
+   .bj-cards da 3 colunas nesta largura; aqui o numero de colunas E o conteudo. */
+.bj-cards-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bj-card-numero strong {
+  font-family: var(--bj-font-display);
+  font-size: 46px;
+  font-weight: var(--bj-weight-medium);
+  line-height: 1;
+  color: var(--bj-brand);
+}
+.bj-card h4 {
+  margin: 0;
+  font-size: var(--bj-text-lg);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-fonte {
+  margin: 0;
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+.bj-card-numero .bj-fonte {
+  margin-top: auto;
+}
+
+.bj-tira {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bj-border);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-lg);
+  overflow: hidden;
+}
+.bj-tira li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-5) var(--bj-space-4);
+  background: var(--bj-bg-base);
+}
+.bj-tira strong {
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-3xl);
+  font-weight: var(--bj-weight-medium);
+  line-height: 1;
+}
+.bj-tira p {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+}
+.bj-tira-quem {
+  margin-top: auto;
+  color: var(--bj-brand-dim);
+  font-size: var(--bj-text-sm);
+}
+
+/* ---------- atrito com a organização ---------- */
+
+.bj-atritos {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--bj-space-7);
+  align-items: start;
+  padding: var(--bj-space-6);
+  background: var(--bj-bg-sunken);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-atritos-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+}
+.bj-atritos-texto h3 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  font-weight: var(--bj-weight-medium);
+  line-height: var(--bj-leading-tight);
+}
+.bj-atritos-texto p {
+  margin: 0;
+  color: var(--bj-fg-muted);
+}
+.bj-atritos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bj-border);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  overflow: hidden;
+}
+.bj-atritos-lista li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bj-space-5);
+  padding: var(--bj-space-4);
+  background: var(--bj-bg-base);
+}
+.bj-atritos-lista p {
+  margin: 0;
+}
+.bj-atritos-lista .bj-fonte {
+  white-space: nowrap;
+}
+/* Os dois enquadramentos são obrigatórios: sem eles a faixa inteira sai (§5.4). */
+.bj-atritos-nota {
+  background: var(--bj-brand-bg);
+}
+
+/* ---------- fecho ---------- */
+
+.bj-fecho-inner {
+  gap: var(--bj-space-4);
+}
+.bj-fecho {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-5);
+  padding: var(--bj-space-6);
+  background: var(--bj-bg-base);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+}
+.bj-fecho > svg {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  color: var(--bj-brand);
+}
+.bj-fecho > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+  flex: 1 1 auto;
+}
+.bj-fecho-marca {
+  color: var(--bj-brand-dim);
+  font-size: var(--bj-text-sm);
+  font-weight: var(--bj-weight-medium);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+}
+.bj-fecho h3 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-fecho p {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+}
+.bj-aviso h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  margin: 0 0 var(--bj-space-3);
+  font-size: var(--bj-text-lg);
+  font-weight: var(--bj-weight-medium);
+  color: var(--bj-info);
+}
+
+/* ---------- estreito ---------- */
+
+/* Mapa e painel lado a lado a partir do `nb` do design-system (§4.4, 1200px), que é
+   onde ele já garante dois painéis abertos e é o mesmo corte que o rail usa acima.
+   Abaixo disso o conteúdo (janela menos o rail) não sustenta duas colunas: o painel
+   aperta e os seis chips deixam de caber numa linha. Breakpoint de janela, como no
+   resto do arquivo — não há container query no alvo firefox104. */
+@media (max-width: 1199px) {
+  .bj-panorama {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .bj-atritos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bj-tira,
+  .bj-cards-4,
+  .bj-numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bj-faixa-head-larga {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .bj-faixa-head-larga > p {
+    text-align: left;
+  }
+  .bj-hero-nome {
+    font-size: 48px;
+  }
+  .bj-fecho {
+    flex-wrap: wrap;
+  }
+}
