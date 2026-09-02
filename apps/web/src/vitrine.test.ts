@@ -110,9 +110,21 @@ describe('vitrine — marca do portal (DF-25 §4.3)', () => {
   })
 
   it('FR-DF25.17: a marca nunca aparece sem rótulo ao lado', () => {
-    // toda ocorrência de <MarkPortal .../> na vitrine tem texto irmão no mesmo bloco
-    expect(publicHome).toContain('<MarkPortal size={24} className="bj-hero-marca" />')
-    expect(publicHome).toContain('Bajeiros')
+    // A vitrine passou a usar a ARTE de marca (raster, `.bj-logo`) nos dois lugares
+    // em que ela aparece grande; a MarkPortal continua sendo o glifo do sistema
+    // (favicon, vitrine de ícones). A regra não mudou: cada ocorrência tem o nome
+    // no mesmo bloco — o <h2> no hero, o `bj-fecho-marca` no fecho.
+    expect(publicHome).toContain('<span className="bj-logo bj-logo-hero" aria-hidden="true" />')
+    expect(publicHome).toContain('<h2 className="bj-hero-nome">Bajeiros</h2>')
+    expect(publicHome).toContain(
+      '<span className="bj-logo bj-logo-fecho bj-logo-chapada" aria-hidden="true" />',
+    )
+    expect(publicHome).toContain('<span className="bj-fecho-marca">Bajeiros</span>')
+    // arte decorativa não pode ficar sozinha no acessível: nenhuma `.bj-logo` sem
+    // `aria-hidden` (seria um segundo "Bajeiros" para o leitor de tela)
+    for (const m of publicHome.matchAll(/className="bj-logo[^"]*"([^/>]*)\/>/g)) {
+      expect(m[1]).toContain('aria-hidden')
+    }
   })
 
   it('o inventário de ícones continua intocado em 23', () => {

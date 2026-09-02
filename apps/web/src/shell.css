@@ -28,6 +28,12 @@
   .bj-shell {
     grid-template-columns: var(--bj-rail-w-compact);
   }
+  /* mesma razão do `.bj-shell-compacto`: 56 px de rail não cabem a arte, e o que
+     coubesse não desenharia nada. Os dois caminhos até o rail estreito — a classe
+     e esta media query — precisam da regra. */
+  .bj-logo-rail {
+    display: none;
+  }
   .bj-nav-label {
     position: absolute;
     width: 1px;
@@ -66,12 +72,79 @@
   overflow-y: auto;
 }
 
+/* ---------- marca (arte de logo_bajeiros) ---------- */
+
+/*
+  UMA arte raster, dois papéis, um download só. `logo-bajeiros.png` é a gaiola
+  desenhada em ouro, com fundo recortado em alpha. Ela entra de dois jeitos:
+
+    `background-image` — o metálico inteiro, onde a superfície é escura e o
+      desenho aparece grande (hero e fecho da vitrine no tema escuro);
+
+    `mask-image` — só o canal alpha do MESMO arquivo, com a cor vindo de
+      `--bj-brand`. É o que serve onde o metálico não sobrevive: superfície
+      clara (o ouro da arte é claro e dessaturado, sem contraste sobre creme)
+      e tamanho pequeno, onde a rampa de três valores vira borrão.
+
+  Por que raster e não SVG: esta arte é ilustração de marca, não o glifo do
+  sistema. O glifo continua sendo a `MarkPortal` de `icons/marks.tsx` — vetor,
+  `currentColor`, é ela que vai ao favicon e à vitrine de ícones. Os dois níveis
+  são deliberados; §8.6 não foi reaberto.
+*/
+.bj-logo {
+  display: block;
+  flex: none;
+  aspect-ratio: 1151 / 790;
+  background-image: url('/marca/logo-bajeiros.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+/* uma cor só, tomada do token — por classe (rail, fecho) ou por tema (claro) */
+.bj-logo-chapada,
+:root[data-theme='light'] .bj-logo {
+  background-color: var(--bj-brand);
+  background-image: none;
+  mask-image: url('/marca/logo-bajeiros.png');
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .bj-logo {
+    background-color: var(--bj-brand);
+    background-image: none;
+    mask-image: url('/marca/logo-bajeiros.png');
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+  }
+}
+
 .bj-rail-brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--bj-space-2);
   padding: var(--bj-space-2);
   margin-bottom: var(--bj-space-2);
+}
+/*
+  Linha própria, não ao lado do nome. Duas medidas forçaram isso:
+
+  1. ao lado sobravam 110 px para "portal das equipes", que pede 114 — o rótulo
+     quebrava em duas linhas só para caber a marca;
+  2. a arte é 1,46:1 e horizontal: ao lado do nome ela teria 26 px de altura, e
+     abaixo de ~120 px de largura o desenho vira mancha (medido no preview).
+
+  A 112 px a silhueta da gaiola ainda lê. Chapada em `--bj-brand` porque neste
+  tamanho a rampa metálica já não se distingue e o rail inteiro é de uma cor só.
+*/
+.bj-logo-rail {
+  flex-basis: 100%;
+  width: 112px;
+  margin-bottom: var(--bj-space-1);
 }
 .bj-rail-brand-texto {
   display: flex;
@@ -240,6 +313,12 @@
 .bj-shell-compacto .bj-rail-brand {
   justify-content: center;
   padding-inline: 0;
+}
+/* No compacto o rail tem 56 px e o botão de expandir ocupa metade: a arte caberia
+   em ~20 px, onde não sobra desenho nenhum. Some por medida, não por descuido — o
+   identificador do rail compacto são os glifos dos destinos (C-02). */
+.bj-shell-compacto .bj-logo-rail {
+  display: none;
 }
 /* o rótulo continua no DOM para o leitor de tela; some só do olho (C-02) */
 .bj-shell-compacto .bj-rail-brand-texto,
@@ -1893,12 +1972,11 @@
   text-align: center;
   gap: var(--bj-space-5);
 }
-/* A marca sai do primitivo com 24px; aqui ela é o elemento dominante e o tamanho é
-   da página, não do inventário. O CSS vence o atributo de apresentação do <svg>. */
-.bj-hero-marca {
-  width: 96px;
-  height: 96px;
-  color: var(--bj-brand);
+/* A arte de marca é o elemento dominante do hero — é o único lugar do produto em
+   que ela aparece acima dos 240 px que o desenho precisa para ler inteiro. Capada
+   em 400 px porque é essa a largura para a qual o PNG foi exportado (800 px = 2x). */
+.bj-logo-hero {
+  width: min(400px, 78%);
 }
 .bj-hero-nome {
   margin: 0;
@@ -2342,11 +2420,10 @@
   border: 1px solid var(--bj-border-strong);
   border-radius: var(--bj-radius-lg);
 }
-.bj-fecho > svg {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  color: var(--bj-brand);
+/* Chapada como no rail, e pela mesma medida: a 104 px a rampa metálica já não se
+   distingue e o desenho fica lavado sobre `--bj-bg-base`. Uma cor só resolve. */
+.bj-logo-fecho {
+  width: 104px;
 }
 .bj-fecho > div {
   display: flex;

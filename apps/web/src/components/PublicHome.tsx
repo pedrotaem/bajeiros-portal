@@ -1,5 +1,5 @@
 import { IconArrow, IconShield } from '../icons/glyphs'
-import { MarkAssistant, MarkCage, MarkPortal } from '../icons/marks'
+import { MarkAssistant, MarkCage } from '../icons/marks'
 import { ATRITOS, MOSTRAR_ATRITOS, NUMEROS, PRATICAS } from '../data/panorama'
 import { useSession } from '../session'
 import { BrazilMap } from './BrazilMap'
@@ -31,7 +31,10 @@ export function PublicHome() {
     <div className="bj-vitrine">
       <section className="bj-faixa bj-vitrine-hero">
         <div className="bj-faixa-inner bj-hero-inner">
-          <MarkPortal size={24} className="bj-hero-marca" />
+          {/* A arte de marca entra decorativa (`aria-hidden`): o nome dela está no
+              <h2> logo abaixo, e anunciar as duas leria "Bajeiros" duas vezes.
+              FR-DF25.17 continua atendido — o rótulo está no mesmo bloco. */}
+          <span className="bj-logo bj-logo-hero" aria-hidden="true" />
           <h2 className="bj-hero-nome">Bajeiros</h2>
           <p className="bj-hero-lead">
             Ferramentas e memória da comunidade Baja brasileira. Toda geração recomeça do zero —
@@ -204,7 +207,7 @@ export function PublicHome() {
           <div className="bj-fecho">
             {/* A marca sempre com o nome ao lado (FR-DF25.17): sozinha ela seria
                 decoração, e marca não é decoração. */}
-            <MarkPortal size={24} />
+            <span className="bj-logo bj-logo-fecho bj-logo-chapada" aria-hidden="true" />
             <div>
               <span className="bj-fecho-marca">Bajeiros</span>
               <h3>Comece pela sua equipe</h3>
