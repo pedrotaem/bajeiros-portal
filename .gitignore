@@ -18,6 +18,9 @@ crash.log
 
 # handoff de sessão é nota de trabalho local (contém detalhes operacionais) — fora do repo público
 docs/handoff-sessao.md
+# diagrama de arquitetura: nomeia recurso, tabela e decisão de infra de cada ambiente —
+# mesma razão do handoff. Nunca foi rastreado; a regra apenas torna isso deliberado.
+docs/arquitetura.html
 apps/web/public/config.json
 
 # backup local do config em modo cognito (criado ao testar em dev)
