@@ -113,6 +113,14 @@ graph LR
   desenhada e bloqueada desde a fase 0), o destino selecionado abre embaixo os recursos dele
   (ferramentas, abas de equipe e de comunidade) e as duas ferramentas ganham marca própria —
   categoria à parte do inventário de ícones, com exceção escrita no design-system §8.6.1.
+- **DF-25 — Vitrine pública:** o Início de quem não tem conta vira vitrine — marca grande,
+  quatro números e um **mapa do Brasil com as fronteiras reais dos 27 estados** (Natural Earth,
+  domínio público, gerado por `scripts/build-mapa-uf.mjs`). Duas leituras no mesmo desenho: o
+  estado é a forma e o tom, a região é o recorte que acende e o painel detalha. Parágrafo vira
+  número + uma linha. O dado é **instantâneo datado no front**, nunca consulta ao banco (Aurora
+  escala a zero e a vitrine é a primeira pintura de quem chega). Terceira das quatro marcas de
+  produto; inventário de ícones intocado em 23/24. Não reabre a decisão do DF-12: a vitrine mora
+  **dentro** do shell.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16)
 

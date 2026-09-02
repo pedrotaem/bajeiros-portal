@@ -124,3 +124,29 @@ Nenhum uso da identidade "SAE" está envolvido (restrição de `specs/spec.md` �
 
 Fora do design system: são ativos coloridos e não recoloríveis, servidos como imagem
 (`img-src 'self'`), não passam por `check-icons` nem por `check-tokens`.
+
+---
+
+## Natural Earth — fronteiras estaduais do Brasil
+
+**Conjunto:** `ne_50m_admin_1_states_provinces` (admin-1, 1:50 milhões) ·
+**Origem:** https://github.com/nvkelso/natural-earth-vector ·
+**Site:** https://www.naturalearthdata.com
+
+`apps/web/src/data/brasil-uf.ts` é derivado desse conjunto: as 27 feições brasileiras
+(`adm0_a3 = BRA`), projetadas em equiretangular e simplificadas por Douglas-Peucker. O
+`scripts/build-mapa-uf.mjs` refaz o arquivo e registra o processo inteiro.
+
+Natural Earth é de **domínio público**. A licença não exige atribuição — este bloco existe pela
+mesma razão que os outros: registrar de onde veio o material copiado para dentro do repositório.
+Os autores pedem crédito por cortesia, e o portal o dá na própria tela, no rodapé do mapa.
+
+> Termos de uso, na íntegra (https://www.naturalearthdata.com/about/terms-of-use/):
+>
+> All versions of Natural Earth raster + vector map data found on this website are in the public
+> domain. You may use the maps in any manner, including modifying the content and design,
+> electronic dissemination, and offset printing. The primary authors, Tom Patterson and Nathaniel
+> Vaughn Kelso, and all other contributors renounce all financial claim to the maps and invites
+> you to use them for personal, educational, and commercial purposes.
+>
+> No permission is needed to use Natural Earth. Crediting the authors is unnecessary.

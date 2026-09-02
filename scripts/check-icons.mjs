@@ -54,9 +54,9 @@ for (const name of roles) {
   }
 }
 
-// MARCAS DE FERRAMENTA (DF-24): categoria própria, teto próprio, mesmas regras de
-// geometria. A exceção ao "nada se desenha" de §8.6 é ESCRITA e limitada — quem
-// desenhar uma terceira marca esbarra aqui e tem de nomear o produto que ela
+// MARCAS DE PRODUTO (DF-24; ampliada pelo DF-25): categoria própria, teto próprio,
+// mesmas regras de geometria. A exceção ao "nada se desenha" de §8.6 é ESCRITA e
+// limitada — quem desenhar mais uma esbarra aqui e tem de nomear o produto que ela
 // identifica no registro.
 const MARK_CEILING = 4
 const marksExported = [...marks.matchAll(/export const (Mark\w+)\s*=/g)].map((m) => m[1])
@@ -107,6 +107,6 @@ if (errors.length) {
   process.exit(1)
 }
 console.log(
-  `✓ ${registered.length}/${CEILING} formas registradas, ${marksRegistered.length}/${MARK_CEILING} marcas de ferramenta, ` +
+  `✓ ${registered.length}/${CEILING} formas registradas, ${marksRegistered.length}/${MARK_CEILING} marcas de produto, ` +
     '5 papéis de status, doador único',
 )
