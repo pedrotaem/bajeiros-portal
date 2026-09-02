@@ -136,6 +136,7 @@ identity.get('/export', async (c) => {
       trailCompletions,
       kits,
       optIns,
+      feedbackItems,
     ] = await Promise.all([
       db.query('SELECT * FROM users WHERE id = $1', [sub]),
       db.query('SELECT * FROM consents ORDER BY occurred_at', []),
@@ -187,6 +188,10 @@ identity.get('/export', async (c) => {
         'SELECT * FROM evolution_optin WHERE enabled_by = $1 OR disabled_by = $1 ORDER BY enabled_at',
         [sub],
       ),
+      // DF-26 FR-DF26.32: o que o titular sugeriu e o desfecho de cada item. Vai
+      // no FIM da lista de propósito — o destructuring acima é posicional, e essa
+      // ordem já quebrou um teste antes.
+      db.query('SELECT * FROM feedback_items WHERE author_id = $1 ORDER BY created_at', [sub]),
     ])
     await audit(db, {
       actorUserId: sub,
@@ -214,6 +219,7 @@ identity.get('/export', async (c) => {
       teamGuides: guides.rows,
       guideCompletions: trailCompletions.rows,
       handoverKits: kits.rows,
+      feedback: feedbackItems.rows,
     }
   })
   return c.json(data)

@@ -37,7 +37,7 @@ export interface CurrentProject {
   seq: number
 }
 
-export type PanelId = 'login' | 'profile' | 'projects' | null
+export type PanelId = 'login' | 'profile' | 'projects' | 'feedback' | null
 
 // Destinos da SPA (DF-12 §3.2). O rail é EVOLUÇÃO-cêntrico: o primeiro destino é o
 // dia da equipe, não a ferramenta. `editor` e `assistant` continuam páginas próprias,
@@ -56,6 +56,19 @@ export type PageId =
   | 'admin'
   | 'sobre'
   | 'projeto'
+
+/** Nome de cada destino na tela. Mora junto do `PageId` porque é sobre ele. */
+export const TITULO_PAGINA: Record<PageId, string> = {
+  inicio: 'Início',
+  equipe: 'Equipe',
+  ferramentas: 'Ferramentas',
+  comunidade: 'Comunidade',
+  editor: 'Validador de gaiola',
+  assistant: 'Assistente do regulamento',
+  admin: 'Administração',
+  sobre: 'Sobre o portal',
+  projeto: 'Projeto',
+}
 
 /** Abas do espaço da equipe (DF-12 O2). Sub-estado no store, nunca `useState` local. */
 export type TeamTab = 'evolucao' | 'pessoas' | 'conhecimento' | 'projetos'
@@ -102,6 +115,67 @@ export function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+// ---------- DF-26: o que vai junto com uma sugestão ----------
+
+export interface EnvioContexto {
+  page: PageId
+  view: string | null
+  context: { viewport: [number, number]; rail: 'aberto' | 'compacto' }
+}
+
+/** Rótulos das abas, para a linha que a pessoa lê antes de enviar (RF-DF26.9). */
+const TITULO_ABA: Record<string, string> = {
+  evolucao: 'Evolução',
+  pessoas: 'Pessoas',
+  conhecimento: 'Conhecimento',
+  projetos: 'Projetos',
+  resultados: 'Resultados',
+  equipes: 'Equipes do Brasil',
+  ficha: 'Ficha',
+  versoes: 'Versões',
+  validacao: 'Validação',
+}
+
+/**
+ * O que a sugestão carrega além do texto (DF-26 §4.2). Função PURA sobre o estado
+ * e o tamanho da janela — é ela que o teste percorre, não a tela.
+ *
+ * A lista é ENUMERADA e é isso que a separa de telemetria (§5.3): o que não está
+ * aqui não é capturado. Sem user-agent, sem captura de tela, sem console, sem rede,
+ * sem URL. Tamanho da janela e estado do menu entram porque a classe de defeito que
+ * mais escapou dos testes neste repo é apresentação numa largura específica.
+ */
+export function contextoDaPagina(
+  s: Pick<SessionState, 'page' | 'teamTab' | 'communityTab' | 'projectTab' | 'railCompact'>,
+  janela: { innerWidth: number; innerHeight: number },
+): EnvioContexto {
+  const view =
+    s.page === 'equipe'
+      ? s.teamTab
+      : s.page === 'comunidade'
+        ? s.communityTab
+        : s.page === 'projeto'
+          ? s.projectTab
+          : null
+  return {
+    page: s.page,
+    view,
+    context: {
+      viewport: [Math.round(janela.innerWidth), Math.round(janela.innerHeight)],
+      rail: s.railCompact ? 'compacto' : 'aberto',
+    },
+  }
+}
+
+/** A mesma coisa em uma linha legível — contexto que a pessoa não vê é telemetria. */
+export function resumoDoContexto(e: EnvioContexto): string {
+  const partes = [TITULO_PAGINA[e.page]]
+  if (e.view) partes.push(TITULO_ABA[e.view] ?? e.view)
+  partes.push(`janela ${e.context.viewport[0]}×${e.context.viewport[1]}`)
+  partes.push(e.context.rail === 'compacto' ? 'menu recolhido' : 'menu aberto')
+  return partes.join(' · ')
+}
+
 // DF-9: pageview de melhor esforço (só logado; falha é silenciosa)
 export function track(page: string) {
   if (!useSession.getState().token) return
@@ -128,6 +202,12 @@ interface SessionState {
   inviteToken: string | null
   inviteNotice: string | null
   authNotice: string | null // falha do pós-login cognito (ex.: 409 de e-mail), exibida no LoginPanel
+  /**
+   * DF-26 RF-DF26.3 — por que o login abriu, quando não foi a pessoa que pediu.
+   * Campo SEPARADO do `authNotice` de propósito: aquele é falha e é pintado como
+   * erro; este é explicação, e pintar explicação de vermelho ensina errado.
+   */
+  loginReason: string | null
   setPanel: (p: PanelId) => void
   setPage: (p: PageId) => void
   setTeamTab: (t: TeamTab) => void
@@ -357,10 +437,12 @@ export const useSession = create<SessionState>((set, get) => ({
   inviteToken: initialInvite,
   inviteNotice: null,
   authNotice: null,
+  loginReason: null,
   clearInviteNotice: () => set({ inviteNotice: null }),
   setPanel: (panel) => {
     if (panel) track(`panel:${panel}`)
-    set({ panel })
+    // o motivo vale para a abertura do login que o gerou, e não sobrevive a ela
+    set(panel === 'login' ? { panel } : { panel, loginReason: null })
   },
   setPage: (page) => {
     track(`page:${page}`)
@@ -446,7 +528,7 @@ export const useSession = create<SessionState>((set, get) => ({
     set({ token: issued.token })
     const user = await get().api<UserInfo>('/api/v1/me', { method: 'POST' })
     // pós-login cai no Início, não no editor (DF-12 AC-DF12.1)
-    set({ user, panel: null, page: 'inicio' })
+    set({ user, panel: null, page: 'inicio', loginReason: null })
 
     // convite pendente na URL? aceita agora, já autenticado
     const invite = get().inviteToken

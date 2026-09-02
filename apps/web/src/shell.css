@@ -2417,3 +2417,273 @@
     flex-wrap: wrap;
   }
 }
+
+/* ---------- DF-26 · sugestões ---------------------------------------------
+
+   Vocabulário PRÓPRIO de status. Nada aqui usa os cinco papéis reservados
+   (pass/fail/warn/manual/info): ali "aprovado" fala de conformidade da gaiola, e
+   o mesmo signo não pode dizer duas coisas em duas telas (§5.6). Os chips são
+   neutros e quem separa é a palavra.
+   -------------------------------------------------------------------------- */
+
+/* A única entrada do portal, e ela mora na topbar porque a topbar está em toda
+   página. Texto, sem glifo — o padrão do sistema é sem ícone (§8.4). */
+.bj-sug-abrir {
+  flex: 0 0 auto;
+  height: var(--bj-control-h-sm);
+  padding: 0 var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-bg-raised);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  cursor: pointer;
+}
+.bj-sug-abrir:hover {
+  border-color: var(--bj-border-strong);
+  color: var(--bj-fg-primary);
+}
+
+/* O formulário é a moldura; só os CAMPOS rolam. A ação primária fica fora do
+   rolamento — achado ao rodar: "Enviar" era cortado na borda do modal. */
+.bj-sug-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.bj-sug-campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+  padding: var(--bj-space-4);
+  overflow-y: auto;
+}
+
+/* Abas do painel. Classe própria: `.toggle` só tem regra dentro de
+   `.viewport-toolbar` e `.team-tabs` (styles.css L1477) — num modal sai sem
+   estilo nenhum. */
+.bj-sug-abas {
+  display: flex;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-3) var(--bj-space-4) 0;
+}
+.bj-sug-aba {
+  height: var(--bj-control-h-sm);
+  padding: 0 var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-sm);
+  background: transparent;
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+  cursor: pointer;
+}
+.bj-sug-aba:hover {
+  color: var(--bj-fg-primary);
+}
+.bj-sug-aba-on {
+  border-color: var(--bj-brand-border);
+  background: var(--bj-brand-bg);
+  color: var(--bj-fg-primary);
+}
+
+.bj-sug-tipos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.bj-sug-tipos legend {
+  padding: 0 0 var(--bj-space-2);
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+}
+.bj-sug-tipo {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  min-height: var(--bj-target-min);
+  padding: 0 var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  cursor: pointer;
+}
+.bj-sug-tipo-on {
+  border-color: var(--bj-brand-border);
+  background: var(--bj-brand-bg);
+  color: var(--bj-fg-primary);
+}
+
+.bj-sug-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  font-size: var(--bj-text-sm);
+}
+.bj-sug-campo > span {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+}
+.bj-sug-campo input,
+.bj-sug-campo textarea,
+.bj-sug-triagem input,
+.bj-sug-triagem select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-bg-inset);
+  color: var(--bj-fg-primary);
+  font: inherit;
+  font-size: var(--bj-text-sm);
+}
+.bj-sug-campo textarea {
+  resize: vertical;
+  line-height: var(--bj-leading-normal);
+}
+.bj-sug-conta {
+  align-self: flex-end;
+  color: var(--bj-fg-faint);
+  font-size: var(--bj-text-xs);
+}
+
+/* O que vai junto, na tela, antes do envio: é isso que separa contexto de
+   telemetria (§5.3). Nunca esconder num rodapé. */
+.bj-sug-ctx {
+  margin: 0;
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border-left: 2px solid var(--bj-brand-border);
+  background: var(--bj-bg-inset);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-xs);
+}
+.bj-sug-aviso {
+  margin: 0;
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
+}
+.bj-sug-acoes {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  padding: var(--bj-space-3) var(--bj-space-4);
+  border-top: 1px solid var(--bj-border);
+}
+
+.bj-sug-lista {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  margin: 0;
+  padding: var(--bj-space-4);
+  overflow-y: auto;
+  list-style: none;
+}
+.bj-sug-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-3);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-bg-raised);
+}
+/* desfecho ainda não lido: marca na BORDA, não no fundo — a lista continua
+   legível quando tudo está por ler */
+.bj-sug-item-novo {
+  border-left: 3px solid var(--bj-brand);
+}
+.bj-sug-item-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bj-space-3);
+}
+.bj-sug-titulo {
+  font-size: var(--bj-text-sm);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-sug-status {
+  flex: 0 0 auto;
+  padding: 0 var(--bj-space-2);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-pill);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-xs);
+  white-space: nowrap;
+}
+/* fechado é mais quieto, não mais colorido */
+.bj-sug-status-fim {
+  border-color: var(--bj-border);
+  color: var(--bj-fg-muted);
+}
+.bj-sug-meta {
+  margin: 0;
+  color: var(--bj-fg-faint);
+  font-size: var(--bj-text-xs);
+}
+.bj-sug-corpo {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+  white-space: pre-wrap;
+}
+.bj-sug-resposta {
+  margin: 0;
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border-left: 2px solid var(--bj-border-strong);
+  background: var(--bj-bg-inset);
+  color: var(--bj-fg-primary);
+  font-size: var(--bj-text-sm);
+}
+
+.bj-sug-triagem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bj-space-2);
+}
+.bj-sug-triagem input {
+  flex: 1 1 220px;
+}
+.bj-sug-triagem select {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.bj-sug-recado {
+  margin: 0 0 var(--bj-space-4);
+  padding: var(--bj-space-3);
+  border: 1px solid var(--bj-brand-border);
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-brand-bg);
+  font-size: var(--bj-text-sm);
+}
+
+/* Explicação de por que o login abriu (DF-26 RF-DF26.3). NÃO usa `modal-err`:
+   pintar explicação com a cor de erro ensina que a pessoa fez algo errado. */
+.bj-modal-aviso {
+  margin: 0;
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border-left: 2px solid var(--bj-brand-border);
+  background: var(--bj-brand-bg);
+  color: var(--bj-fg-primary);
+  font-size: var(--bj-text-sm);
+}
+
+/* A linha do indício, na fila da administração: mesma cor da meta do item, com o
+   recuo do painel legado à volta. */
+.bj-sug-indicio {
+  padding: var(--bj-space-2) var(--bj-space-4) 0;
+}

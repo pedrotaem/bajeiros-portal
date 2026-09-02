@@ -7,6 +7,7 @@ import { audit, clientIp } from '../../audit'
 import type { AuthEnv } from '../../auth/middleware'
 import { recomputeTeam } from '../evolution/engine'
 import { communityAdmin } from '../community/routes'
+import { feedbackAdmin } from '../feedback/routes'
 
 // DF-9 — área administrativa. Autorização: users.is_admin (promoção só manual no
 // banco; nenhuma rota concede). RLS: policies *_admin_read (0003) fazem o SELECT
@@ -294,3 +295,6 @@ admin.post('/evolution/recompute', async (c) => {
 
 // DF-15 — curadoria do acervo (claims, correções, coortes). Herda o requireAdmin.
 admin.route('/community', communityAdmin)
+// DF-26: a triagem herda o requireAdmin daqui; a escrita mesmo é da função
+// feedback_triage() (SECURITY DEFINER), que exige app_is_admin() no banco
+admin.route('/feedback', feedbackAdmin)
