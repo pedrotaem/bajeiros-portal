@@ -142,6 +142,9 @@ export function Shell({ title, children }: { title: string; children: React.Reac
 
       <nav className="bj-rail" aria-label="Seções">
         <div className="bj-rail-brand">
+          {/* decorativa: o nome está no <span> ao lado, e é ele que o leitor de tela
+              anuncia. No rail compacto ela some por CSS — 20 px não desenham nada. */}
+          <span className="bj-logo bj-logo-rail bj-logo-chapada" aria-hidden="true" />
           <span className="bj-rail-brand-texto">
             <span className="bj-rail-brand-name">Bajeiros</span>
             <span className="bj-rail-brand-sub">portal das equipes</span>

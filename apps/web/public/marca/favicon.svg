@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Bajeiros">
+  <title>Bajeiros</title>
+  <!-- Disco: --bj-bg-canvas #211c16 (design-system §2.5). Contraste do ocre sobre ele: 6,1:1 -->
+  <circle cx="512" cy="512" r="512" fill="#211c16" />
+  <!--
+    MarkPortal (apps/web/src/icons/marks.tsx, DF-25): perfil octogonal do corta-fogo
+    visto de frente, X das diagonais, nós nos vértices.
+    Geometria intacta do viewBox 24; traço 1.6 e cap/join redondos do primitivo Svg.
+    Escala 34× → glifo de 510 × 561 px, traço 54,4 px (60% do diâmetro com o traço).
+  -->
+  <g transform="translate(104 112.5) scale(34)" fill="none" stroke="#c89123" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 3.5h9l3 6.5-2 10h-11l-2-10Z" />
+    <path d="M7.5 3.5 17.5 20" />
+    <path d="M16.5 3.5 6.5 20" />
+    <circle cx="7.5" cy="3.5" r="1.1" />
+    <circle cx="16.5" cy="3.5" r="1.1" />
+    <circle cx="6.5" cy="20" r="1.1" />
+    <circle cx="17.5" cy="20" r="1.1" />
+  </g>
+</svg>
