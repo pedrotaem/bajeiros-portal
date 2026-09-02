@@ -1,10 +1,11 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useSession, ApiError } from '../session'
+import { ondeFoi, STATUS_LABEL, type SugestaoItem } from './FeedbackPanel'
 
 // DF-9 — painel administrativo (users.is_admin). O backend é a autoridade:
 // aqui só renderizamos; não-admin recebe 403 e mensagem.
 
-type Tab = 'overview' | 'users' | 'teams' | 'activity' | 'assistant'
+type Tab = 'overview' | 'users' | 'teams' | 'activity' | 'assistant' | 'feedback'
 
 interface Overview {
   usersActive: number
@@ -96,6 +97,7 @@ export function AdminPanel() {
             ['teams', 'Equipes'],
             ['activity', 'Atividade'],
             ['assistant', 'Chat IA'],
+            ['feedback', 'Sugestões'],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -137,6 +139,7 @@ export function AdminPanel() {
       {tab === 'teams' && <TeamsTab api={api} fail={fail} />}
       {tab === 'activity' && <ActivityTab api={api} fail={fail} userId={userFilter?.id} />}
       {tab === 'assistant' && <AssistantTab api={api} fail={fail} userId={userFilter?.id} />}
+      {tab === 'feedback' && <SugestoesTab api={api} fail={fail} />}
     </div>
   )
 }
@@ -492,5 +495,177 @@ function AssistantTab({
       </div>
       <Pager offset={offset} more={more} load={load} />
     </>
+  )
+}
+
+// ---------- sugestões (DF-26) ----------
+
+interface FeedbackRow extends SugestaoItem {
+  authorName: string | null
+}
+
+interface Fila {
+  items: FeedbackRow[]
+  porPagina: { page: string; abertos: number }[]
+  novoMaisAntigo: string | null
+}
+
+const STATUS_ORDEM = [
+  'novo',
+  'em_analise',
+  'planejado',
+  'entregue',
+  'recusado',
+  'duplicado',
+] as const
+
+/**
+ * A fila da triagem. Duas coisas que a tela nomeia de propósito:
+ *
+ * - a contagem por página é INDÍCIO de onde dói, nunca votação (RF-DF26.21);
+ * - o mais antigo ainda em "Recebida" é o número que denuncia o abandono cedo
+ *   (§9.3) — canal com fila parada é pior que canal inexistente.
+ */
+function SugestoesTab({ api, fail }: { api: Api; fail: (e: unknown) => void }) {
+  const [fila, setFila] = useState<Fila | null>(null)
+  const [status, setStatus] = useState('')
+  const [editando, setEditando] = useState<string | null>(null)
+
+  const carregar = useCallback(() => {
+    api<Fila>(`/api/v1/admin/feedback${status ? `?status=${status}` : ''}`)
+      .then(setFila)
+      .catch(fail)
+  }, [api, status]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(carregar, [carregar])
+
+  if (!fila) return <p className="admin-dim">Carregando…</p>
+
+  return (
+    <>
+      <div className="admin-tabs">
+        <button
+          className={status === '' ? 'toggle active' : 'toggle'}
+          onClick={() => setStatus('')}
+        >
+          Todas
+        </button>
+        {STATUS_ORDEM.map((s) => (
+          <button
+            key={s}
+            className={status === s ? 'toggle active' : 'toggle'}
+            onClick={() => setStatus(s)}
+          >
+            {STATUS_LABEL[s]}
+          </button>
+        ))}
+      </div>
+
+      <p className="bj-sug-meta bj-sug-indicio">
+        Abertas por página (indício de onde dói — não é votação):{' '}
+        {fila.porPagina.length === 0
+          ? 'nenhuma'
+          : fila.porPagina
+              .map((p) => `${ondeFoi({ page: p.page, view: null })} ${p.abertos}`)
+              .join(' · ')}
+        {fila.novoMaisAntigo && ` · mais antiga sem leitura: ${when(fila.novoMaisAntigo)}`}
+      </p>
+
+      <div className="admin-scroll">
+        {fila.items.length === 0 && <p className="admin-dim">Nada nesta fila.</p>}
+        {fila.items.map((i) => (
+          <div key={i.id} className="bj-sug-item">
+            <div className="bj-sug-item-topo">
+              <span className="bj-sug-titulo">{i.title}</span>
+              <span className="bj-sug-status">{STATUS_LABEL[i.status] ?? i.status}</span>
+            </div>
+            <p className="bj-sug-meta">
+              {i.kind} · {ondeFoi(i)} · {i.authorName ?? 'ex-usuário'} · {when(i.createdAt)}
+            </p>
+            <p className="bj-sug-corpo">{i.body}</p>
+            {i.resolution && <p className="bj-sug-resposta">{i.resolution}</p>}
+            {editando === i.id ? (
+              <Triagem
+                api={api}
+                fail={fail}
+                item={i}
+                aoFechar={() => {
+                  setEditando(null)
+                  carregar()
+                }}
+              />
+            ) : (
+              <button className="disclaimer-link" onClick={() => setEditando(i.id)}>
+                triar
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function Triagem({
+  api,
+  fail,
+  item,
+  aoFechar,
+}: {
+  api: Api
+  fail: (e: unknown) => void
+  item: FeedbackRow
+  aoFechar: () => void
+}) {
+  const [status, setStatus] = useState(item.status)
+  const [resolution, setResolution] = useState(item.resolution ?? '')
+  const [duplicateOf, setDuplicateOf] = useState('')
+  // recusar em silêncio ensina que o canal é decorativo — a API recusa 400, e a
+  // tela não deixa nem tentar (RF-DF26.19)
+  const exigeMotivo = status === 'recusado' || status === 'duplicado'
+
+  return (
+    <div className="bj-sug-triagem">
+      <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        {STATUS_ORDEM.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABEL[s]}
+          </option>
+        ))}
+      </select>
+      <input
+        value={resolution}
+        maxLength={1000}
+        placeholder={exigeMotivo ? 'Motivo (obrigatório)' : 'Resposta a quem pediu (opcional)'}
+        onChange={(e) => setResolution(e.target.value)}
+      />
+      {status === 'duplicado' && (
+        <input
+          value={duplicateOf}
+          placeholder="id da sugestão original"
+          onChange={(e) => setDuplicateOf(e.target.value)}
+        />
+      )}
+      <button
+        className="primary"
+        disabled={exigeMotivo && !resolution.trim()}
+        onClick={() => {
+          api(`/api/v1/admin/feedback/${item.id}/triage`, {
+            method: 'POST',
+            body: JSON.stringify({
+              status,
+              resolution: resolution.trim() || null,
+              duplicateOf: duplicateOf.trim() || null,
+            }),
+          })
+            .then(aoFechar)
+            .catch(fail)
+        }}
+      >
+        Salvar
+      </button>
+      <button className="disclaimer-link" onClick={aoFechar}>
+        cancelar
+      </button>
+    </div>
   )
 }

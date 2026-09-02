@@ -230,7 +230,19 @@ async function personalModules(db: DbClient, sub: string) {
       [sub],
     )
   ).rows[0]
+  // DF-26 RF-DF26.25 — um número, ~30 bytes, dentro do teto de 20 KB do agregador.
+  // `null` quando não há desfecho novo: Início não ganha bloco vazio (RF-DF26.26).
+  const respondidas = Number(
+    (
+      await db.query(
+        `SELECT count(*)::int AS n FROM feedback_items
+         WHERE author_id = $1 AND status_changed_at IS NOT NULL AND seen_at IS NULL`,
+        [sub],
+      )
+    ).rows[0].n,
+  )
   return {
+    feedback: respondidas > 0 ? { respondidas } : null,
     continueEditor: snapshot
       ? {
           projectId: snapshot.project_id,
