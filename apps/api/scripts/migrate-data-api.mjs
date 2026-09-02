@@ -13,6 +13,64 @@ import { readdir, readFile } from 'node:fs/promises'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+// ---------- resume do Aurora (exportado p/ testes) ----------
+
+/**
+ * Espera o Aurora acordar do 0 ACU, com orçamento de TEMPO — não de tentativas.
+ *
+ * A escada anterior somava 20 s e o deploy do DF-25 falhou porque o cluster levou
+ * mais que isso: `DatabaseResumingException` depois de 35 s. Uma escada maior de
+ * passos fixos só empurraria o mesmo problema. O que importa é quanto tempo se
+ * está disposto a esperar, e aqui a resposta é clara — **esperar é melhor que
+ * falhar o deploy**, porque a alternativa é alguém reexecutar o job à mão pelo
+ * mesmo motivo. O job não tem `timeout-minutes`, então o teto é o padrão de 6 h.
+ *
+ * Só `DatabaseResumingException` é reexecutado: erro de SQL ou de permissão tem
+ * de estourar na hora, senão o deploy demora 3 min para dizer o que já sabia.
+ */
+export const RESUME_BUDGET_MS_DEFAULT = 180_000
+
+/** Rampa curta no início (o caso comum acorda em segundos), patamar de 10 s depois. */
+export function resumeDelay(attempt) {
+  if (attempt === 0) return 2000
+  if (attempt === 1) return 3000
+  return attempt < 5 ? 5000 : 10_000
+}
+
+export function isResuming(err) {
+  return err?.name === 'DatabaseResumingException' || /resum/i.test(err?.message ?? '')
+}
+
+export async function withResumeRetry(fn, opts = {}) {
+  const budgetMs = opts.budgetMs ?? RESUME_BUDGET_MS_DEFAULT
+  const now = opts.now ?? (() => Date.now())
+  const sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)))
+  const log = opts.log ?? console.log
+  const warn = opts.warn ?? console.error
+  const started = now()
+
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const out = await fn()
+      if (attempt > 0) log(`aurora acordou depois de ${Math.round((now() - started) / 1000)}s`)
+      return out
+    } catch (err) {
+      const elapsed = now() - started
+      const delay = resumeDelay(attempt)
+      if (!isResuming(err)) throw err
+      if (elapsed + delay > budgetMs) {
+        warn(
+          `aurora ainda acordando depois de ${Math.round(elapsed / 1000)}s — orçamento de ` +
+            `${Math.round(budgetMs / 1000)}s esgotado (DB_RESUME_BUDGET_MS ajusta sem release)`,
+        )
+        throw err
+      }
+      log(`aurora acordando… ${Math.round(elapsed / 1000)}s, retry em ${delay}ms`)
+      await sleep(delay)
+    }
+  }
+}
+
 // ---------- parsing (exportado p/ testes) ----------
 
 export function extractUpSection(sql) {
@@ -124,27 +182,15 @@ async function main() {
       new ExecuteStatementCommand({ ...base, sql, transactionId, includeResultMetadata: true }),
     )
 
-  // retry no resume do Aurora 0 ACU (~15s)
-  async function withResumeRetry(fn) {
-    const delays = [2000, 3000, 5000, 5000, 5000]
-    for (let attempt = 0; ; attempt++) {
-      try {
-        return await fn()
-      } catch (err) {
-        const resuming =
-          err?.name === 'DatabaseResumingException' || /resum/i.test(err?.message ?? '')
-        if (!resuming || attempt >= delays.length) throw err
-        console.log(`aurora acordando… retry em ${delays[attempt]}ms`)
-        await new Promise((r) => setTimeout(r, delays[attempt]))
-      }
-    }
-  }
-
+  // Primeira chamada à Data API: é ela que acorda o cluster, e é por isso que
+  // só ela precisa do retry — depois daqui o Aurora está de pé.
   // tabela de controle compatível com node-pg-migrate
-  await withResumeRetry(() =>
-    exec(
-      'CREATE TABLE IF NOT EXISTS pgmigrations (id serial PRIMARY KEY, name varchar(255) NOT NULL, run_on timestamp NOT NULL)',
-    ),
+  await withResumeRetry(
+    () =>
+      exec(
+        'CREATE TABLE IF NOT EXISTS pgmigrations (id serial PRIMARY KEY, name varchar(255) NOT NULL, run_on timestamp NOT NULL)',
+      ),
+    { budgetMs: Number(process.env.DB_RESUME_BUDGET_MS ?? RESUME_BUDGET_MS_DEFAULT) },
   )
   const done = await exec('SELECT name FROM pgmigrations ORDER BY id')
   const applied = new Set((done.records ?? []).map((r) => r[0].stringValue))
