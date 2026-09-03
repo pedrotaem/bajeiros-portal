@@ -20,7 +20,9 @@ import { ProjectPage } from './components/ProjectPage'
 import { About } from './components/About'
 import { Shell } from './components/Shell'
 import { FeedbackPanel } from './components/FeedbackPanel'
-import { useSession, track, TITULO_PAGINA as TITULOS } from './session'
+import { ComingSoon } from './components/ComingSoon'
+import { mostrarCortina } from './cortina'
+import { appConfigAtual, useSession, track, TITULO_PAGINA as TITULOS } from './session'
 import './shell.css'
 
 function ViewportToggles() {
@@ -125,7 +127,20 @@ function AvisoDeMudanca() {
   )
 }
 
+/**
+ * DF-27 — a cortina troca o portal inteiro, e por isso vive num componente ACIMA do
+ * `Portal`: um `return` antecipado lá dentro mudaria a ordem dos hooks entre um render
+ * e o seguinte (a sessão do administrador chega depois do boot). Aqui a troca é
+ * montagem/desmontagem, que é exatamente o que se quer — o portal não existe enquanto
+ * a cortina está no ar (FR-DF27.5).
+ */
 export default function App() {
+  const user = useSession((s) => s.user)
+  if (mostrarCortina(appConfigAtual(), user)) return <ComingSoon />
+  return <Portal />
+}
+
+function Portal() {
   const cage = useStore((s) => s.cage)
   const selectedMember = useStore((s) => s.selectedMember)
   const selectedNode = useStore((s) => s.selectedNode)

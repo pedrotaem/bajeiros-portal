@@ -57,10 +57,12 @@ module "site" {
   oidc_provider_arn  = data.terraform_remote_state.global.outputs.oidc_provider_arn
   github_repo        = var.github_repo
   github_environment = "production"
-  noindex            = false
-  csp_enforce        = false # promover a true após CSP limpa no staging (C2)
-  extra_connect_src  = [module.auth.auth_domain_url]
-  api_origin_domain  = module.api.api_endpoint_domain
+  # DF-27: enquanto a cortina "Em breve" estiver ligada, prod não é indexável.
+  # Derrubar a cortina (COMING_SOON=false) e voltar isto a `false` é o MESMO ato.
+  noindex           = true
+  csp_enforce       = false # promover a true após CSP limpa no staging (C2)
+  extra_connect_src = [module.auth.auth_domain_url]
+  api_origin_domain = module.api.api_endpoint_domain
 }
 
 # G3/DF-8: Function URL do AI Gateway (stack do repo bajeiros-ai-gateway, mesma
@@ -87,6 +89,7 @@ module "api" {
   backup_retention_days = 35
   deletion_protection   = true
   budget_alert_emails   = ["pedrotaem@gmail.com"]
+  assistant_anon_daily  = 0 # DF-27: sem cortina, voltar ao default 2
   gateway_url           = data.terraform_remote_state.ai_gateway.outputs.gateway.function_url
 }
 

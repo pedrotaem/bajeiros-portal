@@ -76,3 +76,14 @@ variable "evolution_mode" {
     error_message = "evolution_mode deve ser 'declarado' ou 'aferido'."
   }
 }
+
+variable "assistant_anon_daily" {
+  description = "DF-27: perguntas/dia do assistente SEM conta (por IP). 0 fecha a degustação anônima — é o que produção usa enquanto a cortina 'Em breve' estiver ligada."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.assistant_anon_daily >= 0
+    error_message = "assistant_anon_daily não pode ser negativo."
+  }
+}

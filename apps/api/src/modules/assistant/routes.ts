@@ -27,7 +27,16 @@ assistant.use('*', optionalAuth)
 assistant.use('*', accessLog)
 
 const FREE_DAILY = 20 // entitlement free hardcoded, mesmo padrão de projetos
-const ANON_DAILY = 2 // degustação sem conta
+
+/**
+ * Degustação sem conta (DF-27 FR-DF27.12). Lida a cada chamada, não no import: o valor
+ * é operação de ambiente (prod com cortina roda `0`), e ler no boot travaria o teste e
+ * o ajuste sem redeploy. Valor inválido cai no default de 2.
+ */
+function anonDaily(): number {
+  const n = Number(env('ASSISTANT_ANON_DAILY'))
+  return Number.isFinite(n) && n >= 0 ? n : 2
+}
 const NOTICE_ACTION = 'assistant.notice_accept'
 export const NOTICE_VERSION = 'v1'
 
@@ -105,7 +114,7 @@ assistant.get('/status', async (c) => {
       anonymous: true,
       noticeAccepted: false, // aceite anônimo vive só no cliente
       noticeVersion: NOTICE_VERSION,
-      dailyLimit: ANON_DAILY,
+      dailyLimit: anonDaily(),
       usedToday: anonCount(ip),
     })
   }
@@ -168,12 +177,15 @@ assistant.post('/chat', async (c) => {
       )
     }
   } else {
-    if (anonCount(ip) >= ANON_DAILY) {
+    const limite = anonDaily()
+    if (anonCount(ip) >= limite) {
       return problem(
         c,
         429,
-        'Limite sem conta atingido',
-        `Sem conta são ${ANON_DAILY} perguntas por dia. Crie uma conta gratuita para ter ${FREE_DAILY}/dia.`,
+        limite === 0 ? 'Assistente sem conta indisponível' : 'Limite sem conta atingido',
+        limite === 0
+          ? `O assistente sem conta não está disponível neste ambiente. Com conta gratuita são ${FREE_DAILY} perguntas por dia.`
+          : `Sem conta são ${limite} perguntas por dia. Crie uma conta gratuita para ter ${FREE_DAILY}/dia.`,
       )
     }
     anonBump(ip) // conta a tentativa antes do stream (custo de LLM já incorre)

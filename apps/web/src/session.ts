@@ -311,6 +311,11 @@ export function authMode(): AppConfig['authMode'] {
   return appConfig.authMode
 }
 
+/** Config do ambiente já resolvida no boot (DF-26 usa o `comingSoon`). */
+export function appConfigAtual(): AppConfig {
+  return appConfig
+}
+
 // IdPs sociais habilitados neste ambiente (DF-17); vazio = só e-mail e senha.
 export function authProviders(): NonNullable<NonNullable<AppConfig['cognito']>['providers']> {
   return appConfig.cognito?.providers ?? []

@@ -112,8 +112,13 @@ jobs:
           fi
       - name: Gerar config.json do ambiente # build é único; config por env entra aqui
         run: |
-          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
-            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
+          # DF-27: só o literal "true" liga a cortina "Em breve" (variable por
+          # environment; staging não define). `if` e não `&&`: com `bash -e` um teste
+          # falso no fim de linha derrubaria o passo.
+          coming_soon=false
+          if [ "${{ vars.COMING_SOON }}" = "true" ]; then coming_soon=true; fi
+          printf '{"authMode":"cognito","comingSoon":%s,"cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
+            "$coming_soon" "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
             '${{ vars.COGNITO_PROVIDERS || '[]' }}' > dist/config.json
       - name: Sync S3 (assets primeiro, index e config por último)
         run: |
@@ -195,8 +200,13 @@ jobs:
           fi
       - name: Gerar config.json do ambiente
         run: |
-          printf '{"authMode":"cognito","cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
-            "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
+          # DF-27: só o literal "true" liga a cortina "Em breve" (variable por
+          # environment; staging não define). `if` e não `&&`: com `bash -e` um teste
+          # falso no fim de linha derrubaria o passo.
+          coming_soon=false
+          if [ "${{ vars.COMING_SOON }}" = "true" ]; then coming_soon=true; fi
+          printf '{"authMode":"cognito","comingSoon":%s,"cognito":{"domain":"%s","clientId":"%s","providers":%s}}' \
+            "$coming_soon" "${{ vars.COGNITO_DOMAIN }}" "${{ vars.COGNITO_CLIENT_ID }}" \
             '${{ vars.COGNITO_PROVIDERS || '[]' }}' > dist/config.json
       - name: Sync S3 (assets primeiro, index e config por último)
         run: |
