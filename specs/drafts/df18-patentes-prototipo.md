@@ -5,6 +5,10 @@
 > Decisão de arquitetura em [`docs/adr/011-patentes-gamificacao.md`](../../docs/adr/011-patentes-gamificacao.md),
 > que **emenda a decisão 1 do [ADR-010](../../docs/adr/010-evolucao-maturidade.md)**.
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-31, `e7df2c2` / PR #38), no lote das patentes
+  DF-18…DF-20. Decisão de arquitetura no
+  [ADR-011](../../docs/adr/011-patentes-gamificacao.md). Não vai para `spec.md`, que é do
+  validador.
 - **Dependências:** DF-13 (níveis por área — implementado), DF-19 (catálogo autodeclarativo v2 —
   define o que alimenta os níveis na v1), DF-15 (vínculo com o registro canônico e resultados de
   competição — implementado em ingestão), DF-10 (capitania, para a permissão de ativar).

@@ -1,7 +1,10 @@
 # DF-9 — Página de administração do portal
 
-- **Status:** 🚧 **EM IMPLEMENTAÇÃO** (2026-08-23) — pedido direto do usuário; sem ciclo
-  de revisão 3 personas (disponível sob demanda).
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-23, `cb1098a` / PR #12) — pedido direto do usuário;
+  sem ciclo de revisão 3 personas (disponível sob demanda). Estendida depois pela triagem da
+  fila de sugestões do [DF-26](df26-sugestoes.md) (PR #43). O `users.is_admin` que ela define é
+  o que a cortina do [DF-27](df27-cortina-em-breve.md) usa para liberar o portal real em
+  produção. Não vai para `spec.md`, que é do validador.
 - **Dependências:** fases 12–14 (identidade, projetos, equipes — implementadas).
 - **Relação com DF-8:** a visão de uso do chat (§3.3) exige **persistir pergunta e
   resposta**, revertendo a decisão "v1 sem persistência de conversas" do DF-8 e a

@@ -7,6 +7,10 @@
 > ferramenta-cêntrico (Editor no topo) e passa a ser **evolução-cêntrico** — Início, Equipe,
 > Ferramentas, Comunidade.
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `f70a236` / PR #33), no lote da evolução
+  DF-12…DF-16. Estendida pelo [DF-24](df24-menu-e-marcas.md) (rail recolhível + recursos da
+  página) e pelo [DF-25](df25-vitrine-publica.md) (o corpo do `PublicHome`). Não vai para
+  `spec.md`, que é do validador.
 - **Direção de produto (2026-08-29):** a evolução das equipes é o core; a gaiola é uma ferramenta.
 - **Normativo visual:** [`docs/design-system.md`](../../docs/design-system.md) — C-01 (shell),
   C-02 (item de navegação), C-11 (abas), §8 (iconografia), §10 (acessibilidade), §11 (voz).

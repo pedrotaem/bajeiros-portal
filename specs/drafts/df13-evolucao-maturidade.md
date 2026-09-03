@@ -7,6 +7,11 @@
 > inteiro. Decisão de arquitetura registrada em
 > [`docs/adr/010-evolucao-maturidade.md`](../../docs/adr/010-evolucao-maturidade.md).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `f70a236` / PR #33). Motor puro em
+  `packages/evolution`. O catálogo subiu para v2.0.0 pelo [DF-19](df19-catalogo-maturidade.md)
+  e ganhou contraprovas pelo [DF-20](df20-afericao-declaracoes.md), ambos em 2026-08-31.
+  Decisão de arquitetura no [ADR-010](../../docs/adr/010-evolucao-maturidade.md). Não vai para
+  `spec.md`, que é do validador.
 - **Direção de produto (2026-08-29):** a gaiola não é o core do portal — a evolução das equipes é.
   Importa mais equipe usando o portal e subindo a maturidade do projeto do que qualquer feature
   pontual. Ferramentas são meios que produzem evidência.

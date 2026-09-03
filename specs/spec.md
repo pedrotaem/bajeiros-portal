@@ -1,7 +1,7 @@
 # Especificação — Bajeiros · Validador de Gaiola B6
 
 - **Feature:** Validador visual e dinâmico de gaiola de proteção contra o Artigo B6 do RATBSB (Regulamento Baja SAE Brasil), Emenda 7
-- **Status:** MVP implementado (protótipo local)
+- **Status:** MVP implementado e **no ar** (2026-09-02). US-1…US-16 entregues. `staging.bajeiros.com.br` serve o portal completo; `bajeiros.com.br` está atrás da cortina "Em breve" do [DF-27](drafts/df27-cortina-em-breve.md) — o código está publicado, quem decide é a variable `COMING_SOON`.
 - **Referência normativa:** `RATBSB_emenda_07.pdf`, Artigo B6 "Gaiola de Proteção" (pág. 33–53)
 - **Documentos irmãos:** [design.md](design.md) (arquitetura), [rules.md](rules.md) (catálogo de regras do motor), [draft-features.md](draft-features.md) (specs em draft — backlog detalhado)
 

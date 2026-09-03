@@ -6,6 +6,9 @@
 > feature própria — a ficha vale por si, e a maturidade é apenas uma das quatro coisas que ela
 > alimenta.
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-31, `65183e2` / PR #37, EV-11.1…11.3). Catálogo de
+  campos em `packages/datasheet`. Não vai para `spec.md`, que é do validador — a ficha é do
+  protótipo inteiro, não da gaiola.
 - **Dependências:** DF-12 (shell — a ficha precisa de uma página de projeto), DF-10 (permissões de
   equipe). O motor B6 (`packages/core`) entra como **facilitador opcional**, nunca como
   pré-requisito (§3.2).

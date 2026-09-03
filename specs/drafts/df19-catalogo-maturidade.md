@@ -5,6 +5,10 @@
 > [`docs/adr/011-patentes-gamificacao.md`](../../docs/adr/011-patentes-gamificacao.md).
 > A saída do modo autodeclarativo é o [DF-20](df20-afericao-declaracoes.md).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-31, `e7df2c2` / PR #38), no lote das patentes
+  DF-18…DF-20. Catálogo **v2.0.0**, 51 critérios, v1 autodeclarativa. As contraprovas vieram
+  no [DF-20](df20-afericao-declaracoes.md), do mesmo lote. Não vai para `spec.md`, que é do
+  validador.
 - **Dependências:** DF-13 (motor, áreas, escada de níveis — implementado com o catálogo v1.0.0),
   DF-18 (a patente lê estes níveis), DF-10 (capitania responde).
 - **Lacuna conhecida, endereçada fora daqui:** 17 destes 51 critérios se apoiam em informação de

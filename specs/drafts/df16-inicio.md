@@ -6,6 +6,10 @@
 > fecho do ciclo da informação: os próximos passos gerados pelo DF-13 aparecem aqui e abrem a
 > ferramenta certa.
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `f70a236` / PR #33), no lote da evolução
+  DF-12…DF-16. O Início de quem **não** tem conta virou a vitrine do
+  [DF-25](df25-vitrine-publica.md); esta spec descreve o Início de quem tem. Não vai para
+  `spec.md`, que é do validador.
 - **Dependências:** DF-12 (destino `inicio`), DF-13 (fila, níveis, temporada, atividade), DF-14
   (atividade de conhecimento), DF-15 (resultado/competição da equipe vinculada). Consome também
   `projects` (continuar) e `assistant_log` (retomar conversa — DF-9 já persiste).

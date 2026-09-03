@@ -5,6 +5,10 @@
 > Brasil (ver `Pesquisa de Mercado/praticas-elite.md`, Prática 1: estrutura organizacional
 > de empresa, com organograma e funções bem definidos — EESC USP, Poli, Komiketo).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-26, `6b895d7` / PR #28). Não vai para `spec.md`, que
+  é do validador — esta é feature de portal e o status mora aqui. O RF-5.7 (requisitos de
+  maturidade) foi realizado pelo [DF-13](df13-evolucao-maturidade.md), não por esta spec.
+
 ## 1. Contexto e motivação
 
 Hoje o portal tem equipes com três papéis técnicos (`owner`/`admin`/`member`), convite por
