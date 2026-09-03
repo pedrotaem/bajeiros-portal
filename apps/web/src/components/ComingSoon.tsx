@@ -32,8 +32,8 @@ export function ComingSoon() {
         <span className="bj-logo bj-cortina-logo" aria-hidden="true" />
         <h1 className="bj-cortina-titulo">Em breve</h1>
         <p className="bj-cortina-lead">
-          Ferramentas e memória da comunidade Baja brasileira. Estamos afinando os últimos detalhes
-          — o portal abre em breve.
+          Ferramentas e memória da comunidade Baja brasileira. Estamos afinando os últimos detalhes.
+          O portal abre em breve.
         </p>
 
         {user ? (

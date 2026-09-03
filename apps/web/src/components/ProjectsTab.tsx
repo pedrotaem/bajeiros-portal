@@ -80,8 +80,8 @@ export function ProjectsTab({ teamId, canManage }: { teamId: string; canManage: 
         <div className="bj-vazio">
           <h4>Nenhum projeto na equipe ainda</h4>
           <p>
-            Um projeto pessoal vira projeto da equipe pelo painel "Meus projetos" — a partir daí
-            todo mundo acessa, e o que for designado como projeto da temporada passa a alimentar a
+            Um projeto pessoal vira projeto da equipe pelo painel "Meus projetos". A partir daí todo
+            mundo acessa, e o que for designado como projeto da temporada passa a alimentar a
             evolução.
           </p>
         </div>
@@ -171,11 +171,11 @@ function Temporada({
     return (
       <section className="bj-card">
         <header>
-          <h3>Temporada {season?.label ?? '— não configurada'}</h3>
+          <h3>Temporada {season?.label ?? 'não configurada'}</h3>
         </header>
         {season?.next ? (
           <p>
-            Próximo marco: <b>{season.next.title}</b> — faltam {season.next.daysLeft} dias.
+            Próximo marco: <b>{season.next.title}</b>, faltam {season.next.daysLeft} dias.
           </p>
         ) : (
           <p>

@@ -50,7 +50,7 @@ export function assertProdEnv(): void {
     }
     if (process.env.DEV_JWT_SECRET === def.DEV_JWT_SECRET) {
       throw new Error(
-        'AUTH_MODE=cognito com DEV_JWT_SECRET default de dev setado — config suspeita, remova a variável',
+        'AUTH_MODE=cognito com DEV_JWT_SECRET default de dev setado. Config suspeita, remova a variável',
       )
     }
   }

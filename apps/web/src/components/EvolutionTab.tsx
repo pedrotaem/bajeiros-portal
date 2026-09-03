@@ -281,7 +281,7 @@ export function EvolutionTab({
         <div className="bj-escore-txt">
           <p>
             Maturidade média das 6 áreas. Cada área sobe quando <b>todos</b> os critérios do nível
-            estão satisfeitos — e desce quando um deixa de estar.
+            estão satisfeitos, e desce quando um deixa de estar.
           </p>
           {bench.data?.visible && bench.data.average != null && (
             <p className="bj-escore-bench">
@@ -321,7 +321,7 @@ export function EvolutionTab({
               <Barra level={a.level} />
               <span className="bj-area-proximo">
                 {a.pending.length === 0
-                  ? 'Área completa — nada pendente.'
+                  ? 'Área completa, nada pendente.'
                   : `Próximo: ${a.criteria.find((c) => c.id === a.pending[0])?.label ?? ''}`}
               </span>
             </button>
@@ -401,8 +401,8 @@ export function EvolutionTab({
         <p className="bj-rodape-catalogo">
           <button type="button" className="bj-link" onClick={desativar}>
             Desativar a avaliação de maturidade
-          </button>{' '}
-          — patente e níveis somem da tela e param de recomputar. Nada é apagado, e reativar devolve
+          </button>
+          : patente e níveis somem da tela e param de recomputar. Nada é apagado, e reativar devolve
           tudo.
         </p>
       )}
@@ -456,7 +456,7 @@ function PainelAtivacao({
       </button>
       {!canOptIn && (
         <p className="bj-ativacao-sem-permissao">
-          Peça à capitania para ativar — só quem capitaneia decide medir a equipe.
+          Peça à capitania para ativar. Só quem capitaneia decide medir a equipe.
         </p>
       )}
       <p className="bj-credito-arte">{ART_CREDIT}</p>
@@ -515,7 +515,7 @@ function Criterio({
         {criterio.measured && (
           <span className={criterio.divergent ? 'bj-medida bj-medida-divergente' : 'bj-medida'}>
             medido: {criterio.measured.reason}
-            {criterio.divergent && ' — a sua resposta diverge do que o portal mede'}
+            {criterio.divergent && ' · a sua resposta diverge do que o portal mede'}
           </span>
         )}
 
@@ -716,7 +716,7 @@ function Bootstrap({ onProjetos }: { onProjetos: () => void }) {
     <section className="bj-vazio">
       <h3>O caminho mínimo</h3>
       <p>
-        A equipe ainda não tem projeto da temporada designado — sem ele não há protótipo avaliado, e
+        A equipe ainda não tem projeto da temporada designado. Sem ele não há protótipo avaliado, e
         a patente fica esperando. Comece por aqui:
       </p>
       <ol className="bj-lista">

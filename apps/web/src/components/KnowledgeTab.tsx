@@ -260,7 +260,7 @@ export function KnowledgeTab({ teamId, canManage }: { teamId: string; canManage:
             <NovoKit teamId={teamId} canManage={canManage} onCriado={recarregarTudo} />
             {kits.estado === 'ok' && (kits.data ?? []).length === 0 && (
               <p className="bj-vazio">
-                Nenhum kit iniciado. Abra um quando alguém anunciar a saída — a data do kit É o
+                Nenhum kit iniciado. Abra um quando alguém anunciar a saída: a data do kit É o
                 registro dessa saída.
               </p>
             )}

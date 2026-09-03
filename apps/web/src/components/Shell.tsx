@@ -87,7 +87,7 @@ export const DESTINOS: Destino[] = [
 
 /** Obrigação de interface do spec.md §1 — agora com posição fixa em TODA página. */
 export const DISCLAIMER =
-  'Apoio ao projeto — não substitui a inspeção oficial (B6.4). Sem vínculo com a organização da competição.'
+  'Apoio ao projeto. Não substitui a inspeção oficial (B6.4). Sem vínculo com a organização da competição.'
 
 /** O destino está aceso? (a página dele ou uma das que também o acendem) */
 export function destinoAtivo(d: Destino, page: PageId): boolean {
@@ -233,7 +233,7 @@ export function Shell({ title, children }: { title: string; children: React.Reac
  * exigida pelo CICLO — sem ela não há para quem devolver o desfecho (§5.2).
  */
 export const SUGERIR_EXIGE_CONTA =
-  'Para sugerir é preciso ter conta — é assim que dá para te avisar do que aconteceu com o seu pedido.'
+  'Para sugerir é preciso ter conta. É assim que dá para te avisar do que aconteceu com o seu pedido.'
 
 /**
  * DF-26 — a ÚNICA entrada de sugestão do portal, e ela mora na topbar porque a

@@ -453,7 +453,7 @@ datasheet.put('/:id/datasheet/waivers/:sid', async (c) => {
       c,
       400,
       'Body inválido',
-      'Dispensar uma seção exige um motivo curto — é o que impede a dispensa de virar atalho para inflar o progresso.',
+      'Dispensar uma seção exige um motivo curto. É o que impede a dispensa de virar atalho para inflar o progresso.',
     )
   }
   const { sub } = c.get('auth')

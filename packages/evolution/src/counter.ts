@@ -40,11 +40,11 @@ export const ACTIVITY_FLOOR_DAYS = 90
 export const MEETING_INDICATION_DAYS = 60
 
 export const NOT_COMPARABLE = {
-  validator: 'sem como conferir aqui — o projeto não está modelado no validador',
-  knowledge: 'sem como conferir aqui — a equipe ainda não publicou nada em Conhecimento',
-  org: 'sem como conferir aqui — o organograma não foi montado no portal',
-  template: 'sem como conferir aqui — a equipe declarou gabarito gerado fora do portal',
-  mass: 'sem como conferir aqui — não há protótipos comparáveis suficientes no acervo',
+  validator: 'sem como conferir aqui: o projeto não está modelado no validador',
+  knowledge: 'sem como conferir aqui: a equipe ainda não publicou nada em Conhecimento',
+  org: 'sem como conferir aqui: o organograma não foi montado no portal',
+  template: 'sem como conferir aqui: a equipe declarou gabarito gerado fora do portal',
+  mass: 'sem como conferir aqui: não há protótipos comparáveis suficientes no acervo',
 } as const
 
 /** O que a contraprova precisa saber sobre a declaração (fora dos fatos de evidência). */
@@ -204,7 +204,7 @@ export const COUNTER_CHECKS: Record<string, CounterSpec> = {
         ? {
             message:
               `Não há nenhum rastro de atividade da equipe no portal há ${f.daysSinceEvidence} ` +
-              'dias — a rotina de reunião combinada segue acontecendo?',
+              'dias. A rotina de reunião combinada segue acontecendo?',
             measured: `última evidência há ${f.daysSinceEvidence} dias`,
           }
         : null,
@@ -244,7 +244,7 @@ function massIndication(question: string): CounterSpec {
       if (mass <= median * MASS_INDICATION_RATIO) return null
       const pct = Math.round((mass / median - 1) * 100)
       return {
-        message: `A massa da gaiola está ${pct}% acima da mediana da classe — ${question}`,
+        message: `A massa da gaiola está ${pct}% acima da mediana da classe. ${question}`,
         measured: `${fmt(mass)} kg contra mediana de ${fmt(median)} kg em ${f.community?.massProjects} protótipos`,
       }
     },
@@ -286,7 +286,7 @@ export function activityFloorOf(f: Facts): ActivityFloor | null {
   return {
     message:
       'A equipe não tem organograma no portal nem nenhum registro de atividade nos últimos ' +
-      `${ACTIVITY_FLOOR_DAYS} dias. As declarações ficam suspensas até haver lastro — comece ` +
+      `${ACTIVITY_FLOOR_DAYS} dias. As declarações ficam suspensas até haver lastro. Comece ` +
       'pelo caminho mínimo.',
     measured:
       f.daysSinceEvidence === null

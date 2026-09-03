@@ -65,7 +65,7 @@ export interface RankView {
  * original com a escada de nomes livres — que já vive no catálogo (`freeName`).
  */
 export const ART_CREDIT =
-  'Emblemas: Evgeniy Yudin (Mazok Pixels) e Misha Petrick — “MAD MAX Fury Road”, CC BY-NC 4.0.'
+  'Emblemas: Evgeniy Yudin (Mazok Pixels) e Misha Petrick, “MAD MAX Fury Road”, CC BY-NC 4.0.'
 
 export function emblemSrc(def: RankDefView): string {
   return `/patentes/${def.emblem}`
@@ -86,9 +86,9 @@ export function RankBand({
     return (
       <section className="bj-patente bj-patente-vazia">
         <p>
-          A patente é do <b>protótipo da temporada</b>, não da equipe — designe um projeto para a
-          temporada {rank.seasonLabel ?? 'atual'} e o emblema aparece aqui. Nenhuma área é
-          penalizada enquanto isso.
+          A patente é do <b>protótipo da temporada</b>. Designe um projeto para a temporada{' '}
+          {rank.seasonLabel ?? 'atual'} e o emblema aparece aqui. Nenhuma área é penalizada enquanto
+          isso.
         </p>
       </section>
     )
@@ -145,7 +145,7 @@ export function RankBand({
         <p className="bj-patente-carencia">
           Uma trava da patente {def.n} está rompida desde{' '}
           {new Date(rank.grace.since).toLocaleDateString('pt-BR')}. Você tem até{' '}
-          <b>{new Date(rank.grace.endsAt).toLocaleDateString('pt-BR')}</b> para consertar — se a
+          <b>{new Date(rank.grace.endsAt).toLocaleDateString('pt-BR')}</b> para consertar. Se a
           trava voltar antes disso, o emblema nunca desce. Depois, ele passa a{' '}
           {rank.grace.target.name}.
         </p>
@@ -170,7 +170,7 @@ export function NextRankPanel({
       <section>
         <h3>Para chegar em…</h3>
         <p className="bj-vazio">
-          A equipe está em {rank.rank?.name} — o topo da escada. Não há próxima patente.
+          A equipe está em {rank.rank?.name}, o topo da escada. Não há próxima patente.
         </p>
       </section>
     )

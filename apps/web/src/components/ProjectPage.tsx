@@ -202,8 +202,9 @@ function VersoesTab({
         <div className="bj-vazio">
           <h4>Nenhuma versão salva</h4>
           <p>
-            A ficha do protótipo funciona sem nenhuma versão — o validador facilita, nunca é
-            condição. Quando a equipe modelar a gaiola, cada salvar vira uma versão aqui.
+            A ficha do protótipo funciona sem nenhuma versão salva. O validador facilita o
+            preenchimento, mas nunca é condição para ele. Quando a equipe modelar a gaiola, cada
+            salvar vira uma versão aqui.
           </p>
         </div>
       ) : (
@@ -265,8 +266,8 @@ function ValidacaoTab({ projectId, ultima }: { projectId: string; ultima: number
   return (
     <div className="bj-validacao">
       <p className="bj-lead">
-        Conformidade da versão v{snap.data?.seq} — estado da gaiola, não campo da ficha. Um número
-        que a equipe não consegue preencher à mão é resultado de ferramenta, e mora aqui.
+        Conformidade da versão v{snap.data?.seq}. É o estado da gaiola, e não um campo da ficha. Um
+        número que a equipe não consegue preencher à mão é resultado de ferramenta, e mora aqui.
       </p>
       <div className="bj-contadores">
         {papeis.map((p) => (
@@ -283,7 +284,7 @@ function ValidacaoTab({ projectId, ultima }: { projectId: string; ultima: number
               <StatusChip role={r.status} />
               <div className="bj-criterio-corpo">
                 <span className="bj-criterio-label">
-                  {r.id} — {r.title}
+                  {r.id} · {r.title}
                 </span>
                 {(r.measured || r.limit) && (
                   <span className="bj-criterio-meta">
@@ -298,7 +299,8 @@ function ValidacaoTab({ projectId, ultima }: { projectId: string; ultima: number
       </ul>
       <p className="bj-rodape-catalogo">
         <IconCloudUp size={16} /> A validação lê a última versão salva. Salvar uma versão nova muda
-        o que aparece aqui e as sugestões da ficha — nunca os valores que a equipe digitou.
+        o que aparece aqui e as sugestões da ficha. Os valores que a equipe digitou ficam como
+        estão.
       </p>
     </div>
   )

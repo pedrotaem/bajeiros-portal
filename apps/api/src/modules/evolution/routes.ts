@@ -60,7 +60,7 @@ const OPTIN_NOTICE = {
   title: 'O que a avaliação de maturidade lê',
   reads: [
     'a última versão salva do protótipo da temporada (contagens do validador, nunca a geometria)',
-    'o organograma e a capitania — quantos cargos existem e quantos têm ocupante',
+    'o organograma e a capitania: quantos cargos existem e quantos têm ocupante',
     'os contadores do diário e dos guias: quantos, de quem, quando foram atualizados',
     'os resultados públicos de competição, se e quando houver vínculo com o registro do Brasil',
   ],
@@ -70,7 +70,7 @@ const OPTIN_NOTICE = {
     'qualquer coisa que apareça para outra equipe sem você ligar a vitrine',
   ],
   retroactive:
-    'Ativar recomputa na hora o que a equipe já produziu — ninguém encara um painel zerado.',
+    'Ativar recomputa na hora o que a equipe já produziu, e ninguém encara um painel zerado.',
   reversible:
     'Desativar é simétrico: patente e níveis somem da tela e param de recomputar, e nada é apagado.',
 }
@@ -359,7 +359,7 @@ evolution.post('/:id/evolution/declarations/:cid/reaffirm', async (c) => {
       c,
       400,
       'Justificativa obrigatória',
-      'Reafirmar um indício exige a nota que explica o número medido — é ela que a próxima geração lê no lugar de repetir a dúvida.',
+      'Reafirmar um indício exige a nota que explica o número medido. É ela que a próxima geração lê no lugar de repetir a dúvida.',
     )
   }
   const { sub } = c.get('auth')
@@ -413,7 +413,7 @@ evolution.post('/:id/evolution/declarations/:cid/reaffirm', async (c) => {
       c,
       400,
       'Contradição não se reafirma',
-      'O portal mediu o mesmo fato que o critério afirma. O caminho é consertar o dado — salvar a versão conforme, criar o organograma —, não justificar.',
+      'O portal mediu o mesmo fato que o critério afirma. O caminho é consertar o dado (salvar a versão conforme, criar o organograma), e não justificar.',
     )
   }
   return c.json(toEvolution(result.evo))
@@ -477,7 +477,7 @@ evolution.post('/:id/evolution/optin', async (c) => {
       c,
       403,
       'Sem permissão',
-      'Apenas a capitania ativa a avaliação de maturidade — peça a quem capitaneia.',
+      'Apenas a capitania ativa a avaliação de maturidade. Peça a quem capitaneia.',
     )
   }
   return c.json({

@@ -143,13 +143,13 @@ function ManikinBlock() {
   const rMax = manikinReadings(lmMax)
   return (
     <div className="section">
-      <div className="section-title">Piloto — manequim ergonômico (DF-4)</div>
+      <div className="section-title">Piloto · manequim ergonômico (DF-4)</div>
       <label className="num-field">
         <span>percentil menor</span>
         <select value={cfg.profileMin} onChange={(e) => setManikin({ profileMin: e.target.value })}>
           {PROFILES.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.label} — {(p.statureMm / 10).toFixed(0)} cm · {p.massKg} kg
+              {p.label} · {(p.statureMm / 10).toFixed(0)} cm · {p.massKg} kg
             </option>
           ))}
         </select>
@@ -159,7 +159,7 @@ function ManikinBlock() {
         <select value={cfg.profileMax} onChange={(e) => setManikin({ profileMax: e.target.value })}>
           {PROFILES.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.label} — {(p.statureMm / 10).toFixed(0)} cm · {p.massKg} kg
+              {p.label} · {(p.statureMm / 10).toFixed(0)} cm · {p.massKg} kg
             </option>
           ))}
         </select>
@@ -242,7 +242,7 @@ function SteeringBlock() {
   const zoneR = st?.zoneRadiusMm ?? 50
   return (
     <div className="section">
-      <div className="section-title">Direção — ancoragem do volante (DF-5)</div>
+      <div className="section-title">Direção · ancoragem do volante (DF-5)</div>
       {!st ? (
         <div className="add-row">
           <button onClick={() => addSteering('central')}>+ ancoragem central</button>
@@ -279,13 +279,13 @@ function SteeringBlock() {
                 ) : (
                   <span className="removal-bad">
                     {' '}
-                    ✕ sem suporte ({d.toFixed(0)} mm) — ajuste a gaiola ou adicione tubo
+                    ✕ sem suporte ({d.toFixed(0)} mm). Ajuste a gaiola ou adicione tubo
                   </span>
                 )}
                 {distWrist > zoneR && (
                   <div className="muted" style={{ fontSize: 11, color: '#e6a817' }}>
                     ⚠ {distWrist.toFixed(0)} mm do punho do manequim (zona recomendada: {zoneR} mm)
-                    — informativo
+                    (informativo)
                   </div>
                 )}
                 <NumField
@@ -342,7 +342,7 @@ function ContinuityBlock({ node }: { node: string }) {
   const free = incident.filter((m) => !used(m.id))
   const blocked =
     (selA && used(selA)) || (selB && used(selB))
-      ? 'membro já pertence a uma passagem contínua neste nó — desfaça-a primeiro'
+      ? 'membro já pertence a uma passagem contínua neste nó. Desfaça-a primeiro'
       : null
   return (
     <div className="continuity">
@@ -541,7 +541,7 @@ function DistanceBlock({ from }: { from: NodeId }) {
           </label>
           {travados.length > 0 && (
             <div className="removal-bad">
-              🔒 {travados.join(' e ')} travado(s) — escolha outro lado ou destrave
+              🔒 {travados.join(' e ')} travado(s). Escolha outro lado ou destrave
             </div>
           )}
           {twins && (
@@ -601,7 +601,7 @@ function PlanesGroup({ planes }: { planes: CagePlane[] }) {
         <div className="muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
           Plano = circuito fechado de pontos denominados adjacentes, todos dentro da tolerância de
           um mesmo plano ajustado. Afrouxar funde painéis vizinhos (o assoalho vira um só,
-          escondendo a dobra nos pontos I); apertar separa. Nada disto vai para o JSON — é derivado
+          escondendo a dobra nos pontos I); apertar separa. Nada disto vai para o JSON: é derivado
           da geometria, como as juntas.
         </div>
         <div className="member-info">
@@ -660,7 +660,7 @@ function PlanesGroup({ planes }: { planes: CagePlane[] }) {
                     </div>
                     {travados.length > 0 && (
                       <div className="removal-bad">
-                        🔒 giro bloqueado: {travados.join(', ')} travado(s). Girar é corpo rígido —
+                        🔒 giro bloqueado: {travados.join(', ')} travado(s). Girar é corpo rígido, e
                         deixar um ponto para trás deformaria o plano.
                       </div>
                     )}
@@ -670,7 +670,7 @@ function PlanesGroup({ planes }: { planes: CagePlane[] }) {
             </>
           ) : (
             <div className="member-info">
-              nenhum plano vizinho com aresta comum — sem dobradiça, o ângulo não é editável
+              nenhum plano vizinho com aresta comum. Sem dobradiça, o ângulo não é editável
             </div>
           )}
         </div>
@@ -897,13 +897,13 @@ export function Inspector({
               />
               <div className="member-info">
                 {isLocked(cage, member.b)
-                  ? `🔒 ${member.b} travado — destrave ou use a cota do nó ${member.a}`
+                  ? `🔒 ${member.b} travado. Destrave ou use a cota do nó ${member.a}`
                   : `digitar o comprimento desloca ${member.b} sobre o eixo do tubo${mirror ? ' (com espelho L/R)' : ''}`}{' '}
                 · massa: {(massReport.perMember[member.id] ?? 0).toFixed(0)} g
               </div>
               <label
                 className="check-field"
-                title="Trava as duas pontas do tubo — o membro inteiro para de se mover"
+                title="Trava as duas pontas do tubo: o membro inteiro para de se mover"
               >
                 <input
                   type="checkbox"
@@ -928,7 +928,7 @@ export function Inspector({
               })()}
               {removalMap[member.id]?.length === 0 ? (
                 <div className="removal-ok">
-                  ✓ Remoção total deste membro não infringe nenhuma regra automática — candidato a
+                  ✓ Remoção total deste membro não infringe nenhuma regra automática. Candidato a
                   redução de massa: economiza{' '}
                   {removalMassDelta(cage, member.id, massReport).toFixed(0)} g (tubo + juntas).
                   Juízes ainda podem exigir reforços (B6.4.1.2).
@@ -1020,7 +1020,7 @@ export function Inspector({
                   {bendAngle >= 3 &&
                     !isNamedIn(cage, selectedNode) &&
                     bendAngle > 30 &&
-                    ' — acima de 30° fora de ponto denominado'}
+                    ', acima de 30° fora de ponto denominado'}
                 </div>
               )}
               <DistanceBlock from={selectedNode} />
@@ -1082,11 +1082,11 @@ export function Inspector({
                 const d = anchorSupport(anchor)
                 return d <= 25 ? (
                   <div className="removal-ok">
-                    ✓ Apoiada — tubo mais próximo a {d.toFixed(0)} mm do eixo.
+                    ✓ Apoiada. Tubo mais próximo a {d.toFixed(0)} mm do eixo.
                   </div>
                 ) : (
                   <div className="removal-bad">
-                    ✕ Sem suporte — tubo mais próximo a {d.toFixed(0)} mm. Ajuste a gaiola ou
+                    ✕ Sem suporte. Tubo mais próximo a {d.toFixed(0)} mm. Ajuste a gaiola ou
                     adicione tubo/reforço passando por aqui.
                   </div>
                 )
@@ -1177,7 +1177,7 @@ export function Inspector({
           <div className="section muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
             Seções default conforme relatório da Equipe FEI Baja 2 (2014): primário ABNT 4130 Ø31,75
             × 1,65 mm · secundário 4130 Ø25,4 × 0,9 mm. Escolha do 4130 corroborada pela literatura
-            (Brandão et al., 2020; Shailesh, 2022; Barbosa et al., 2016 — UNESP-FEG). Geometria
+            (Brandão et al., 2020; Shailesh, 2022; Barbosa et al., 2016, UNESP-FEG). Geometria
             inspirada em fotos públicas dos protótipos FEI 2022–2026 (não é réplica). Referências em{' '}
             <i>revisao-bibliografica-gaiolas-baja.md</i>.
           </div>
@@ -1201,7 +1201,7 @@ export function Inspector({
               onChange={(v) => setWeightParams({ weldPerMmG: v > 0 ? v : undefined })}
             />
             <div className="muted" style={{ fontSize: 11 }}>
-              Estimativa geométrica — não substitui pesagem. Gussets/luvas não modelados.
+              Estimativa geométrica. Não substitui pesagem, e gussets/luvas não entram na conta.
             </div>
           </div>
 
@@ -1221,12 +1221,12 @@ export function Inspector({
             </div>
             {joints.some((j) => j.kind !== 'crossing' && j.angleDeg < 30) && (
               <div className="removal-bad">
-                ⚠ junta(s) com θ &lt; 30° — boca de lobo e cordão crescem com 1/sin θ
+                ⚠ junta(s) com θ &lt; 30°: boca de lobo e cordão crescem com 1/sin θ
               </div>
             )}
             {joints.some((j) => j.kind === 'crossing') && (
               <div className="removal-bad">
-                ⚠ {joints.filter((j) => j.kind === 'crossing').length} cruzamento(s) sem nó — ver
+                ⚠ {joints.filter((j) => j.kind === 'crossing').length} cruzamento(s) sem nó: ver
                 regra JOINT.X
               </div>
             )}

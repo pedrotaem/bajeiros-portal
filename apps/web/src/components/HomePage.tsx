@@ -165,7 +165,7 @@ export function HomePage() {
         <section className="bj-vazio">
           <h3>Comece por uma equipe</h3>
           <p>
-            O portal gira em torno da evolução das equipes. Crie a sua ou entre por um convite — e o
+            O portal gira em torno da evolução das equipes. Crie a sua ou entre por um convite, e o
             Início passa a mostrar o que precisa de você hoje.
           </p>
           <div className="bj-card-acoes">
@@ -195,7 +195,7 @@ export function HomePage() {
                   ferramenta desligada; o certo é explicar por que está vazio. */}
               {d.optIn === false ? (
                 <p className="bj-vazio">
-                  A avaliação de maturidade não está ativada — a fila de passos nasce dela.{' '}
+                  A avaliação de maturidade não está ativada, e a fila de passos nasce dela.{' '}
                   <button type="button" className="bj-link" onClick={() => goToTeam('evolucao')}>
                     Ver o que a avaliação lê ›
                   </button>
@@ -267,7 +267,7 @@ export function HomePage() {
                   <p className="bj-patente-proxima">
                     Faltam <b>{d.rank.next.missing}</b> passos para {d.rank.next.name}
                     {d.rank.next.block === 'sem-vinculo' &&
-                      ' — comece vinculando a equipe ao registro do Brasil, em Comunidade'}
+                      ': comece vinculando a equipe ao registro do Brasil, em Comunidade'}
                     .
                   </p>
                 )}
@@ -376,7 +376,7 @@ function Narrativa({
       const counts = (payload.counts ?? {}) as Record<string, number>
       return (
         <span>
-          Projeto da temporada salvo{seq ? ` (v${seq})` : ''} —{' '}
+          Projeto da temporada salvo{seq ? ` (v${seq})` : ''}:{' '}
           <b>
             {counts.pass ?? 0} {STATUS_LABEL.pass}
           </b>{' '}
@@ -404,9 +404,9 @@ function Narrativa({
           {subiu ? <StatusChip role="pass" /> : <StatusChip role="warn" />}{' '}
           <b>{String(payload.area)}</b> {subiu ? 'subiu' : 'voltou'} para o nível {para}
           {doCatalogo
-            ? ` — o catálogo de critérios passou para a v${String(payload.catalogVersion ?? '')}`
+            ? `: o catálogo de critérios passou para a v${String(payload.catalogVersion ?? '')}`
             : !subiu && motivos[0]
-              ? ` — ${motivos[0].reason}`
+              ? `: ${motivos[0].reason}`
               : ''}
         </span>
       )
@@ -471,7 +471,7 @@ function Narrativa({
       return (
         <span>
           <StatusChip role="fail" /> <b>{String(payload.label ?? payload.criterionId ?? '')}</b> em
-          contraprova — {String(payload.measured ?? '')}
+          contraprova: {String(payload.measured ?? '')}
         </span>
       )
     case 'counter.cleared':

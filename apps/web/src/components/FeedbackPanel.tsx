@@ -183,7 +183,7 @@ function Formulario({ aoEnviar }: { aoEnviar: (i: SugestaoItem) => void }) {
       setErro(
         err instanceof ApiError
           ? (err.problem.detail ?? err.problem.title)
-          : 'Erro de rede — tente de novo.',
+          : 'Erro de rede. Tente de novo.',
       )
     } finally {
       setEnviando(false)
@@ -243,7 +243,7 @@ function Formulario({ aoEnviar }: { aoEnviar: (i: SugestaoItem) => void }) {
           <strong>Vai junto:</strong> {resumoDoContexto(ctx)}
         </p>
         <p className="bj-sug-aviso">
-          Não escreva dado pessoal, seu ou de terceiros — quem administra o portal lê o texto.
+          Não escreva dado pessoal, seu ou de terceiros: quem administra o portal lê o texto.
         </p>
       </div>
 
@@ -266,7 +266,7 @@ function Minhas({ itens, aoLer }: { itens: SugestaoItem[] | null; aoLer: (id: st
   if (itens.length === 0)
     return (
       <p className="bj-vazio">
-        Você ainda não mandou nada. O que for enviado aparece aqui com o desfecho — inclusive quando
+        Você ainda não mandou nada. O que for enviado aparece aqui com o desfecho, inclusive quando
         a resposta for não.
       </p>
     )

@@ -41,7 +41,7 @@ export const CATALOG_MODE: CatalogMode = 'declarado'
 
 /** Mudanças de catálogo aparecem na atividade da equipe com o delta explicado (P-1.3). */
 export const CATALOG_CHANGELOG: readonly { version: string; note: string }[] = [
-  { version: '1.0.0', note: 'Catálogo inicial (51 critérios) — DF-13 §4, pendente do piloto.' },
+  { version: '1.0.0', note: 'Catálogo inicial (51 critérios), DF-13 §4, pendente do piloto.' },
   {
     version: '2.0.0',
     note:
@@ -98,13 +98,13 @@ export const CATALOG: readonly Criterion[] = [
     research: 'dificuldade iniciante: projeto vive em arquivo local de uma pessoa',
     question: 'O projeto do protótipo desta temporada está registrado no portal?',
     fulfilled:
-      'Existe um projeto designado como o da temporada e ele tem conteúdo — gaiola modelada ' +
+      'Existe um projeto designado como o da temporada e ele tem conteúdo, gaiola modelada ' +
       'com ao menos uma versão salva OU ficha do protótipo com a seção de identificação e ' +
       'dimensões preenchida (DF-21). Os dois caminhos valem igual.',
     notValid:
       'Arquivo no computador de alguém, no Drive da equipe ou aberto no editor sem salvar; ' +
       'projeto criado com nome e mais nada. O ponto é tirar o projeto da máquina de uma ' +
-      'pessoa — não obrigar a usar o editor 3D.',
+      'pessoa, não obrigar a usar o editor 3D.',
     where: 'O próprio projeto, designado em Equipe · Projetos.',
     wave: 'V1',
     audit: 'existe `validation.summary` ou ficha com conteúdo',
@@ -117,7 +117,7 @@ export const CATALOG: readonly Criterion[] = [
     label: 'Gaiola completa, sem pendências de presença',
     source: 'validador',
     research: 'dificuldade iniciante: gaiola incompleta chega à inspeção',
-    question: 'O projeto da gaiola está completo — todos os membros obrigatórios previstos?',
+    question: 'O projeto da gaiola está completo, todos os membros obrigatórios previstos?',
     fulfilled:
       'O projeto contempla todos os membros obrigatórios. Caminho fácil: a última versão ' +
       'salva no validador sem nenhuma pendência de presença. Quem projeta em CAD confere ' +
@@ -149,7 +149,7 @@ export const CATALOG: readonly Criterion[] = [
       'conformidade só aparecer na inspeção.',
     where: 'Decisão no diário ("tubo primário: 1020 Ø31,75×1,5 porque…"), com link.',
     wave: 'V2',
-    audit: 'classe de material do projeto × equivalência B6.3.3.2 — parcial',
+    audit: 'classe de material do projeto × equivalência B6.3.3.2, parcial',
     linkHint: 'decision',
   }),
   c({
@@ -164,14 +164,14 @@ export const CATALOG: readonly Criterion[] = [
     fulfilled:
       'Nenhuma regra que se confere sobre a geometria está violada. Caminho fácil: o ' +
       'validador não aponta infração automática na última versão salva. Quem confere à mão ' +
-      'contra o regulamento responde igual — e aceita o custo de conferir ~40 verificações ' +
+      'contra o regulamento responde igual, e aceita o custo de conferir ~40 verificações ' +
       'a cada mudança. Itens presenciais não contam aqui: são o EST-3.2.',
     notValid:
       '"Está quase", "só falta um ângulo", ou zerar as infrações num rascunho não salvo. ' +
       'Rascunho aberto no editor não conta em nenhum critério.',
     where: 'O projeto da temporada.',
     wave: 'V1',
-    audit: 'contagem de `fail` em `validation.summary` — exemplo canônico de contradição direta',
+    audit: 'contagem de `fail` em `validation.summary`, exemplo canônico de contradição direta',
   }),
   c({
     id: 'EST-3.2',
@@ -185,13 +185,13 @@ export const CATALOG: readonly Criterion[] = [
       'A equipe revisou em reunião os itens do checklist que só dá para verificar presencialmente?',
     fulfilled:
       'Houve uma reunião dedicada em que os itens presenciais foram percorridos um a um, com ' +
-      'o resultado registrado — inclusive os que ficaram pendentes.',
+      'o resultado registrado, inclusive os que ficaram pendentes.',
     notValid:
       'Ter lido o regulamento; ter conversado no grupo; um único membro ter conferido sozinho ' +
       'sem registro. O critério é sobre o RITO.',
     where: 'Decisão no diário com a ata da revisão (link obrigatório na prática).',
     wave: null,
-    audit: 'só existe com a marcação item a item do checklist manual (v2 do DF-13) — sem onda',
+    audit: 'só existe com a marcação item a item do checklist manual (v2 do DF-13), sem onda',
     linkHint: 'decision',
   }),
   c({
@@ -226,12 +226,12 @@ export const CATALOG: readonly Criterion[] = [
     question:
       'O projeto da gaiola foi revisado por alguém que não o desenhou, com o resultado registrado?',
     fulfilled:
-      'Um segundo membro percorreu o projeto e registrou o que encontrou — inclusive "nada a ' +
+      'Um segundo membro percorreu o projeto e registrou o que encontrou, inclusive "nada a ' +
       'apontar", desde que fique claro quem revisou e quando.',
     notValid: 'O próprio autor revisando; aprovação verbal na oficina; "o capitão viu".',
     where: 'Decisão no diário, com o nome do revisor.',
     wave: 'V2',
-    audit: 'autoria por versão em `snapshots` × revisor declarado — indício',
+    audit: 'autoria por versão em `snapshots` × revisor declarado, indício',
     linkHint: 'decision',
   }),
   c({
@@ -244,14 +244,14 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 2: simulação antes da fabricação',
     question: 'A equipe fez análise estrutural do chassi nesta temporada e guardou o resultado?',
     fulfilled:
-      'Existe uma simulação estrutural do chassi desta temporada — com os casos de carga ' +
-      'usados anotados — e o arquivo/relatório está acessível para a próxima geração.',
+      'Existe uma simulação estrutural do chassi desta temporada, com os casos de carga ' +
+      'usados anotados, e o arquivo/relatório está acessível para a próxima geração.',
     notValid:
       'FEA de um chassi de temporada anterior; imagem colorida sem casos de carga declarados; ' +
       'simulação que ninguém consegue mais abrir ou encontrar.',
-    where: 'Link externo (Drive, repositório) — o portal não hospeda o arquivo.',
+    where: 'Link externo (Drive, repositório). O portal não hospeda o arquivo.',
     wave: null,
-    audit: 'acontece fora do portal — segue só declarado, e a tela diz isso',
+    audit: 'acontece fora do portal, segue só declarado, e a tela diz isso',
     linkHint: 'url',
   }),
   c({
@@ -265,11 +265,11 @@ export const CATALOG: readonly Criterion[] = [
     question: 'Depois de soldada, a gaiola foi medida e comparada com o projeto?',
     fulfilled:
       'Houve medição do quadro real (pontos denominados, vãos críticos, altura do arco) ' +
-      'comparada com o projeto, e os desvios foram registrados — corrigidos ou aceitos.',
+      'comparada com o projeto, e os desvios foram registrados, corrigidos ou aceitos.',
     notValid: 'Conferência visual; "encaixou, então está certo"; medir só o que era fácil.',
     where: 'Decisão no diário com a tabela de desvios, ou link para a planilha.',
     wave: null,
-    audit: 'exigiria entrada de medidas as-built no portal — sem onda na v2',
+    audit: 'exigiria entrada de medidas as-built no portal, sem onda na v2',
     linkHint: 'url',
   }),
   c({
@@ -289,7 +289,7 @@ export const CATALOG: readonly Criterion[] = [
       'exatamente o conhecimento que a rotatividade apaga.',
     where: 'Decisão no diário, marcada como pós-competição.',
     wave: 'V2',
-    audit: 'decisão em janela pós-competição do calendário do DF-15 — indício fraco',
+    audit: 'decisão em janela pós-competição do calendário do DF-15, indício fraco',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -340,7 +340,7 @@ export const CATALOG: readonly Criterion[] = [
     fulfilled:
       'O ponto de fixação da direção está definido e apoiado em tubo. Caminho fácil: a ' +
       'verificação STEER.1 do validador. Equipe que ainda não definiu a fixação responde ' +
-      '"não" — o critério não é dispensável por omissão.',
+      '"não": o critério não é dispensável por omissão.',
     notValid: 'Direção resolvida "na hora da montagem".',
     where: 'O projeto da temporada.',
     wave: 'V1',
@@ -357,7 +357,7 @@ export const CATALOG: readonly Criterion[] = [
     question: 'A geometria de suspensão do protótipo tem memória de cálculo arquivada?',
     fulfilled:
       'Existe documento com os parâmetros escolhidos (curso, cambagem, cáster, convergência, ' +
-      'centro de rolagem, relação de instalação) E o porquê de cada um — mesmo que o cálculo ' +
+      'centro de rolagem, relação de instalação) E o porquê de cada um, mesmo que o cálculo ' +
       'seja simples.',
     notValid:
       'Planilha com números sem justificativa; geometria copiada de outra equipe sem ' +
@@ -365,7 +365,7 @@ export const CATALOG: readonly Criterion[] = [
     where: 'Link para a memória de cálculo + decisão no diário resumindo a escolha.',
     wave: 'V2',
     audit:
-      'massa do protótipo × mediana da comunidade — indício quantitativo. Massa muito acima ' +
+      'massa do protótipo × mediana da comunidade, indício quantitativo. Massa muito acima ' +
       'da mediana torna implausível que a geometria tenha sido calculada com a massa real',
     linkHint: 'url',
   }),
@@ -382,7 +382,7 @@ export const CATALOG: readonly Criterion[] = [
       'Existe registro de qual configuração é usada em que prova (aceleração, tração, enduro) ' +
       'e o que muda entre elas.',
     notValid: 'Um único ajuste "que funciona"; ajuste na memória do responsável.',
-    where: 'Guia da equipe (o formato certo — é procedimento repetível), com link.',
+    where: 'Guia da equipe (o formato certo, porque é procedimento repetível), com link.',
     wave: 'V2',
     audit: 'mesmo indício de massa do DIN-3.1',
     linkHint: 'guide',
@@ -397,12 +397,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 5: testar antes de competir',
     question: 'Ao menos um subsistema foi testado em bancada, com o resultado anotado?',
     fulfilled:
-      'Houve um ensaio controlado — amortecedor, freio, transmissão, o que for — com ' +
+      'Houve um ensaio controlado (amortecedor, freio, transmissão, o que for) com ' +
       'procedimento e resultado registrados, incluindo o que não deu certo.',
     notValid: '"Rodamos o carro e pareceu bom"; teste sem número anotado.',
     where: 'Decisão ou guia com o procedimento e o resultado.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'url',
   }),
   c({
@@ -415,12 +415,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 8: decisão por dado medido',
     question: 'A equipe já coletou dados instrumentados do carro em pista nesta temporada?',
     fulfilled:
-      'Houve ao menos uma sessão com aquisição — mesmo simples (acelerômetro, GPS, célula de ' +
-      'carga) — com os dados guardados.',
+      'Houve ao menos uma sessão com aquisição, mesmo simples (acelerômetro, GPS, célula de ' +
+      'carga), com os dados guardados.',
     notValid: 'Cronometrar com celular; impressão do piloto sem dado.',
     where: 'Link para o conjunto de dados + decisão descrevendo a sessão.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'url',
   }),
   c({
@@ -438,7 +438,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Coletar sempre e nunca analisar; analisar sem que nada mude.',
     where: 'Decisões no diário, uma por sessão analisada.',
     wave: 'V2',
-    audit: 'contagem de decisões da área `dinamica` na temporada — indício',
+    audit: 'contagem de decisões da área `dinamica` na temporada, indício',
     linkHint: 'decision',
   }),
   c({
@@ -452,11 +452,11 @@ export const CATALOG: readonly Criterion[] = [
     question: 'Para ao menos um sistema, o resultado simulado foi comparado com o medido?',
     fulfilled:
       'Existe comparação explícita entre o que a simulação previu e o que o ensaio mediu, com ' +
-      'a divergência discutida — inclusive quando a simulação errou.',
+      'a divergência discutida, inclusive quando a simulação errou.',
     notValid: 'Simular e testar sem comparar; comparar e só registrar quando bate.',
     where: 'Link para o relatório de correlação + decisão.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'url',
   }),
 
@@ -471,12 +471,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'dificuldade iniciante: relatório começa do zero todo ano',
     question: 'A equipe já definiu qual modelo vai usar nos relatórios desta temporada?',
     fulfilled:
-      'Existe um template escolhido — o oficial da competição ou um próprio — e todo mundo ' +
+      'Existe um template escolhido, o oficial da competição ou um próprio, e todo mundo ' +
       'sabe qual é.',
     notValid: '"Vamos usar o do ano passado" sem que alguém saiba onde ele está.',
     where: 'Decisão no diário com link para o template.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -491,11 +491,11 @@ export const CATALOG: readonly Criterion[] = [
     question: 'O relatório de projeto está sendo escrito, com um responsável nomeado por seção?',
     fulfilled:
       'O documento existe, está dividido em seções e cada seção tem um nome ao lado. Não ' +
-      'precisa estar pronto — precisa ter dono.',
+      'precisa estar pronto, precisa ter dono.',
     notValid: 'Documento em branco com títulos; "o capitão escreve tudo no fim".',
     where: 'Link para o documento + decisão com a divisão de seções.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'url',
   }),
@@ -514,7 +514,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Enviar incompleto para bater o prazo.',
     where: 'Decisão no diário com a data de envio.',
     wave: 'V2',
-    audit: 'data do marco de entrega em `team_season.milestones` × data da declaração — indício',
+    audit: 'data do marco de entrega em `team_season.milestones` × data da declaração, indício',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -533,7 +533,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Arquivos espalhados em conversas; pasta que só uma pessoa sabe navegar.',
     where: 'Link para o acervo + guia da equipe explicando a organização.',
     wave: 'V2',
-    audit: 'existência de guia com etiqueta de acervo — indício fraco',
+    audit: 'existência de guia com etiqueta de acervo, indício fraco',
     linkHint: 'url',
   }),
   c({
@@ -549,7 +549,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Revisão só das seções "importantes"; revisão de português sem leitura técnica.',
     where: 'Decisão com a matriz autor × revisor.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -580,14 +580,14 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 9: acervo geracional acessível',
     question: 'Os relatórios e memórias das temporadas anteriores estão acessíveis e indexados?',
     fulfilled:
-      'Existe índice — por ano e por subsistema — e um membro novo abre o material de duas ' +
+      'Existe índice, por ano e por subsistema, e um membro novo abre o material de duas ' +
       'temporadas atrás sem pedir ajuda.',
     notValid:
       'Ter os arquivos em algum lugar; acervo que depende de um veterano para navegar. É o ' +
       'critério que separa "a equipe guarda" de "a equipe consegue usar o que guardou".',
     where: 'Guia da equipe com o índice + link para o acervo.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'url',
   }),
 
@@ -607,7 +607,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: '"A gente dá um jeito"; oficina disponível "provavelmente".',
     where: 'Decisão no diário.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'decision',
   }),
   c({
@@ -626,7 +626,7 @@ export const CATALOG: readonly Criterion[] = [
     where: 'O validador gera; gabarito externo entra como link na declaração.',
     wave: 'V1',
     audit:
-      'existência de `template.generated` — e só dispara contraprova quando existe (RF-4.8): ' +
+      'existência de `template.generated`, e só dispara contraprova quando existe (RF-4.8): ' +
       'quem gerou por fora não é contradito pela ausência',
     linkHint: 'url',
   }),
@@ -640,15 +640,15 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 6: processo de fabricação planejado',
     question: 'Existe uma sequência de solda e um plano de fixação no gabarito?',
     fulfilled:
-      'Está escrito em que ordem as peças serão soldadas e como o conjunto fica fixado — a ' +
+      'Está escrito em que ordem as peças serão soldadas e como o conjunto fica fixado, a ' +
       'ordem que controla distorção térmica.',
     notValid: '"Solda de baixo para cima"; plano na cabeça do soldador.',
-    where: 'Guia da equipe (procedimento repetível) — vira o FAB-3.1 quando publicado.',
+    where: 'Guia da equipe (procedimento repetível). Vira o FAB-3.1 quando publicado.',
     // §5.4 diz "ver FAB-3.1 — V1"; §6 conta 2 aferições em Fabricação (FAB-2.1 e
     // FAB-3.1). A aferição acontece LÁ, não aqui: este critério não tem contraprova
     // própria, e é a tabela do §6 que fecha o denominador de 19.
     wave: null,
-    audit: 'a aferição acontece no FAB-3.1 (o plano publicado) — sem contraprova própria',
+    audit: 'a aferição acontece no FAB-3.1 (o plano publicado), sem contraprova própria',
     linkHint: 'guide',
   }),
   c({
@@ -661,7 +661,7 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 6 + prática 4: processo virou documento vivo',
     question: 'A sequência de solda está publicada como guia da equipe, e não só combinada?',
     fulfilled:
-      'Existe guia publicado, com dono, descrevendo a sequência — de forma que a próxima ' +
+      'Existe guia publicado, com dono, descrevendo a sequência, de forma que a próxima ' +
       'geração consiga repetir sem o autor.',
     notValid: 'Foto do quadro branco; mensagem no grupo; documento sem dono.',
     where: 'Guia em Equipe · Conhecimento, com a etiqueta de solda.',
@@ -678,12 +678,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 6: verificação dimensional após fabricação',
     question: 'As medidas do quadro foram conferidas depois da solda, com registro?',
     fulfilled:
-      'Houve medição das cotas críticas pós-solda com os valores anotados — ' +
+      'Houve medição das cotas críticas pós-solda com os valores anotados, ' +
       'independentemente de terem ficado dentro ou fora do previsto.',
     notValid: 'Conferência visual; medir só depois de perceber que algo ficou torto.',
     where: 'Decisão com a tabela de medidas.',
     wave: null,
-    audit: 'ver EST-5.1 — sem onda na v2',
+    audit: 'ver EST-5.1, sem onda na v2',
     linkHint: 'url',
   }),
   c({
@@ -701,7 +701,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Dar uma volta no estacionamento; testar só o que deu tempo.',
     where: 'Guia com o protocolo + decisão com o resultado da execução.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'guide',
   }),
@@ -716,11 +716,11 @@ export const CATALOG: readonly Criterion[] = [
     question: 'A equipe tem um carro anterior rodando como mula de testes, ou bancada própria?',
     fulfilled:
       'Existe um segundo veículo ou uma bancada em condição de uso, sendo usado para testar ' +
-      'antes de o carro novo estar pronto — a prática que separa a alta performance.',
+      'antes de o carro novo estar pronto, a prática que separa a alta performance.',
     notValid: 'Carro antigo parado no galpão; bancada emprestada uma vez.',
     where: 'Decisão descrevendo o ativo e como está sendo usado.',
     wave: 'V2',
-    audit: 'múltiplos projetos ativos da equipe — indício fraco',
+    audit: 'múltiplos projetos ativos da equipe, indício fraco',
     linkHint: 'url',
   }),
 
@@ -740,7 +740,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Capitania informal; organograma desenhado fora do portal.',
     where: 'Equipe · Pessoas.',
     wave: 'V1',
-    audit: '`org.summary` — terceiro exemplo canônico do DF-20 (piso de atividade)',
+    audit: '`org.summary`, terceiro exemplo canônico do DF-20 (piso de atividade)',
   }),
   c({
     id: 'GES-2.1',
@@ -753,7 +753,7 @@ export const CATALOG: readonly Criterion[] = [
     question: 'Todos os cargos de liderança do organograma têm alguém?',
     fulfilled: 'Nenhum nó marcado como liderança está vago.',
     notValid:
-      'Apagar o cargo vago do organograma para "fechar" o critério — o que a área mede é ' +
+      'Apagar o cargo vago do organograma para "fechar" o critério. O que a área mede é ' +
       'cobertura, e um organograma que esconde a vaga mente para a própria equipe.',
     where: 'Equipe · Pessoas.',
     wave: 'V1',
@@ -767,14 +767,14 @@ export const CATALOG: readonly Criterion[] = [
     label: 'Rotina de reunião definida',
     source: 'capitania',
     research: 'prática 3: cadência de reunião',
-    question: 'A equipe tem uma rotina de reunião definida — frequência e formato?',
+    question: 'A equipe tem uma rotina de reunião definida, frequência e formato?',
     fulfilled:
       'Existe combinação explícita (quando, onde, quanto tempo, o que se decide ali) e ela ' +
       'está sendo seguida.',
     notValid: '"A gente se fala todo dia"; reunião que acontece quando dá.',
     where: 'Decisão no diário com a rotina.',
     wave: 'V1',
-    audit: 'piso de atividade da equipe no portal — indício',
+    audit: 'piso de atividade da equipe no portal, indício',
     linkHint: 'decision',
   }),
   c({
@@ -809,7 +809,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Lista de desejos sem valores; controle só das notas fiscais.',
     where: 'Link para a planilha + decisão com o total previsto.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'url',
   }),
@@ -828,7 +828,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Efetivar quem "apareceu bastante"; avaliação combinada verbalmente.',
     where: 'Guia com o critério + decisão com o resultado da última rodada.',
     wave: 'V2',
-    audit: 'trainees promovidos em `org.summary` × existência de guia — indício',
+    audit: 'trainees promovidos em `org.summary` × existência de guia, indício',
     linkHint: 'guide',
   }),
   c({
@@ -846,7 +846,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Patrocinador de temporadas passadas; contato que "demonstrou interesse".',
     where: 'Decisão com a lista e a contrapartida de cada um.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -865,7 +865,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Convidar conhecidos; processo escrito mas não aplicado.',
     where: 'Guia com o processo + decisão com o resultado da última seleção.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     linkHint: 'guide',
   }),
   c({
@@ -883,7 +883,7 @@ export const CATALOG: readonly Criterion[] = [
     notValid: 'Planilha compartilhada sem apresentação; prestação só para a capitania.',
     where: 'Decisão no diário com a data e o material apresentado.',
     wave: null,
-    audit: 'fora do portal — segue declarado',
+    audit: 'fora do portal, segue declarado',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -901,7 +901,7 @@ export const CATALOG: readonly Criterion[] = [
     fulfilled: 'Existe uma decisão registrada, com o contexto e a alternativa descartada.',
     notValid:
       'Anotação sem o porquê. Uma decisão sem alternativa descartada é um comunicado, não uma ' +
-      'decisão — e é o registro do porquê que serve à geração seguinte.',
+      'decisão, e é o registro do porquê que serve à geração seguinte.',
     where: 'Equipe · Conhecimento.',
     wave: 'V1',
     audit: '`decision.created`',
@@ -919,7 +919,7 @@ export const CATALOG: readonly Criterion[] = [
       'Os dois contadores foram atingidos. São PISOS DE EXISTÊNCIA, não metas: o número ' +
       'existe para marcar que o hábito começou, não para ser perseguido.',
     notValid:
-      'Dez decisões registradas na mesma tarde para fechar o critério — o ganho de fazê-lo é ' +
+      'Dez decisões registradas na mesma tarde para fechar o critério. O ganho de fazê-lo é ' +
       'zero, porque quem lê o diário vazio depois é a própria equipe.',
     where: 'Equipe · Conhecimento.',
     wave: 'V1',
@@ -969,12 +969,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 4: registro cobre a equipe inteira, não um subsistema',
     question: 'O diário tem decisões de pelo menos três áreas diferentes nos últimos seis meses?',
     fulfilled:
-      'As decisões da janela cobrem três das seis áreas — sinal de que o registro é hábito da ' +
+      'As decisões da janela cobrem três das seis áreas, sinal de que o registro é hábito da ' +
       'equipe, e não de uma pessoa que documenta o próprio subsistema.',
     notValid: 'Vinte decisões, todas de chassi.',
     where: 'Equipe · Conhecimento, com a área marcada em cada decisão.',
     wave: 'V1',
-    audit: 'janela temporal em `knowledge.summary` — este critério expira sozinho com o tempo',
+    audit: 'janela temporal em `knowledge.summary`, este critério expira sozinho com o tempo',
   }),
   c({
     id: 'CON-4.1',
@@ -1023,12 +1023,12 @@ export const CATALOG: readonly Criterion[] = [
     question:
       'A equipe fez uma reunião de lições aprendidas depois da última competição, com registro?',
     fulfilled:
-      'Houve um encontro dedicado, com o time presente, e o resultado virou registro — ' +
+      'Houve um encontro dedicado, com o time presente, e o resultado virou registro, ' +
       'inclusive o que deu errado.',
     notValid: 'Conversa na viagem de volta; retrospectiva só entre a capitania.',
     where: 'Decisão no diário com as lições e os responsáveis por cada ação.',
     wave: 'V2',
-    audit: 'decisão em janela pós-competição do calendário do DF-15 — indício',
+    audit: 'decisão em janela pós-competição do calendário do DF-15, indício',
     seasonal: true,
     linkHint: 'decision',
   }),
@@ -1042,12 +1042,12 @@ export const CATALOG: readonly Criterion[] = [
     research: 'prática 9: continuidade entre gerações',
     question: 'A equipe mantém o histórico de quem ocupou cada função ao longo dos anos?',
     fulfilled:
-      'Existe registro de gerações — quem foi capitão, quem cuidou de cada subsistema, e como ' +
+      'Existe registro de gerações, quem foi capitão, quem cuidou de cada subsistema, e como ' +
       'encontrar essas pessoas depois de formadas.',
     notValid: 'Lista de nomes sem função nem ano; grupo de mensagens como "acervo".',
     where: 'Guia da equipe com o histórico (o organograma histórico é DF-10 v2).',
     wave: null,
-    audit: 'organograma histórico, quando existir — sem onda na v2',
+    audit: 'organograma histórico, quando existir, sem onda na v2',
     linkHint: 'guide',
   }),
 ]

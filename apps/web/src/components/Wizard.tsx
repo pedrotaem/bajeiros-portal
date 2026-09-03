@@ -27,7 +27,7 @@ const STEPS: StepDef[] = [
       { key: 'seatY', label: 'Geraldão Y (mm)' },
       { key: 'seatZ', label: 'Geraldão Z (mm)' },
       { key: 'simY', label: 'Altura dos pontos S (mm)' },
-      { key: 'shcY', label: 'Altura do SHC — pontos H (mm)' },
+      { key: 'shcY', label: 'Altura do SHC nos pontos H (mm)' },
     ],
   },
   {
@@ -69,7 +69,7 @@ const STEPS: StepDef[] = [
   {
     title: '6 · Amarração (Fore-Aft Bracing)',
     guide:
-      'O regulamento exige AO MENOS UM dos dois sistemas (B6.2.14.2): a dianteira dispensa a traseira e vice-versa — ambas também é aceito. Traseira: triângulos apoiados em B, S e A, membros ≤ 813 mm, ângulos ≥ 25° (B6.2.14.4). Dianteira: junção ≤ 127 mm do ponto C, ≥ 30° com o FBM e pontos P suportados até o LFS (B6.2.14.3).',
+      'O regulamento exige AO MENOS UM dos dois sistemas (B6.2.14.2): a dianteira dispensa a traseira e vice-versa, e as duas juntas também são aceitas. Traseira: triângulos apoiados em B, S e A, membros ≤ 813 mm, ângulos ≥ 25° (B6.2.14.4). Dianteira: junção ≤ 127 mm do ponto C, ≥ 30° com o FBM e pontos P suportados até o LFS (B6.2.14.3).',
     fields: [
       { key: 'rearZ', label: 'Recuo Z do vértice R (mm)' },
       { key: 'rearY', label: 'Altura do vértice R (mm)' },

@@ -32,7 +32,7 @@ export const SECTIONS: readonly Section[] = [
     id: 'chassi',
     label: 'Chassi e materiais',
     purpose:
-      'O que a gaiola é feita e de onde veio o material — inclusive a rastreabilidade que a inspeção pergunta.',
+      'O que a gaiola é feita e de onde veio o material, inclusive a rastreabilidade que a inspeção pergunta.',
   },
   {
     id: 'suspensao',
@@ -43,7 +43,7 @@ export const SECTIONS: readonly Section[] = [
   {
     id: 'direcao',
     label: 'Direção',
-    purpose: 'Relação, curso e geometria — o que define esterçamento e esforço no volante.',
+    purpose: 'Relação, curso e geometria: o que define esterçamento e esforço no volante.',
   },
   {
     id: 'freios',
@@ -67,7 +67,7 @@ export const SECTIONS: readonly Section[] = [
     id: 'ergonomia',
     label: 'Ergonomia e testes',
     purpose:
-      'O piloto de referência e a evidência de que o carro rodou antes da competição — lastro dos critérios de fabricação e dinâmica.',
+      'O piloto de referência e a evidência de que o carro rodou antes da competição, lastro dos critérios de fabricação e dinâmica.',
   },
 ]
 
@@ -154,7 +154,7 @@ export const FIELDS: readonly Field[] = [
     section: 'identificacao',
     label: 'Nome do protótipo',
     type: 'text',
-    help: 'Como a equipe chama o carro — o apelido que aparece na oficina, não o nome do projeto no portal.',
+    help: 'Como a equipe chama o carro: o apelido que aparece na oficina, e não o nome do projeto no portal.',
   },
   {
     id: 'id.temporada',
@@ -291,7 +291,7 @@ export const FIELDS: readonly Field[] = [
     absolute: { min: 0, max: 100 },
     typical: { min: 30, max: 50 },
     dual: true,
-    help: 'Percentual da massa sobre o eixo dianteiro. A traseira é o complemento — não é campo separado de propósito.',
+    help: 'Percentual da massa sobre o eixo dianteiro. A traseira é o complemento, e por isso não tem campo próprio.',
   },
   {
     id: 'dim.comprimento-tubo',
@@ -301,7 +301,7 @@ export const FIELDS: readonly Field[] = [
     unit: 'mm',
     absolute: { min: 1000, max: 200000 },
     suggest: 'tubeLengthMm',
-    help: 'Soma do comprimento de todos os membros. Útil na hora da compra — e o sugerido não inclui sobra de corte.',
+    help: 'Soma do comprimento de todos os membros. Útil na hora da compra. O valor sugerido não inclui sobra de corte.',
   },
   {
     id: 'dim.tubos-cortados',
@@ -342,7 +342,7 @@ export const FIELDS: readonly Field[] = [
     section: 'chassi',
     label: 'Lote / certificado do material',
     type: 'link',
-    help: 'Link para o certificado ou a nota fiscal — a rastreabilidade que a inspeção pergunta.',
+    help: 'Link para o certificado ou a nota fiscal, a rastreabilidade que a inspeção pergunta.',
   },
   {
     id: 'chassi.tratamento',
@@ -495,7 +495,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'susp.amortecedor',
     section: 'suspensao',
-    label: 'Amortecedor — modelo',
+    label: 'Modelo do amortecedor',
     type: 'text',
     help: 'Fabricante e modelo. Sem isso, a regulagem da temporada passada não é reproduzível.',
   },
@@ -504,7 +504,7 @@ export const FIELDS: readonly Field[] = [
     section: 'suspensao',
     label: 'Memória de cálculo',
     type: 'link',
-    help: 'Link para a planilha ou o relatório do dimensionamento — o mesmo lastro que o critério DIN-3.1 pede.',
+    help: 'Link para a planilha ou o relatório do dimensionamento, o mesmo lastro que o critério DIN-3.1 pede.',
   },
 
   // 5.5 Direção
@@ -588,12 +588,12 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'freio.cilindro-mestre',
     section: 'freios',
-    label: 'Cilindro mestre — diâmetro',
+    label: 'Diâmetro do cilindro mestre',
     type: 'number',
     unit: 'mm',
     absolute: { min: 5, max: 80 },
     typical: { min: 12, max: 25 },
-    help: 'Diâmetro do êmbolo. Componente que costuma vir em polegada — converta antes de registrar (a v1 guarda só em SI).',
+    help: 'Diâmetro do êmbolo. Componente que costuma vir em polegada, então converta antes de registrar (a v1 guarda só em SI).',
   },
   {
     id: 'freio.relacao-pedal',
@@ -630,14 +630,14 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'tf.motor',
     section: 'trem-forca',
-    label: 'Motor — modelo',
+    label: 'Modelo do motor',
     type: 'text',
     help: 'Modelo do motor entregue pela organização ou adotado pela equipe.',
   },
   {
     id: 'tf.cvt',
     section: 'trem-forca',
-    label: 'CVT — modelo',
+    label: 'Modelo da CVT',
     type: 'text',
     help: 'Fabricante e modelo do variador.',
   },
@@ -646,7 +646,7 @@ export const FIELDS: readonly Field[] = [
     section: 'trem-forca',
     label: 'Mola primária',
     type: 'text',
-    help: 'Identificação do fabricante — cor, código, o que estiver escrito na peça.',
+    help: 'Identificação do fabricante: cor, código, o que estiver escrito na peça.',
   },
   {
     id: 'tf.pesos',
@@ -672,7 +672,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'tf.reducao-tipo',
     section: 'trem-forca',
-    label: 'Redução — tipo',
+    label: 'Tipo de redução',
     type: 'enum',
     options: REDUCAO_TIPO,
     help: 'Como a redução depois do CVT é feita.',
@@ -699,7 +699,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'tf.pneu',
     section: 'trem-forca',
-    label: 'Pneu — medida',
+    label: 'Medida do pneu',
     type: 'text',
     comparable: true,
     maxLength: 60,
@@ -721,14 +721,14 @@ export const FIELDS: readonly Field[] = [
     section: 'trem-forca',
     label: 'Registro de setup por condição',
     type: 'link',
-    help: 'Onde a equipe anota a calibração por tipo de prova — o mesmo lastro que o critério DIN-3.2 pede.',
+    help: 'Onde a equipe anota a calibração por tipo de prova, o mesmo lastro que o critério DIN-3.2 pede.',
   },
 
   // 5.8 Elétrica e segurança
   {
     id: 'ele.interruptores',
     section: 'eletrica',
-    label: 'Interruptores de corte — quantidade',
+    label: 'Quantidade de interruptores de corte',
     type: 'number',
     absolute: { min: 0, max: 10 },
     typical: { min: 2, max: 3 },
@@ -744,7 +744,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'ele.bateria',
     section: 'eletrica',
-    label: 'Bateria — tipo e fixação',
+    label: 'Tipo e fixação da bateria',
     type: 'text',
     help: 'Tipo, capacidade e como está presa. A fixação é o que a inspeção olha.',
   },
@@ -758,7 +758,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'ele.cinto-pontos',
     section: 'eletrica',
-    label: 'Cinto — pontos',
+    label: 'Pontos do cinto',
     type: 'enum',
     options: CINTO_PONTOS,
     help: 'Quantos pontos de ancoragem o cinto tem.',
@@ -766,7 +766,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'ele.cinto-validade',
     section: 'eletrica',
-    label: 'Cinto — validade',
+    label: 'Validade do cinto',
     type: 'date',
     help: 'A data que a inspeção confere. Registrar aqui é o que evita descobrir o vencimento na fila da vistoria.',
   },
@@ -780,7 +780,7 @@ export const FIELDS: readonly Field[] = [
   {
     id: 'ele.extintor-validade',
     section: 'eletrica',
-    label: 'Extintor — validade',
+    label: 'Validade do extintor',
     type: 'date',
     help: 'Mesma lógica do cinto.',
   },
@@ -818,7 +818,7 @@ export const FIELDS: readonly Field[] = [
     section: 'ergonomia',
     label: 'Protocolo de testes pré-competição',
     type: 'link',
-    help: 'O roteiro que a equipe cumpre antes de viajar — lastro do critério FAB-4.1.',
+    help: 'O roteiro que a equipe cumpre antes de viajar, lastro do critério FAB-4.1.',
   },
   {
     id: 'erg.horas-shakedown',
@@ -836,7 +836,7 @@ export const FIELDS: readonly Field[] = [
     label: 'Sessões de aquisição de dados',
     type: 'number',
     absolute: { min: 0, max: 500 },
-    help: 'Quantas sessões com instrumentação — lastro dos critérios DIN-4.2 e DIN-5.1.',
+    help: 'Quantas sessões com instrumentação, lastro dos critérios DIN-4.2 e DIN-5.1.',
   },
   {
     id: 'erg.ultima-sessao',
@@ -850,7 +850,7 @@ export const FIELDS: readonly Field[] = [
     section: 'ergonomia',
     label: 'Controle dimensional pós-solda',
     type: 'link',
-    help: 'Onde está o registro da conferência das medidas depois de soldar — lastro do critério FAB-3.2.',
+    help: 'Onde está o registro da conferência das medidas depois de soldar, lastro do critério FAB-3.2.',
   },
 ]
 

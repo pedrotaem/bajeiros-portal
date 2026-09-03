@@ -38,8 +38,8 @@ export function AssistantDemo() {
         <div>
           <strong>O assistente do regulamento é para quem tem conta.</strong>
           <p>
-            No plano gratuito são 20 perguntas por dia, sobre o regulamento inteiro — não só a seção
-            B6 — com a seção e a página citadas em toda resposta.
+            No plano gratuito são 20 perguntas por dia sobre o regulamento inteiro, não só a seção
+            B6, e toda resposta vem com a seção e a página citadas.
           </p>
         </div>
         <div className="bj-demo-acoes">
@@ -56,7 +56,8 @@ export function AssistantDemo() {
 
       <div className="assistant-foot">
         <span>
-          O assistente pode errar — confira no PDF oficial. Não substitui a inspeção (B6.4).
+          O assistente pode errar, então confira no PDF oficial. Ele não substitui a inspeção
+          (B6.4).
         </span>
       </div>
     </div>

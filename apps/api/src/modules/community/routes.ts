@@ -446,7 +446,7 @@ community.post('/goals', async (c) => {
     if (!can(role, 'step.manage')) return 'forbidden' as const
     const comp = await db.query('SELECT name FROM competitions WHERE id = $1', [competitionId])
     if (!comp.rowCount) return 'no-competition' as const
-    const title = `Recuperar a mediana de ${event} — ${comp.rows[0].name}`.slice(0, 140)
+    const title = `Recuperar a mediana de ${event}: ${comp.rows[0].name}`.slice(0, 140)
     const r = await db.query(
       `INSERT INTO evolution_steps (team_id, title, origin, link_ref, created_by, position)
        VALUES ($1, $2, 'meta', $3, $4, 0) RETURNING *`,

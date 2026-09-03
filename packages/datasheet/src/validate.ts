@@ -55,7 +55,7 @@ function validateNumber(field: Field, raw: unknown): ValidationResult {
 function validateText(field: Field, raw: unknown): ValidationResult {
   if (typeof raw !== 'string') return fail(`"${field.label}" espera texto.`)
   const v = raw.trim()
-  if (!v) return fail(`"${field.label}" não aceita texto vazio — para apagar, remova o valor.`)
+  if (!v) return fail(`"${field.label}" não aceita texto vazio. Para apagar, remova o valor.`)
   const max = maxLengthOf(field)
   if (max != null && v.length > max) {
     return fail(`"${field.label}" tem no máximo ${max} caracteres (recebidos ${v.length}).`)

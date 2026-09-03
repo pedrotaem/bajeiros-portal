@@ -18,7 +18,7 @@ describe('exportação da ficha (DF-21 RF-6.1)', () => {
   // AC-DF21.14
   it('Markdown traz seções, unidades e as três colunas', () => {
     const md = exportMarkdown(base)
-    expect(md).toContain('# Ficha do protótipo — Canindé 2026')
+    expect(md).toContain('# Ficha do protótipo: Canindé 2026')
     expect(md).toContain('## Dimensões e massa')
     expect(md).toContain('| Campo | Unidade | Sugerido | Projetado | Medido |')
     expect(md).toContain('| Massa da gaiola | kg | 26,4 | 30 | 31,8 |')
@@ -53,7 +53,7 @@ describe('exportação da ficha (DF-21 RF-6.1)', () => {
       ...base,
       waivers: [{ sectionId: 'ergonomia', reason: 'sem aquisição de dados nesta temporada' }],
     })
-    expect(md).toContain('## Ergonomia e testes — não se aplica')
+    expect(md).toContain('## Ergonomia e testes (não se aplica)')
     expect(md).toContain('Motivo: sem aquisição de dados nesta temporada')
     expect(exportCsv({ ...base, waivers: [{ sectionId: 'ergonomia' }] })).not.toContain(
       'Horas de shakedown',

@@ -71,7 +71,7 @@ function unitOf(field: Field): string {
 export function exportMarkdown(input: ExportInput): string {
   const { rows, waived, hasSuggested, hasMeasured, progress } = build(input)
   const out: string[] = []
-  out.push(`# Ficha do protótipo — ${input.projectName}`, '')
+  out.push(`# Ficha do protótipo: ${input.projectName}`, '')
   out.push(
     `Catálogo v${input.catalogVersion} · ficha ${progress.pct}% ` +
       `(${progress.filled} de ${progress.total} campos` +
@@ -87,7 +87,7 @@ export function exportMarkdown(input: ExportInput): string {
 
   for (const section of SECTIONS) {
     const dispensada = waived.has(section.id)
-    out.push(`## ${section.label}${dispensada ? ' — não se aplica' : ''}`)
+    out.push(`## ${section.label}${dispensada ? ' (não se aplica)' : ''}`)
     if (dispensada) {
       const motivo = waived.get(section.id)
       out.push('', motivo ? `Motivo: ${motivo}` : 'Sem motivo registrado.', '')

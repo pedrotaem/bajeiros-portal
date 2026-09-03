@@ -265,7 +265,7 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
         c,
         409,
         'Função da capitania',
-        'Capitão/capitã e co-capitães ficam no topo do organograma — dá para renomear, não para mover.',
+        'Capitão/capitã e co-capitães ficam no topo do organograma. Dá para renomear, mas não para mover.',
       )
     if (result === 'no-parent') return problem(c, 400, 'Função-mãe inválida')
     if (result === 'cycle')
@@ -329,7 +329,7 @@ export function registerPositionRoutes(teams: Hono<AuthEnv>): void {
         c,
         409,
         'Função da capitania',
-        'Capitão/capitã e co-capitães fazem parte da estrutura — não dá para excluir.',
+        'Capitão/capitã e co-capitães fazem parte da estrutura. Não dá para excluir.',
       )
     return c.body(null, 204)
   })

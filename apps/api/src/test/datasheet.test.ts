@@ -503,7 +503,7 @@ describe('DF-21 — ficha do protótipo (API)', () => {
     const md = await app.request(`/api/v1/projects/${daEquipe}/datasheet/export`, authed(cap))
     expect(md.headers.get('content-type')).toMatch(/text\/markdown/)
     const texto = await md.text()
-    expect(texto).toContain('# Ficha do protótipo — Canindé 2026')
+    expect(texto).toContain('# Ficha do protótipo: Canindé 2026')
     expect(texto).toContain('## Dimensões e massa')
     expect(texto).toContain('| Campo | Unidade | Sugerido | Projetado | Medido |')
 
