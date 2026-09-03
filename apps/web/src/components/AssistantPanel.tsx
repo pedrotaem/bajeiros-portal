@@ -1,34 +1,22 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { create } from 'zustand'
 import { authHeaders, useSession } from '../session'
+import { AssistantDemo } from './AssistantDemo'
+import { Bolha, type ChatMsg, type Citation } from './AssistantMsg'
 
 // DF-8 — Assistente de Regras: chat sobre o regulamento completo via AI Gateway.
 // Conversa vive em memória (zustand de módulo — fechar o painel preserva; recarregar
 // a página zera, mesmo padrão do token). Citações chegam ESTRUTURADAS (evento SSE
 // `citation` com seção + página, G3) e viram chips sob a resposta.
-
-export interface Citation {
-  sectionId: string
-  pageStart: number
-  pageEnd: number
-}
-
-export interface ChatMsg {
-  role: 'user' | 'assistant'
-  content: string
-  citations?: Citation[]
-}
+// DF-28: exige conta. Sem sessão, a página mostra a demonstração encenada e não
+// chama rota nenhuma — o `AssistantDemo` entra no lugar de tudo que vem abaixo.
 
 interface AssistantStatus {
-  anonymous: boolean
   noticeAccepted: boolean
   noticeVersion: string
   dailyLimit: number
   usedToday: number
 }
-
-// Anônimo: aceite do aviso vive só no browser (servidor não rastreia anônimos)
-const ANON_NOTICE_KEY = 'bajeiros:assistant-notice-v1'
 
 interface AssistantState {
   messages: ChatMsg[]
@@ -48,55 +36,23 @@ export const useAssistant = create<AssistantState>((set) => ({
   clear: () => set({ messages: [], streaming: false }),
 }))
 
-/** Abre a página do assistente com pergunta pré-preenchida (uso: checklist). */
+/**
+ * Abre a página do assistente com pergunta pré-preenchida (uso: checklist).
+ *
+ * Sem conta a pessoa cai na demonstração (DF-28 FR-DF28.21) — e a pergunta fica
+ * guardada aqui, então ela aparece na caixa se a sessão começar sem sair da página.
+ */
 export function askAssistant(question: string, ctx?: { ruleId: string; status?: string }) {
   useAssistant.getState().setPrefill(question, ctx)
-  useSession.getState().setPage('assistant') // anônimo pode (2 perguntas/dia)
+  useSession.getState().setPage('assistant')
 }
 
 const WINDOW = 12 // janela de mensagens enviada por chamada
 
-// Mini-renderer: só o markdown que o modelo insiste em usar (títulos, negrito,
-// listas). Sem HTML do modelo — tudo vira texto React (sem dangerouslySetInnerHTML).
-function renderBold(text: string, keyBase: string) {
-  const parts = text.split(/\*\*([^*]+)\*\*/g)
-  return parts.map((p, i) => (i % 2 === 1 ? <b key={`${keyBase}-${i}`}>{p}</b> : p))
-}
-
-function Rich({ text }: { text: string }) {
-  return (
-    <>
-      {text.split('\n').map((line, i) => {
-        const h = /^#{1,4}\s+(.*)$/.exec(line)
-        if (h) {
-          return (
-            <div key={i} className="assistant-h">
-              {renderBold(h[1], `h${i}`)}
-            </div>
-          )
-        }
-        const li = /^\s*[-•]\s+(.*)$/.exec(line)
-        if (li) {
-          return (
-            <div key={i} className="assistant-li">
-              {renderBold(li[1], `l${i}`)}
-            </div>
-          )
-        }
-        return (
-          <div key={i} className={line.trim() ? undefined : 'assistant-gap'}>
-            {renderBold(line, `p${i}`)}
-          </div>
-        )
-      })}
-    </>
-  )
-}
-
 // O título da página vive na topbar do shell (DF-12 RF-1.4) — o painel não desenha
 // mais cabeçalho próprio.
 export function AssistantPanel() {
-  const { token, api, setPanel } = useSession()
+  const { user, token, api } = useSession()
   const { messages, streaming, prefill, context } = useAssistant()
   const [status, setStatus] = useState<AssistantStatus | null>(null)
   const [input, setInput] = useState('')
@@ -105,15 +61,11 @@ export function AssistantPanel() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!user) return // sem conta a tela é a demonstração: nenhuma chamada (FR-DF28.14)
     api<AssistantStatus>('/api/v1/assistant/status')
-      .then((s) =>
-        setStatus(
-          // aceite anônimo lembrado no browser
-          s.anonymous && localStorage.getItem(ANON_NOTICE_KEY) ? { ...s, noticeAccepted: true } : s,
-        ),
-      )
+      .then(setStatus)
       .catch(() => setErr('Não foi possível carregar o assistente — API local rodando?'))
-  }, [api, token])
+  }, [api, token, user])
 
   useEffect(() => {
     if (prefill) {
@@ -129,8 +81,7 @@ export function AssistantPanel() {
   const accept = async () => {
     setErr(null)
     try {
-      if (token) await api('/api/v1/assistant/notice', { method: 'POST' })
-      else localStorage.setItem(ANON_NOTICE_KEY, new Date().toISOString())
+      await api('/api/v1/assistant/notice', { method: 'POST' })
       setStatus((s) => (s ? { ...s, noticeAccepted: true } : s))
     } catch {
       setErr('Falha ao registrar o aceite. Tente de novo.')
@@ -247,6 +198,10 @@ export function AssistantPanel() {
     }
   }
 
+  // DF-28: sem conta, a demonstração é a página inteira. O ramo fica DEPOIS dos
+  // hooks — a ordem deles não pode mudar entre um render e o seguinte.
+  if (!user) return <AssistantDemo />
+
   if (err && !status) {
     return (
       <div className="assistant-panel">
@@ -276,18 +231,10 @@ export function AssistantPanel() {
               Suas perguntas são processadas por um provedor de IA <b>fora do Brasil</b>{' '}
               (transferência internacional com salvaguardas contratuais — LGPD art. 33).
             </li>
-            {status.anonymous ? (
-              <li>
-                Sem conta você tem <b>{status.dailyLimit} perguntas por dia</b> e nada é armazenado.
-                Com conta (gratuita), perguntas e respostas são <b>armazenadas</b> (90 dias) e
-                visíveis ao administrador do portal, para operação e melhoria do serviço.
-              </li>
-            ) : (
-              <li>
-                Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador
-                do portal, para operação e melhoria do serviço.
-              </li>
-            )}
+            <li>
+              Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador do
+              portal, para operação e melhoria do serviço.
+            </li>
             <li>
               <b>Não digite dados pessoais</b> (nomes, e-mails, documentos) nas perguntas.
             </li>
@@ -317,27 +264,7 @@ export function AssistantPanel() {
           </p>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={`assistant-msg ${m.role}`}>
-            {m.content ? (
-              m.role === 'assistant' ? (
-                <Rich text={m.content} />
-              ) : (
-                m.content
-              )
-            ) : (
-              <span className="assistant-typing">…</span>
-            )}
-            {m.citations && m.citations.length > 0 && (
-              <div className="assistant-cites">
-                {m.citations.map((c) => (
-                  <span key={`${c.sectionId}-${c.pageStart}`} className="assistant-cite">
-                    {c.sectionId} · p.{' '}
-                    {c.pageEnd > c.pageStart ? `${c.pageStart}–${c.pageEnd}` : c.pageStart}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          <Bolha key={i} msg={m} />
         ))}
       </div>
       {err && <p className="modal-err">{err}</p>}
@@ -347,9 +274,7 @@ export function AssistantPanel() {
           placeholder={
             quotaLeft > 0
               ? 'Sua pergunta… (Enter envia, Shift+Enter quebra linha)'
-              : status.anonymous
-                ? 'Limite sem conta atingido — entre para continuar'
-                : 'Limite diário atingido'
+              : 'Limite diário atingido'
           }
           disabled={quotaLeft <= 0}
           rows={2}
@@ -365,10 +290,6 @@ export function AssistantPanel() {
           <button type="button" className="account-btn" onClick={stop}>
             Parar
           </button>
-        ) : status.anonymous && quotaLeft <= 0 ? (
-          <button type="button" className="account-btn primary" onClick={() => setPanel('login')}>
-            Entrar
-          </button>
         ) : (
           <button className="account-btn primary" disabled={!input.trim() || quotaLeft <= 0}>
             Enviar
@@ -380,13 +301,9 @@ export function AssistantPanel() {
           O assistente pode errar — confira no PDF oficial. Não substitui a inspeção (B6.4).
         </span>
         <span className="admin-dim">
-          {status.anonymous
-            ? quotaLeft > 0
-              ? `${quotaLeft}/${status.dailyLimit} perguntas sem conta — entre p/ ter 20/dia`
-              : 'limite sem conta atingido — crie uma conta gratuita (20/dia)'
-            : quotaLeft > 0
-              ? `${quotaLeft}/${status.dailyLimit} mensagens hoje`
-              : 'limite renova à meia-noite (UTC)'}
+          {quotaLeft > 0
+            ? `${quotaLeft}/${status.dailyLimit} mensagens hoje`
+            : 'limite renova à meia-noite (UTC)'}
         </span>
       </div>
     </div>

@@ -22,10 +22,6 @@ export const app = new Hono()
 app.get('/api/v1/health', (c) => c.json({ ok: true, service: 'bajeiros-api' }))
 if (env('AUTH_MODE') === 'dev') app.route('/api/v1/dev', devIssuer)
 
-// assistente aceita anônimo (2 perguntas/dia) — auth opcional dentro do módulo,
-// por isso montado ANTES do requireAuth global
-app.route('/api/v1/assistant', assistant)
-
 app.use('/api/v1/*', requireAuth)
 app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
 app.route('/api/v1/me', identity)
@@ -41,6 +37,9 @@ app.route('/api/v1/teams', evolution)
 app.route('/api/v1/teams', knowledge) // DF-14
 app.route('/api/v1/evolution', evolutionRoot)
 app.route('/api/v1/community', community) // DF-15
+// DF-28: o assistente era a única exceção na ordem (montado antes do requireAuth
+// para aceitar anônimo). A degustação sem conta acabou, e com ela a exceção.
+app.route('/api/v1/assistant', assistant)
 app.route('/api/v1/feedback', feedback) // DF-26
 app.route('/api/v1/invites', invites)
 app.route('/api/v1/activity', activity)

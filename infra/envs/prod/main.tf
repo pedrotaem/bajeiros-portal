@@ -89,7 +89,6 @@ module "api" {
   backup_retention_days = 35
   deletion_protection   = true
   budget_alert_emails   = ["pedrotaem@gmail.com"]
-  assistant_anon_daily  = 0 # DF-27: sem cortina, voltar ao default 2
   gateway_url           = data.terraform_remote_state.ai_gateway.outputs.gateway.function_url
 }
 

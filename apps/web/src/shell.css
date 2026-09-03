@@ -2843,3 +2843,80 @@
     font-size: 44px;
   }
 }
+
+/* ---------- DF-28 — demonstração do assistente (sem conta) ---------- */
+
+/* A demonstração vive DENTRO da página do assistente e reusa as classes do chat
+   (`assistant-thread`, `assistant-msg`, `assistant-cite`), que ainda moram no
+   `styles.css` do mundo pré-redesign. O que é novo mora aqui, com token — a spec
+   §9.5 registra a convivência dos dois sistemas até a fase que migrar o assistente. */
+
+.bj-demo-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-3);
+  padding: var(--bj-space-3) var(--bj-space-4);
+  border-bottom: 1px solid var(--bj-border);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+  line-height: var(--bj-leading-normal);
+}
+
+/* Ocre é acento, nunca superfície: o selo é a única marca de cor da tela. */
+.bj-demo-selo {
+  flex: none;
+  border: 1px solid var(--bj-brand-border);
+  border-radius: var(--bj-radius-sm);
+  padding: 2px var(--bj-space-2);
+  font-size: var(--bj-text-xs);
+  font-weight: var(--bj-weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bj-brand-strong);
+  background: var(--bj-brand-bg);
+}
+
+.bj-demo-convite {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bj-space-4);
+  flex-wrap: wrap;
+  margin: 0 var(--bj-space-4) var(--bj-space-3);
+  padding: var(--bj-space-4);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  background: var(--bj-bg-raised);
+}
+.bj-demo-convite strong {
+  display: block;
+  font-size: var(--bj-text-lg);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-demo-convite p {
+  margin: var(--bj-space-1) 0 0;
+  max-width: 56ch;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+  line-height: var(--bj-leading-normal);
+  text-wrap: pretty;
+}
+
+.bj-demo-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  flex: none;
+}
+
+/* Sem a linha de quota, o aviso do rodapé é o único texto — centralizado ele para de
+   parecer alinhado ao lado errado. */
+.bj-demo-convite + .assistant-foot {
+  justify-content: center;
+}
+
+/* A caixa de texto é figurante: mostra a pergunta sendo digitada e não recebe nada. */
+.assistant-input textarea[readonly] {
+  cursor: default;
+  color: var(--bj-fg-secondary);
+}

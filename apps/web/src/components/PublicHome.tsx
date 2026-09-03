@@ -163,8 +163,8 @@ export function PublicHome() {
                 <h4>Ferramentas</h4>
               </header>
               <p>
-                Validador de gaiola com ~40 verificações da seção B6, e o assistente que responde
-                citando seção e página. Abrem sem conta.
+                Validador de gaiola com ~40 verificações da seção B6, que abre sem conta. E o
+                assistente que responde citando seção e página — com conta, depois da demonstração.
               </p>
             </article>
           </div>

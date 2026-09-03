@@ -125,10 +125,14 @@ os dois requisitos do enunciado.
 
 ### 5.3 O assistente anônimo
 
-- **FR-DF27.12** `ANON_DAILY` (hoje constante `2` em `modules/assistant/routes.ts`) vira
-  `ASSISTANT_ANON_DAILY`, com default `2`. **Produção com cortina roda `0`.** É a única rota que
-  gasta dinheiro com LLM sem conta, e ela não passa pela UI: uma cortina que a deixasse aberta
-  seria decorativa justo do lado que custa. A resposta é a mensagem de limite que já existe.
+- **FR-DF27.12** — ⛔ **SUBSTITUÍDA pelo [DF-28](df28-assistente-sem-conta.md)** (2026-09-03).
+  A degustação anônima acabou: o assistente exige conta em **todo** ambiente, o que é
+  estritamente mais fechado que o `ASSISTANT_ANON_DAILY=0` que esta FR pedia. A variável, a
+  quota por IP e o `optionalAuth` foram removidos. A **AC-DF27.7 continua verdadeira**, por um
+  motivo mais forte: a pergunta anônima é recusada com 401 antes de qualquer contagem.
+  - _Texto original:_ `ANON_DAILY` (constante `2` em `modules/assistant/routes.ts`) vira
+    `ASSISTANT_ANON_DAILY`, com default `2`. Produção com cortina roda `0`. É a única rota que
+    gasta dinheiro com LLM sem conta, e ela não passa pela UI.
 
 ### 5.4 Buscadores
 
@@ -247,8 +251,8 @@ Ambos entram no runbook — cortina sem chave reserva é incidente esperando dat
 - **Unitário** (config): `loadAppConfig` preserva `comingSoon` no caminho cognito e **não** o
   inventa no fallback dev.
 - **Guarda de fonte** (estilo `vitrine.test.ts`): `App.tsx` não monta `Shell` no ramo da cortina.
-- **API** (`apps/api/src/test/assistant.test.ts`): `ASSISTANT_ANON_DAILY=0` recusa a pergunta
-  anônima e não chama o gateway.
+- **API** (`apps/api/src/test/assistant.test.ts`): pergunta anônima é recusada e o gateway não é
+  chamado (desde o DF-28 isso é 401, não 429 — ver a nota na FR-DF27.12).
 - **Manual em prod**, na ordem do §10: anônimo → login de conta comum → login do administrador →
   desligar e religar a cortina.
 - **Smoke do deploy:** o teste atual faz `grep -qi "bajeiros"` no corpo da raiz — a cortina

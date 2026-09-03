@@ -212,9 +212,6 @@ resource "aws_lambda_function" "api" {
       # contraprovas. A troca NÃO exige migração — é o mesmo dado, outro cálculo — e o
       # gate é de produto (uma temporada de v1 acumulada), não de deploy.
       EVOLUTION_MODE = var.evolution_mode
-      # DF-27: degustação anônima do assistente. `0` enquanto a cortina "Em breve"
-      # estiver de pé — é a única rota que gasta LLM sem conta e não passa pela UI.
-      ASSISTANT_ANON_DAILY = tostring(var.assistant_anon_daily)
     }
   }
 
