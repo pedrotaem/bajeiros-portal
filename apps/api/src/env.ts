@@ -9,6 +9,10 @@ const def = {
   GATEWAY_URL: 'http://localhost:8788',
   GATEWAY_AUTH: '', // 'iam' em prod: assina SigV4 na Function URL do gateway (G3)
   ASSISTANT_RATE_SALT: 'dev-salt-nao-usar-em-prod',
+  // DF-27 — degustação anônima do assistente (perguntas/dia por IP). `0` fecha a
+  // porta: é a única rota que gasta LLM sem conta e não passa pela UI, então a
+  // cortina "Em breve" precisa fechá-la aqui, não na tela.
+  ASSISTANT_ANON_DAILY: '2',
   // DF-19 AC-10 / DF-20 §9 — 'declarado' (v1 autodeclarativa) | 'aferido' (liga as
   // contraprovas). Alternar NÃO exige migração: é o mesmo dado, outro cálculo. O
   // gate do DF-20 é uma temporada de v1 acumulada, não uma decisão de deploy.

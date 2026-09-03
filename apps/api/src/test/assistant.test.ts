@@ -159,6 +159,27 @@ describe('assistente (DF-8)', () => {
     expect(after).toBe(before)
   })
 
+  it('ASSISTANT_ANON_DAILY=0 fecha a degustação sem conta (DF-27 FR-DF27.12)', async () => {
+    process.env.ASSISTANT_ANON_DAILY = '0'
+    try {
+      const ip = { 'x-forwarded-for': '203.0.113.90' }
+      const s = await (await app.request('/api/v1/assistant/status', { headers: ip })).json()
+      expect(s.dailyLimit).toBe(0)
+
+      const r = await app.request('/api/v1/assistant/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...ip },
+        body: JSON.stringify(chatBody),
+      })
+      // primeira pergunta já é recusada: o gateway não chega a ser chamado
+      expect(r.status).toBe(429)
+      const p = await r.json()
+      expect(p.title).toBe('Assistente sem conta indisponível')
+    } finally {
+      delete process.env.ASSISTANT_ANON_DAILY
+    }
+  })
+
   it('IPs anônimos diferentes têm quotas independentes', async () => {
     const r = await app.request('/api/v1/assistant/chat', {
       method: 'POST',

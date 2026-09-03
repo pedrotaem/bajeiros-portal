@@ -122,6 +122,57 @@ Duas coisas que dependem de operação e que travam a escada:
   diário: `POST /api/v1/admin/evolution/recompute`. Enquanto o gatilho do EventBridge não
   existe, a queda de quem nunca abre a tela fica pendurada até alguém abrir.
 
+## Cortina "Em breve" em produção (DF-27)
+
+Produção mostra a cortina para todo mundo **menos** quem tem `users.is_admin` (DF-9). Staging e
+dev local nunca são afetados. A chave é o campo `comingSoon` do `config.json` do ambiente —
+publicar um arquivo, não fazer um release.
+
+**Pré-requisito (fazer ANTES de ligar):** o administrador precisa existir em prod com
+`is_admin = true`. Sem isso você fica do lado de fora junto com todo mundo.
+
+```sql
+-- conexão OWNER no cluster de prod (ver "API — operação")
+UPDATE users SET is_admin = true WHERE email = 'pedrotaem@gmail.com';
+```
+
+**Ligar:**
+
+1. GitHub → Settings → Environments → `production` → variable `COMING_SOON` = `true`
+   (o literal exato; qualquer outro valor sai como `false`).
+2. `noindex = true` e `assistant_anon_daily = 0` no `infra/envs/prod/main.tf` → `terraform apply`
+   com `AWS_PROFILE=bajeiros-prod` (o primeiro fecha buscador, o segundo fecha a degustação do
+   assistente sem conta — a única rota que gasta LLM fora da UI).
+3. Re-rodar o deploy (Actions → Deploy → Run workflow) **ou**, para efeito imediato, publicar o
+   `config.json` à mão:
+
+```bash
+printf '{"authMode":"cognito","comingSoon":true,"cognito":{"domain":"DOMINIO","clientId":"CLIENT_ID","providers":["google"]}}' > config.json
+aws s3 cp config.json s3://bajeiros-prod-site/config.json \
+  --cache-control "no-cache" --content-type "application/json" --profile bajeiros-prod
+aws cloudfront create-invalidation --distribution-id DISTRO_ID --paths "/config.json" \
+  --profile bajeiros-prod
+```
+
+**Desligar (dia do lançamento):** `COMING_SOON=false`, `noindex = false` e
+`assistant_anon_daily = 2` no env de prod + apply, e o mesmo `config.json` com
+`"comingSoon":false`. Os três voltam juntos — desligar a cortina e deixar o `noindex` de pé é o
+erro mais fácil de cometer aqui.
+
+**Se você se trancar para fora** (promoção não aplicada, conta errada): publicar o `config.json`
+com `"comingSoon":false` pelo comando acima. Ele não depende de login nenhum.
+
+**Verificar:**
+
+```bash
+curl -s https://bajeiros.com.br/config.json          # "comingSoon":true
+curl -sI https://bajeiros.com.br/ | grep -i robots   # x-robots-tag: noindex, nofollow
+```
+
+A cortina é de produto, não de acesso: o bundle continua público e quem forçar `comingSoon:false`
+no devtools vê a interface — que é o que já era público. Dado de equipe, projeto e ficha segue
+protegido por JWT + RLS, com ou sem cortina (DF-27 §9).
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.

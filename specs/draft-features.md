@@ -228,3 +228,26 @@ gente, não de código:
 - **Base legal do conteúdo pós-exclusão** (DF-14 §8.3) — revisão jurídica antes do GA.
 - **Acervo do DF-15 não foi ingerido** em nenhum ambiente: o script roda em dry-run por
   padrão e o `--apply` é ato deliberado, com o diff conferido no PR.
+
+## DF-27 — Cortina "Em breve" em produção (proposto em 2026-09-02)
+
+Prod e staging rodam o mesmo artefato: tudo que entra em `main` aparece em `bajeiros.com.br` no
+mesmo dia — inclusive a vitrine do DF-25, que ainda não está pronta para receber gente. A
+[cortina "Em breve"](drafts/df27-cortina-em-breve.md) troca o portal por uma tela única em
+**produção apenas**, mantendo o login inteiro e liberando o portal real para quem tem
+`users.is_admin` (DF-9). Staging e o dev local não mudam.
+
+A decisão de arquitetura é **cortina de render, não muro de borda**: um campo `comingSoon` no
+`config.json` por ambiente e um ramo no `App` que impede o `Shell` de montar. Isso alterna sem
+rebuild (publicar um arquivo + invalidar um caminho) e não inventa papel nenhum além do
+administrador que já existe. A camada de borda (CloudFront Function servindo `em-breve.html`)
+fica especificada em §5.5 como fase 2 opcional — ela fecha buscador e visitante casual, mas
+**não pode** fechar quem pede a rota de login, porque login aberto obriga a servir o app.
+O §9 escreve esses limites em vez de deixá-los para a descoberta.
+
+**Estado (2026-09-02): N1 implementada** — `comingSoon` no `config.json` por ambiente
+(`deploy.yml`), decisão pura em `apps/web/src/cortina.ts`, `ComingSoon.tsx` no lugar do `Portal`
+(o `Shell` não monta), `ASSISTANT_ANON_DAILY` fechando a degustação sem conta em prod,
+`noindex = true` no env de prod e a seção de operação no runbook. **N2 (borda) não entrou.**
+Ligar a cortina é ato de operação, não deploy: variable `COMING_SOON=true` + apply + publicar o
+`config.json`.

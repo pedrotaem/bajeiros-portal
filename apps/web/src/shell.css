@@ -2764,3 +2764,82 @@
 .bj-sug-indicio {
   padding: var(--bj-space-2) var(--bj-space-4) 0;
 }
+
+/* ---------- DF-27 — cortina "Em breve" ---------- */
+
+/* A cortina não é uma página dentro do shell: ela É a tela. Por isso a altura vem do
+   viewport e não do grid do `Shell`, que nem chega a montar (FR-DF27.5). */
+.bj-cortina {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* mesma assinatura visual do hero da vitrine: grid técnico + brilho ocre. `rgb(R G B
+     / A%)` LITERAL — o alvo é chrome107 e a cor relativa exige 119 (design-system §1.6) */
+  background:
+    radial-gradient(ellipse 60% 70% at 50% -8%, rgb(200 145 35 / 12%), transparent 64%),
+    repeating-linear-gradient(0deg, transparent 0 47px, rgb(241 239 235 / 3%) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, rgb(241 239 235 / 3%) 47px 48px);
+}
+
+.bj-cortina-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--bj-space-5);
+  max-width: var(--bj-page-w);
+  margin: 0 auto;
+  padding: var(--bj-space-7) var(--bj-space-5);
+}
+
+.bj-cortina-logo {
+  width: min(360px, 72%);
+}
+
+.bj-cortina-titulo {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: 64px;
+  font-weight: var(--bj-weight-medium);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+}
+
+.bj-cortina-lead {
+  max-width: 560px;
+  margin: 0;
+  font-size: var(--bj-text-xl);
+  line-height: var(--bj-leading-normal);
+  color: var(--bj-fg-secondary);
+  text-wrap: pretty;
+}
+
+.bj-cortina-conta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bj-space-3);
+}
+.bj-cortina-conta p {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+}
+
+.bj-cortina-rodape {
+  border-top: 1px solid var(--bj-border);
+  padding: var(--bj-space-4) var(--bj-space-5);
+  text-align: center;
+}
+.bj-cortina-rodape p {
+  margin: 0;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+}
+
+@media (max-width: 767px) {
+  .bj-cortina-titulo {
+    font-size: 44px;
+  }
+}
