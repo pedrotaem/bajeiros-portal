@@ -37,7 +37,7 @@ export function PublicHome() {
           <span className="bj-logo bj-logo-hero" aria-hidden="true" />
           <h2 className="bj-hero-nome">Bajeiros</h2>
           <p className="bj-hero-lead">
-            Ferramentas e memória da comunidade Baja brasileira. Toda geração recomeça do zero —
+            Ferramentas e memória da comunidade Baja brasileira. Toda geração recomeça do zero, e
             essa é a parte que dá para resolver.
           </p>
           <div className="bj-hero-acoes">
@@ -86,7 +86,7 @@ export function PublicHome() {
             <article className="bj-card bj-card-numero">
               <strong>7 emendas</strong>
               <p>
-                mais dezenas de informativos por temporada — e nenhuma versão consolidada do
+                mais dezenas de informativos por temporada, sem nenhuma versão consolidada do
                 regulamento.
               </p>
               <p className="bj-fonte">RATBSB emenda 7 · A3.6.6</p>
@@ -108,8 +108,8 @@ export function PublicHome() {
               <h3>O que a elite faz</h3>
             </div>
             <p>
-              Levantado nas equipes de referência do país. Cada uma virou critério verificável, não
-              conselho solto.
+              Levantado nas equipes de referência do país. Cada prática dessas virou um critério que
+              dá para verificar.
             </p>
           </header>
           <ul className="bj-tira">
@@ -138,8 +138,8 @@ export function PublicHome() {
             <article className="bj-card">
               <h4>Evolução</h4>
               <p>
-                Seis áreas, níveis 1 a 5, 51 critérios. Sai uma fila de próximos passos com dono,
-                não uma nota.
+                Seis áreas, níveis 1 a 5, 51 critérios. O que sai no fim é uma fila de próximos
+                passos, cada um com dono.
               </p>
             </article>
             <article className="bj-card">
@@ -152,8 +152,8 @@ export function PublicHome() {
             <article className="bj-card">
               <h4>Comunidade</h4>
               <p>
-                O acervo do mapa acima, com benchmark pela mediana da sua coorte. Nunca ranking
-                público.
+                O acervo do mapa acima, com a comparação feita pela mediana da sua coorte. Nada
+                disso vira ranking público.
               </p>
             </article>
             <article className="bj-card">
@@ -164,7 +164,8 @@ export function PublicHome() {
               </header>
               <p>
                 Validador de gaiola com ~40 verificações da seção B6, que abre sem conta. E o
-                assistente que responde citando seção e página — com conta, depois da demonstração.
+                assistente que responde citando seção e página, para quem tem conta, com uma
+                demonstração aberta a todo mundo.
               </p>
             </article>
           </div>
@@ -179,8 +180,8 @@ export function PublicHome() {
                 <span className="bj-regua" />
                 <h3>Acompanhar a competição também é trabalho</h3>
                 <p>
-                  Não é queixa: boa parte disto é o verso de um comitê pequeno e voluntário. Mas
-                  pesa mais em quem tem menos gente para monitorar.
+                  Boa parte disto é o verso de um comitê pequeno e voluntário. Ainda assim pesa mais
+                  em quem tem menos gente para monitorar.
                 </p>
               </div>
               <ul className="bj-atritos-lista">
@@ -192,8 +193,8 @@ export function PublicHome() {
                 ))}
                 <li className="bj-atritos-nota">
                   <p>
-                    O portal não substitui esses canais nem fala pela organização — ajuda a rastrear
-                    o que mudou.
+                    O portal não substitui esses canais nem fala pela organização. Ele ajuda a
+                    rastrear o que mudou.
                   </p>
                 </li>
               </ul>
@@ -224,16 +225,16 @@ export function PublicHome() {
             </h3>
             <ul>
               <li>
-                Ferramenta <b>educacional</b> de apoio ao projeto — <b>não substitui</b> a Inspeção
-                de Conformidade Técnica e Segurança nem o julgamento dos Juízes Credenciados de
-                Segurança (B6.4).
+                Ferramenta <b>educacional</b> de apoio ao projeto. Ela <b>não substitui</b> a
+                Inspeção de Conformidade Técnica e Segurança nem o julgamento dos Juízes
+                Credenciados de Segurança (B6.4).
               </li>
               <li>
                 Projeto comunitário independente, <b>sem vínculo</b> com a organização da
                 competição.
               </li>
               <li>
-                As verificações são paráfrases interpretativas do regulamento — o texto oficial do
+                As verificações são paráfrases interpretativas do regulamento. O texto oficial do
                 RATBSB prevalece sempre.
               </li>
             </ul>
@@ -256,7 +257,7 @@ export function PrecisaDeConta({ destino }: { destino: string }) {
       <section className="bj-vazio">
         <h3>{destino} precisa de conta</h3>
         <p>
-          Esta parte do portal é da sua equipe — para mostrar qualquer coisa aqui é preciso saber
+          Esta parte do portal é da sua equipe, e para mostrar qualquer coisa aqui é preciso saber
           quem é você. Criar conta leva um minuto e não pede senha no ambiente de desenvolvimento.
         </p>
         <div className="bj-card-acoes">

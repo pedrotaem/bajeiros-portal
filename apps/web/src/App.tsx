@@ -38,21 +38,21 @@ function ViewportToggles() {
     <>
       <button
         className={showGeraldao ? 'toggle active' : 'toggle'}
-        title="Gabarito de habitáculo (Geraldão) do regulamento (B6.2.4.3) — visualização apenas"
+        title="Gabarito de habitáculo (Geraldão) do regulamento (B6.2.4.3), visualização apenas"
         onClick={() => setShowGeraldao(!showGeraldao)}
       >
         Geraldão
       </button>
       <button
         className={showManikin ? 'toggle active' : 'toggle'}
-        title="Manequim ergonômico do piloto (faixa de percentis) — visualização apenas"
+        title="Manequim ergonômico do piloto (faixa de percentis), visualização apenas"
         onClick={() => setShowManikin(!showManikin)}
       >
         Piloto
       </button>
       <button
         className={showPlanes ? 'toggle active' : 'toggle'}
-        title="Planos formados por pontos denominados adjacentes (DF-22) — clique num plano para medir e editar ângulos"
+        title="Planos formados por pontos denominados adjacentes (DF-22). Clique num plano para medir e editar ângulos"
         onClick={() => setShowPlanes(!showPlanes)}
       >
         Planos
@@ -74,7 +74,7 @@ function ViewportToggles() {
  * novo no mesmo botão reenquadra.
  */
 const VISTAS: { id: CameraView; label: string; title: string }[] = [
-  { id: 'lateral', label: 'Lateral', title: 'Vista lateral (nariz à direita) — enquadra a gaiola' },
+  { id: 'lateral', label: 'Lateral', title: 'Vista lateral (nariz à direita), enquadra a gaiola' },
   { id: 'frontal', label: 'Frontal', title: 'Vista frontal (de frente para o nariz)' },
   { id: 'superior', label: 'Topo', title: 'Vista superior (frente para cima)' },
   { id: 'iso', label: 'Iso', title: 'Vista isométrica' },
@@ -255,7 +255,7 @@ function Portal() {
                 : `✓ Nenhuma infração · ${passed}/${auto.length} verificações OK`}
               {pendingFails > 0 && ` · ${pendingFails} pendente(s) dos próximos passos`}
             </div>
-            <div className="mass-strip" title="Estimativa geométrica — não substitui pesagem">
+            <div className="mass-strip" title="Estimativa geométrica, não substitui pesagem">
               <b>Massa estimada: {mass.totalKg.toFixed(1).replace('.', ',')} kg</b>
               <span className="mass-detail">
                 primário {mass.primaryKg.toFixed(1).replace('.', ',')} kg · secundário{' '}

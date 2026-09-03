@@ -86,7 +86,7 @@ export function BrazilMap() {
                 onClick={() => setAtiva(u.regiao)}
               >
                 <title>
-                  {u.nome} — {n === 0 ? 'nenhuma equipe mapeada' : `${n} equipe${n > 1 ? 's' : ''}`}
+                  {u.nome}: {n === 0 ? 'nenhuma equipe mapeada' : `${n} equipe${n > 1 ? 's' : ''}`}
                 </title>
               </path>
             )

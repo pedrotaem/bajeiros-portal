@@ -34,7 +34,7 @@ function useErr(): [string | null, (e: unknown) => void, () => void] {
       setErr(
         e instanceof ApiError
           ? (e.problem.detail ?? e.problem.title)
-          : 'Erro de rede — API local rodando? (npm run db:start + npm run dev -w @bajeiros/api)',
+          : 'Erro de rede. A API local está rodando? (npm run db:start + npm run dev -w @bajeiros/api)',
       ),
     () => setErr(null),
   ]
@@ -95,7 +95,7 @@ function LoginPanel() {
             </button>
           )}
           <p className="modal-note">
-            Você será redirecionado à página segura de login — lá dá para entrar, criar conta ou
+            Você será redirecionado à página segura de login. Lá dá para entrar, criar conta ou
             recuperar a senha.
           </p>
           <button className="account-btn" disabled={busy} onClick={go()}>
@@ -132,8 +132,8 @@ function LoginPanel() {
         {loginReason && <p className="bj-modal-aviso">{loginReason}</p>}
         {authNotice && <p className="modal-err">{authNotice}</p>}
         <p className="modal-note">
-          Ambiente de desenvolvimento local: informe e-mail e nome — a conta é criada/reaberta na
-          hora (sem senha). Nos ambientes publicados o login real usa Cognito.
+          Ambiente de desenvolvimento local: informe e-mail e nome, e a conta é criada ou reaberta
+          na hora, sem senha. Nos ambientes publicados o login real usa Cognito.
         </p>
         <label className="field">
           E-mail
@@ -277,8 +277,8 @@ function ProfilePanel() {
         </button>
         {signedInWith === 'Google' && (
           <p className="modal-note">
-            Conta conectada com o Google — a senha e a verificação em duas etapas ficam na sua conta
-            Google, não aqui.
+            Conta conectada com o Google. A senha e a verificação em duas etapas ficam na sua conta
+            Google.
           </p>
         )}
 
@@ -392,7 +392,7 @@ function ProjectsPanel() {
   if (versionsOf) {
     return (
       <>
-        <Head title={`Versões — ${versionsOf.name}`} />
+        <Head title={`Versões de ${versionsOf.name}`} />
         <div className="modal-body">
           <button className="account-btn" onClick={() => setVersionsOf(null)}>
             ← Voltar

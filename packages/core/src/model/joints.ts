@@ -293,7 +293,7 @@ export function copeSvg(cage: Cage, memberId: string, node: NodeId): string | nu
   const W = (w + 2 * margin).toFixed(1)
   const H = (h + 2 * margin).toFixed(1)
   const me = cage.members.find((m) => m.id === memberId)
-  const label = `${memberId} (${me?.type ?? '?'}) @ ${node} — Ø ${(params.rb * 2).toFixed(1)} mm sobre Ø ${(params.ra * 2).toFixed(1)} mm, θ = ${params.thetaDeg.toFixed(0)}°`
+  const label = `${memberId} (${me?.type ?? '?'}) @ ${node}: Ø ${(params.rb * 2).toFixed(1)} mm sobre Ø ${(params.ra * 2).toFixed(1)} mm, θ = ${params.thetaDeg.toFixed(0)}°`
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}">`,
     `<rect x="0" y="0" width="${W}" height="${H}" fill="white"/>`,

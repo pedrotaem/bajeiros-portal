@@ -151,7 +151,7 @@ function useErr(): [string | null, (e: unknown) => void, () => void] {
       setErr(
         e instanceof ApiError
           ? (e.problem.detail ?? e.problem.title)
-          : 'Erro de rede — API local rodando?',
+          : 'Erro de rede. A API local está rodando?',
       ),
     () => setErr(null),
   ]
@@ -393,8 +393,8 @@ export function TeamPage(): JSX.Element {
         )}
         <p className="modal-note">
           Uma equipe compartilha projetos entre os membros e organiza quem responde por cada
-          subsistema. Convide colegas por link — o convite vale só p/ o e-mail convidado, expira em
-          7 dias e a entrada ainda passa pela confirmação da capitania.
+          subsistema. Convide colegas por link: o convite vale só p/ o e-mail convidado, expira em 7
+          dias e a entrada ainda passa pela confirmação da capitania.
         </p>
         <form className="team-form" onSubmit={createTeam}>
           <label className="field">
@@ -479,7 +479,7 @@ function eliteGaps(team: TeamDetail): string[] {
   const gaps: string[] = []
   const ocupadas = new Set(team.members.map((m) => m.positionId).filter(Boolean))
   if (team.positions.length === 0) {
-    gaps.push('A equipe ainda não tem organograma — crie a estrutura padrão na aba Estrutura.')
+    gaps.push('A equipe ainda não tem organograma. Crie a estrutura padrão na aba Estrutura.')
   }
   const semLider = team.positions.filter((p) => p.kind === 'lead' && !ocupadas.has(p.id))
   if (semLider.length > 0) {
@@ -499,9 +499,9 @@ function eliteGaps(team: TeamDetail): string[] {
     gaps.push(`${traineesAntigos.length} trainee(s) há mais de 6 meses sem efetivação.`)
   }
   if (team.members.filter((m) => m.role === 'owner').length > 1) {
-    gaps.push('A equipe tem mais de um capitão — regularize transferindo a capitania.')
+    gaps.push('A equipe tem mais de um capitão. Regularize transferindo a capitania.')
   } else if (team.members.length > 2 && !team.members.some((m) => m.role === 'admin')) {
-    gaps.push('Nenhum co-capitão nomeado — a capitania fica sem suplência.')
+    gaps.push('Nenhum co-capitão nomeado, então a capitania fica sem suplência.')
   }
   if (team.joinRequests.length > 0) {
     gaps.push(`${team.joinRequests.length} solicitação(ões) de entrada esperando resposta.`)
@@ -615,7 +615,7 @@ function OverviewTab({
 
       {gaps.length > 0 && (
         <>
-          <div className="modal-section">Práticas de elite — o que falta</div>
+          <div className="modal-section">Práticas de elite: o que falta</div>
           <ul className="team-gaps">
             {gaps.map((g) => (
               <li key={g} className="team-gap">
@@ -647,7 +647,7 @@ function OverviewTab({
             </button>
           </form>
           <p className="modal-note">
-            Depois de transferir, o projeto passa a ser da equipe — todos os membros veem e salvam
+            Depois de transferir, o projeto passa a ser da equipe, e todos os membros veem e salvam
             versões.
           </p>
         </>
@@ -856,7 +856,7 @@ function OrgTab({ team }: { team: TeamDetail }) {
   if (team.positions.length === 0) {
     return (
       <p className="modal-note">
-        A equipe ainda não tem funções — crie a estrutura padrão na aba Estrutura para ver o
+        A equipe ainda não tem funções. Crie a estrutura padrão na aba Estrutura para ver o
         organograma.
       </p>
     )

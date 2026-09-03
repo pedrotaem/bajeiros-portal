@@ -97,7 +97,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
   return (
     <div className="bj-page bj-hub">
       <p className="bj-lead">
-        Ferramentas são meios. O que fica é a evolução da equipe — por isso cada uma diz o que
+        Ferramentas são meios. O que fica é a evolução da equipe, e por isso cada uma diz o que
         alimenta.
       </p>
 
@@ -133,7 +133,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
               </>
             ) : (
               <span>
-                Nenhum projeto designado como o da temporada — sem ele o validador não alimenta a
+                Nenhum projeto designado como o da temporada. Sem ele o validador não alimenta a
                 evolução.
               </span>
             )}
@@ -161,7 +161,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
           </p>
           <div className="bj-card-estado">
             {!user ? (
-              <span>Precisa de conta — veja a demonstração antes de decidir.</span>
+              <span>Precisa de conta. Veja a demonstração antes de decidir.</span>
             ) : estado === 'loading' ? (
               <span className="bj-skeleton" aria-hidden="true" />
             ) : assistente ? (
@@ -199,7 +199,8 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
         <StatusChip role="info" />
         <p>
           A fila de ferramentas segue a evolução das equipes: entra primeiro o que destrava um nível
-          para mais gente. Ainda não há canal aberto para sugestões — ele chega com o fórum.
+          para mais gente. Se falta alguma coisa aqui, use o botão Sugerir melhoria na barra de
+          cima.
         </p>
       </footer>
     </div>

@@ -84,7 +84,7 @@ export function AdminPanel() {
     setErr(
       e instanceof ApiError
         ? (e.problem.detail ?? e.problem.title)
-        : 'Erro de rede — API local rodando?',
+        : 'Erro de rede. A API local está rodando?',
     )
 
   return (
@@ -561,7 +561,7 @@ function SugestoesTab({ api, fail }: { api: Api; fail: (e: unknown) => void }) {
       </div>
 
       <p className="bj-sug-meta bj-sug-indicio">
-        Abertas por página (indício de onde dói — não é votação):{' '}
+        Abertas por página (indício de onde dói, e não uma votação):{' '}
         {fila.porPagina.length === 0
           ? 'nenhuma'
           : fila.porPagina

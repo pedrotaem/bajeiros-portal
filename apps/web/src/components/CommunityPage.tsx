@@ -186,7 +186,7 @@ function Resultados({ teamId }: { teamId: string | null }) {
             <p className="bj-nota-credencial">
               {bench.data?.reason === 'sem-vinculo'
                 ? 'Vincule a equipe ao registro do acervo para ver a mediana da sua coorte.'
-                : `A mediana só aparece com ${bench.data?.floor ?? 8} equipes ou mais na coorte — abaixo disso ela identificaria gente.`}
+                : `A mediana só aparece com ${bench.data?.floor ?? 8} equipes ou mais na coorte. Abaixo disso ela identificaria gente.`}
             </p>
           )}
           <p className="bj-legenda">Legenda: sua equipe · mediana da coorte.</p>
@@ -285,7 +285,7 @@ function SolicitarCorrecao({ competitionId }: { competitionId: string | null }) 
   const [estado, setEstado] = useState<'ocioso' | 'enviado' | 'erro'>('ocioso')
   const [erro, setErro] = useState<string | null>(null)
 
-  if (estado === 'enviado') return <span>Correção enviada — um admin vai avaliar com a fonte.</span>
+  if (estado === 'enviado') return <span>Correção enviada. Um admin vai avaliar com a fonte.</span>
   if (!aberto)
     return (
       <button type="button" className="bj-link" onClick={() => setAberto(true)}>

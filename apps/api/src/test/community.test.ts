@@ -366,7 +366,7 @@ describe('DF-15 — API da comunidade', () => {
     expect(r.status).toBe(201)
     const passo = await r.json()
     expect(passo.origin).toBe('meta')
-    expect(passo.title).toBe('Recuperar a mediana de Enduro — Nacional 2026')
+    expect(passo.title).toBe('Recuperar a mediana de Enduro: Nacional 2026')
 
     const fila = await (
       await app.request(`/api/v1/teams/${teamId}/evolution/steps`, authed(cap))

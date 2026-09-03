@@ -37,18 +37,18 @@ export const ROTEIRO: TurnoDemo[] = [
     resposta: [
       'São dois caminhos, e basta atender a um deles.',
       '',
-      '**(A) Tubo padrão** — aço circular com 25,4 mm de diâmetro externo, parede de 3,05 mm e pelo menos 0,18% de carbono na composição.',
+      '**(A) Tubo padrão**: aço circular com 25,4 mm de diâmetro externo, parede de 3,05 mm e pelo menos 0,18% de carbono na composição.',
       '',
-      '**(B) Perfil equivalente** — outro perfil de aço, desde que a rigidez à flexão e a resistência à flexão superem as do tubo de (A). A parede não pode ser menor que 1,57 mm e o carbono continua em 0,18%, seja qual for o material ou a seção.',
+      '**(B) Perfil equivalente**: outro perfil de aço, desde que a rigidez à flexão e a resistência à flexão superem as do tubo de (A). A parede não pode ser menor que 1,57 mm e o carbono continua em 0,18%, seja qual for o material ou a seção.',
       '',
-      'No caminho (B), os dois valores são calculados na linha neutra que der o resultado mais baixo — não vale escolher o eixo mais favorável.',
+      'No caminho (B), os dois valores são calculados na linha neutra que der o resultado mais baixo. Não vale escolher o eixo mais favorável.',
     ].join('\n'),
     citations: [{ sectionId: 'B6.3.3.1', pageStart: 49, pageEnd: 49 }],
   },
   {
     pergunta: 'E como eu comprovo o caminho (B) na inspeção?',
     resposta: [
-      'Com cálculo digitado, entregue na Inspeção de Conformidade Técnica e Segurança, em unidades do S.I. e com três algarismos significativos para as dimensões nominais dos tubos — as mesmas da nota fiscal.',
+      'Com cálculo digitado, entregue na Inspeção de Conformidade Técnica e Segurança, em unidades do S.I. e com três algarismos significativos para as dimensões nominais dos tubos, as mesmas da nota fiscal.',
       '',
       'Vão junto:',
       '- a análise anexada à Ficha de Especificação da Gaiola (Anexo B), com o que a B6.3.5 exige;',

@@ -285,7 +285,7 @@ export function DatasheetTab({
           </span>
         </div>
         <p className="bj-ficha-lead">
-          Preenchimento parcial é normal. Nada aqui trava, nada exige o validador — a ficha vale
+          Preenchimento parcial é normal. Nada aqui trava e nada exige o validador. A ficha vale
           para a inspeção, para o relatório e para quem chegar na equipe no ano que vem.
         </p>
         <div className="bj-card-acoes">
@@ -312,8 +312,8 @@ export function DatasheetTab({
         </p>
       ) : (
         <p className="bj-ficha-nota">
-          <StatusIcon role="info" /> Este projeto não tem versão de gaiola salva — e a ficha
-          continua 100% preenchível.{' '}
+          <StatusIcon role="info" /> Este projeto não tem versão de gaiola salva, e a ficha continua
+          100% preenchível.{' '}
           <button type="button" className="bj-link" onClick={onAbrirEditor}>
             abrir o validador
           </button>
@@ -351,7 +351,7 @@ export function DatasheetTab({
 
       <p className="bj-rodape-catalogo">
         Catálogo da ficha v{ficha.catalogVersion}. Rótulos, unidades e faixas são canônicos do
-        catálogo — mudar exige PR, e é assim que a comparação com a comunidade continua honesta.
+        catálogo. Mudar exige PR, e é assim que a comparação com a comunidade continua honesta.
       </p>
     </div>
   )
@@ -702,7 +702,7 @@ function Entrada({
     id,
     className: 'bj-eq-seletor',
     disabled: salvando,
-    'aria-label': rotulo ? `${campo.label} — ${rotulo}` : campo.label,
+    'aria-label': rotulo ? `${campo.label}: ${rotulo}` : campo.label,
   }
 
   return (

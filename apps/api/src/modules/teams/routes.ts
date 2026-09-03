@@ -649,7 +649,7 @@ teams.patch('/:id/members/:userId', async (c) => {
       c,
       409,
       'Capitania é única',
-      'A equipe tem um capitão/capitã só — use "transferir capitania" para passar o posto.',
+      'A equipe tem um capitão/capitã só. Use "transferir capitania" para passar o posto.',
     )
   if (result === 'cocaptain-limit')
     return problem(

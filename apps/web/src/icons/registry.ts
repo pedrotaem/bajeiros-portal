@@ -214,7 +214,7 @@ export const MARKS: readonly MarkEntry[] = [
   {
     name: 'MarkAssistant',
     product: 'Assistente do Regulamento',
-    meaning: 'a folha do regulamento com o brilho de IA — sem balão de conversa',
+    meaning: 'a folha do regulamento com o brilho de IA, sem balão de conversa',
   },
   {
     name: 'MarkPortal',

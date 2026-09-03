@@ -25,7 +25,7 @@ identity.post('/', async (c) => {
         c,
         409,
         'E-mail já cadastrado',
-        'Este e-mail já está associado a outra conta. Se você acabou de entrar com o Google, entre uma vez com e-mail e senha — a conta Google é vinculada no próximo login. Se você excluiu a conta antiga, aguarde o processamento; caso contrário, contate o suporte.',
+        'Este e-mail já está associado a outra conta. Se você acabou de entrar com o Google, entre uma vez com e-mail e senha. A conta Google é vinculada no próximo login. Se você excluiu a conta antiga, aguarde o processamento; caso contrário, contate o suporte.',
       )
     }
     throw e

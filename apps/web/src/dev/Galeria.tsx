@@ -72,7 +72,7 @@ export function Galeria() {
       </section>
 
       <section>
-        <h2>Status — ícone + texto (CT-3)</h2>
+        <h2>Status: ícone + texto (CT-3)</h2>
         <p>
           A cor é reforço, nunca portador: <code>brand × warn</code> tem ΔE00 0,9 em deuteranopia.
         </p>
@@ -110,7 +110,7 @@ export function Galeria() {
 
       <section>
         <h2>
-          Marcas de ferramenta a 16px ({MARKS.length}/{MARK_CEILING}) — categoria à parte do
+          Marcas de ferramenta a 16px ({MARKS.length}/{MARK_CEILING}), categoria à parte do
           inventário (§8.6.1)
         </h2>
         <div className="bj-galeria-icons">

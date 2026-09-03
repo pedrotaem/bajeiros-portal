@@ -666,8 +666,8 @@ export function evaluate(cage: Cage): RuleResult[] {
           rearFab.length && frontFab.length
             ? 'ambos presentes'
             : rearFab.length
-              ? 'traseiro presente — dianteiro dispensado'
-              : 'dianteiro presente — traseiro dispensado',
+              ? 'traseiro presente, dianteiro dispensado'
+              : 'dianteiro presente, traseiro dispensado',
         members: memberIds(fab),
       })
       if (rearFab.length) {
@@ -868,7 +868,7 @@ export function evaluate(cage: Cage): RuleResult[] {
         measured: off.length ? `fora do tubo: ${off.join('; ')}` : `desvio máx ${fmt(worst)} mm`,
         limit: '≤ 25 mm do eixo do tubo',
         members: [],
-        note: 'Tolerância de modelagem do protótipo — a fixação física deve estar sobre o tubo.',
+        note: 'Tolerância de modelagem do protótipo. A fixação física deve estar sobre o tubo.',
       })
 
       // B6.2.8.4 — ILC a ≤ 51 mm da ancoragem traseira das bandejas inferiores dianteiras
@@ -919,7 +919,7 @@ export function evaluate(cage: Cage): RuleResult[] {
         title: 'Ancoragem do suporte do volante apoiada em tubo da gaiola',
         status: off.length ? 'fail' : 'pass',
         measured: off.length
-          ? `sem suporte — ajuste a gaiola ou adicione tubo: ${off.join('; ')}`
+          ? `sem suporte. Ajuste a gaiola ou adicione tubo: ${off.join('; ')}`
           : `desvio máx ${fmt(worst)} mm`,
         limit: '≤ 25 mm do eixo do tubo',
         members: support,
@@ -1014,7 +1014,7 @@ export function evaluate(cage: Cage): RuleResult[] {
         status: 'warn',
         measured: issues.join('; '),
         members: [],
-        note: 'Regra de modelagem do portal — confira o certificado de matéria-prima.',
+        note: 'Regra de modelagem do portal. Confira o certificado de matéria-prima.',
       })
     }
   }

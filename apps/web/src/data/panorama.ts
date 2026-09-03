@@ -80,7 +80,7 @@ export const REGIOES: readonly Regiao[] = [
     iniciante: 2,
     ufs: 2,
     nacional: 1,
-    nota: 'Uma equipe no Nacional 2026. Não existe etapa regional aqui — as três acontecem no Sul, Sudeste e Nordeste.',
+    nota: 'Uma equipe no Nacional 2026. Não existe etapa regional aqui: as três acontecem no Sul, Sudeste e Nordeste.',
   },
   {
     id: 'SE',
@@ -102,7 +102,7 @@ export const REGIOES: readonly Regiao[] = [
     iniciante: 10,
     ufs: 3,
     nacional: 10,
-    nota: 'Cinco das doze equipes de alta performance do país saem daqui — a maior densidade de elite do Brasil.',
+    nota: 'Cinco das doze equipes de alta performance do país saem daqui, a maior densidade de elite do Brasil.',
   },
 ]
 
@@ -138,7 +138,7 @@ export const BRASIL: Selecao = {
   iniciante: somar('iniciante'),
   ufs: somar('ufs'),
   nacional: somar('nacional'),
-  nota: 'Equipes ativas mapeadas em 18 estados. 62 delas correram a etapa nacional de 2026 — eram 69 na retomada de 2022.',
+  nota: 'Equipes ativas mapeadas em 18 estados. 62 delas correram a etapa nacional de 2026, contra 69 na retomada de 2022.',
 }
 
 export function selecao(id: RegiaoId | 'BR'): Selecao {

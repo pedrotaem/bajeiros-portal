@@ -64,7 +64,7 @@ export function AssistantPanel() {
     if (!user) return // sem conta a tela é a demonstração: nenhuma chamada (FR-DF28.14)
     api<AssistantStatus>('/api/v1/assistant/status')
       .then(setStatus)
-      .catch(() => setErr('Não foi possível carregar o assistente — API local rodando?'))
+      .catch(() => setErr('Não foi possível carregar o assistente. A API local está rodando?'))
   }, [api, token, user])
 
   useEffect(() => {
@@ -229,7 +229,7 @@ export function AssistantPanel() {
           <ul>
             <li>
               Suas perguntas são processadas por um provedor de IA <b>fora do Brasil</b>{' '}
-              (transferência internacional com salvaguardas contratuais — LGPD art. 33).
+              (transferência internacional com salvaguardas contratuais, LGPD art. 33).
             </li>
             <li>
               Perguntas e respostas são <b>armazenadas</b> (90 dias) e visíveis ao administrador do
@@ -259,8 +259,8 @@ export function AssistantPanel() {
       <div className="assistant-thread" ref={scrollRef}>
         {messages.length === 0 && (
           <p className="assistant-hint">
-            Pergunte qualquer coisa do regulamento — freios, elétrica, extintor, documentação… Não
-            só B6. Respostas citam seção e página do PDF oficial.
+            Pergunte qualquer coisa do regulamento: freios, elétrica, extintor, documentação. Não é
+            só a seção B6. As respostas citam seção e página do PDF oficial.
           </p>
         )}
         {messages.map((m, i) => (
@@ -298,7 +298,8 @@ export function AssistantPanel() {
       </form>
       <div className="assistant-foot">
         <span>
-          O assistente pode errar — confira no PDF oficial. Não substitui a inspeção (B6.4).
+          O assistente pode errar, então confira no PDF oficial. Ele não substitui a inspeção
+          (B6.4).
         </span>
         <span className="admin-dim">
           {quotaLeft > 0

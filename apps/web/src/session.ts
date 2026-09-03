@@ -265,7 +265,7 @@ async function acceptPendingInvite(invite: string): Promise<void> {
       page: 'equipe',
       teamTab: 'pessoas',
       inviteNotice:
-        'Convite inválido ou expirado — peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
+        'Convite inválido ou expirado. Peça um novo link a quem convidou (confira se entrou com o e-mail convidado).',
     })
   }
 }
@@ -412,7 +412,7 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
       title: 'API indisponível',
       status: res.status,
       detail:
-        'O backend ainda não está disponível neste ambiente — a conta funciona, mas os recursos que dependem da API (projetos, equipes) ficam para quando ele for publicado.',
+        'O backend ainda não está disponível neste ambiente. A conta funciona, mas os recursos que dependem da API (projetos, equipes) ficam para quando ele for publicado.',
     })
   }
   return body as T
