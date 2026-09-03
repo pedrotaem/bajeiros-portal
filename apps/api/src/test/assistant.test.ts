@@ -124,69 +124,33 @@ describe('assistente (DF-8)', () => {
     expect(r.headers.get('content-type')).toContain('application/problem+json')
   })
 
-  it('anônimo: status informa anonymous + limite 2; 2 perguntas ok, 3ª → 429; nada em assistant_log', async () => {
-    const ip = { 'x-forwarded-for': '203.0.113.77' }
-    const s = await (await app.request('/api/v1/assistant/status', { headers: ip })).json()
-    expect(s.anonymous).toBe(true)
-    expect(s.dailyLimit).toBe(2)
-    expect(s.usedToday).toBe(0)
-
+  it('sem conta: chat → 401 e o gateway não é chamado (DF-28 AC-DF28.1)', async () => {
     const owner = new pg.Client({ connectionString: process.env.DATABASE_URL })
     await owner.connect()
     const before = (await owner.query('SELECT count(*)::int AS n FROM assistant_log')).rows[0].n
 
-    for (let i = 0; i < 2; i++) {
-      const r = await app.request('/api/v1/assistant/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', ...ip },
-        body: JSON.stringify(chatBody),
-      })
-      expect(r.status).toBe(200)
-      expect(await r.text()).toContain('event: done')
-    }
-    const r3 = await app.request('/api/v1/assistant/chat', {
+    const r = await app.request('/api/v1/assistant/chat', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...ip },
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.77' },
       body: JSON.stringify(chatBody),
     })
-    expect(r3.status).toBe(429)
-    expect(r3.headers.get('content-type')).toContain('application/problem+json')
+    expect(r.status).toBe(401)
+    expect(r.headers.get('content-type')).toContain('application/problem+json')
 
-    // anônimo não é rastreado: nenhuma linha nova no assistant_log
-    await new Promise((r) => setTimeout(r, 300))
+    // nada foi gasto e nada foi gravado
+    await new Promise((r2) => setTimeout(r2, 300))
     const after = (await owner.query('SELECT count(*)::int AS n FROM assistant_log')).rows[0].n
     await owner.end()
     expect(after).toBe(before)
   })
 
-  it('ASSISTANT_ANON_DAILY=0 fecha a degustação sem conta (DF-27 FR-DF27.12)', async () => {
-    process.env.ASSISTANT_ANON_DAILY = '0'
-    try {
-      const ip = { 'x-forwarded-for': '203.0.113.90' }
-      const s = await (await app.request('/api/v1/assistant/status', { headers: ip })).json()
-      expect(s.dailyLimit).toBe(0)
+  it('sem conta: status → 401; com conta, sem campo `anonymous` (AC-DF28.2)', async () => {
+    const anon = await app.request('/api/v1/assistant/status')
+    expect(anon.status).toBe(401)
 
-      const r = await app.request('/api/v1/assistant/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', ...ip },
-        body: JSON.stringify(chatBody),
-      })
-      // primeira pergunta já é recusada: o gateway não chega a ser chamado
-      expect(r.status).toBe(429)
-      const p = await r.json()
-      expect(p.title).toBe('Assistente sem conta indisponível')
-    } finally {
-      delete process.env.ASSISTANT_ANON_DAILY
-    }
-  })
-
-  it('IPs anônimos diferentes têm quotas independentes', async () => {
-    const r = await app.request('/api/v1/assistant/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.78' },
-      body: JSON.stringify(chatBody),
-    })
-    expect(r.status).toBe(200)
+    const s = await (await app.request('/api/v1/assistant/status', authed(user))).json()
+    expect(s).not.toHaveProperty('anonymous')
+    expect(s.dailyLimit).toBe(20)
   })
 
   it('token inválido → 401 (não vira anônimo silencioso)', async () => {

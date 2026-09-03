@@ -29,6 +29,7 @@
 | DF-25       | Vitrine pública                                                               | ✅     | PR #40                                                                          |
 | DF-26       | Sugestões de dentro da página                                                 | ✅     | PR #43 (sem mural e sem voto na v1)                                             |
 | DF-27       | Cortina "Em breve" em produção                                                | ✅ N1  | PR #45 (N2 §5.5 opcional, não entrou; **ligar é operação**)                     |
+| DF-28       | Assistente sem conta: demonstração no lugar da degustação                     | 🚧     | draft; substitui a FR-DF27.12                                                   |
 
 **Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
 nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
@@ -274,7 +275,27 @@ O §9 escreve esses limites em vez de deixá-los para a descoberta.
 
 **Estado (2026-09-02): N1 implementada** — `comingSoon` no `config.json` por ambiente
 (`deploy.yml`), decisão pura em `apps/web/src/cortina.ts`, `ComingSoon.tsx` no lugar do `Portal`
-(o `Shell` não monta), `ASSISTANT_ANON_DAILY` fechando a degustação sem conta em prod,
+(o `Shell` não monta), `ASSISTANT_ANON_DAILY` fechando a degustação sem conta em prod
+(variável **removida** pelo DF-28, que fechou a degustação em todo ambiente),
 `noindex = true` no env de prod e a seção de operação no runbook. **N2 (borda) não entrou.**
 Ligar a cortina é ato de operação, não deploy: variable `COMING_SOON=true` + apply + publicar o
 `config.json`.
+
+## DF-28 — Assistente sem conta: demonstração no lugar da degustação (proposto em 2026-09-03)
+
+A degustação anônima do assistente (2 perguntas por dia por IP, do `48add3e`) **acaba**. Ela era
+a única rota do portal que gastava LLM sem conta, e a contenção era um `Map` em memória de
+processo — em Lambda, o teto real nunca foi 2 por dia, foi 2 por dia **por instância viva**. Como
+anônimo não entra no `assistant_log` por promessa do aviso de transparência, nunca existiu o
+número que justificaria o funil: quantas contas a degustação criou.
+
+No lugar do painel bloqueado, a [demonstração](drafts/df28-assistente-sem-conta.md): uma conversa
+encenada de quatro turnos (pergunta → resposta com citação → continuação → resposta), desenhada
+pelos **mesmos componentes** do chat real, rodando **uma passada** e parando no estado final. O
+convite a criar conta fica embaixo, no lugar onde a pessoa acabou de ver o valor.
+
+A porta fecha **na API**, não na tela: o módulo `/api/v1/assistant` sai da exceção que ocupava no
+`app.ts` desde o DF-8 e passa a ser montado depois do `requireAuth` global. Somem junto a quota
+por IP, o `rateKey` anônimo, a variável `ASSISTANT_ANON_DAILY` (API e Terraform) e o middleware
+`optionalAuth`, que ficaria sem nenhum call site. Isso **substitui a FR-DF27.12** — sem conta não
+há assistente em ambiente nenhum, o que é mais fechado que o `0` que a cortina usava.

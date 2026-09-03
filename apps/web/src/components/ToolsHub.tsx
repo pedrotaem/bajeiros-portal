@@ -26,9 +26,14 @@ interface SeasonView {
   seasonProjectId: string | null
 }
 
+/**
+ * O que `GET /assistant/status` devolve. Os nomes importam: até o DF-28 este cartão
+ * lia `remaining`/`limit`, que a API nunca mandou — e por isso a quota NUNCA apareceu
+ * aqui, sempre caindo no texto de indisponível.
+ */
 interface AssistantStatus {
-  remaining?: number
-  limit?: number
+  dailyLimit: number
+  usedToday: number
 }
 
 /** Mapa estático: o que cada ferramenta alimenta (§RF-3.1). Curadoria em código. */
@@ -47,6 +52,7 @@ const NO_RADAR = [
 
 export function ToolsHub({ teamId }: { teamId: string | null }) {
   const api = useSession((s) => s.api)
+  const user = useSession((s) => s.user)
   const setPage = useSession((s) => s.setPage)
   const setCurrentProject = useSession((s) => s.setCurrentProject)
   const [estado, setEstado] = useState<'loading' | 'ok' | 'error'>('loading')
@@ -63,7 +69,11 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
         teamId
           ? api<SeasonView | null>(`/api/v1/teams/${teamId}/season`).catch(() => null)
           : Promise.resolve(null),
-        api<AssistantStatus>('/api/v1/assistant/status').catch(() => null),
+        // DF-28: sem conta o assistente é demonstração — não se pede quota que a
+        // rota vai recusar
+        user
+          ? api<AssistantStatus>('/api/v1/assistant/status').catch(() => null)
+          : Promise.resolve(null),
       ])
       if (!vivo) return
       setProjects(ps)
@@ -75,7 +85,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
     return () => {
       vivo = false
     }
-  }, [api, teamId])
+  }, [api, teamId, user])
 
   const daTemporada = projects.find((p) => p.id === season?.seasonProjectId) ?? null
 
@@ -150,11 +160,14 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
             Alimenta · {ALIMENTA.assistente.map((a) => AREA_LABELS[a]).join(' · ')}
           </p>
           <div className="bj-card-estado">
-            {estado === 'loading' ? (
+            {!user ? (
+              <span>Precisa de conta — veja a demonstração antes de decidir.</span>
+            ) : estado === 'loading' ? (
               <span className="bj-skeleton" aria-hidden="true" />
-            ) : assistente?.remaining != null ? (
+            ) : assistente ? (
               <span>
-                {assistente.remaining} de {assistente.limit ?? '—'} perguntas hoje
+                {Math.max(0, assistente.dailyLimit - assistente.usedToday)} de{' '}
+                {assistente.dailyLimit} perguntas hoje
               </span>
             ) : (
               <span>Quota do dia indisponível agora.</span>
@@ -162,7 +175,7 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
           </div>
           <div className="bj-card-acoes">
             <button type="button" className="bj-btn" onClick={() => setPage('assistant')}>
-              Abrir o assistente
+              {user ? 'Abrir o assistente' : 'Ver a demonstração'}
               <IconArrow size={16} />
             </button>
           </div>
