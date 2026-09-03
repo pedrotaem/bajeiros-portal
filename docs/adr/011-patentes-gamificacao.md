@@ -1,8 +1,11 @@
 # ADR-011: Patentes do protótipo — gamificação derivada, opt-in e autodeclarativa na v1
 
-**Status:** proposto (2026-08-30 — direção fixada pelo product owner no canvas
-["Patentes da Estrada"](https://claude.ai/code/artifact/aca0d047-5859-43fd-9b58-5e07d3a7d921);
-vira "aceito" com o merge das specs DF-18…DF-20)
+**Status:** **aceito** (2026-08-31) — proposto em 2026-08-30, direção fixada pelo product owner
+no canvas
+["Patentes da Estrada"](https://claude.ai/code/artifact/aca0d047-5859-43fd-9b58-5e07d3a7d921).
+A condição de promoção escrita aqui — "vira 'aceito' com o merge das specs DF-18…DF-20" —
+disparou com o merge do PR #38 (`e7df2c2`). A aferição do DF-20 entrou em **onda V1**: 19 dos
+51 critérios, os que não exigem ferramenta nova; as ondas seguintes continuam em aberto.
 
 **Emenda o [ADR-010](010-evolucao-maturidade.md)** — decisão 1 (que rejeitava gamificação em uma
 linha) e decisão 2 (que ordenava evidência antes de declaração). As decisões 3 e 4 do ADR-010

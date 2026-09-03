@@ -3335,6 +3335,49 @@ mais: desde o DF-12 o Editor vive dentro de Ferramentas, e no DF-24 ele é **sub
 com glifo do inventário. A vaga continua aberta e livre; se algum dia o Editor voltar a ser destino de
 primeiro nível, a regra antiga volta a valer inteira.
 
+### 8.6.2 Emenda (2026-09-02) — arte de marca é ilustração, não é a marca do sistema
+
+**Decisão do dono do produto, 2026-09-02:** a arte de `logo_bajeiros` — a gaiola de Baja desenhada
+em ouro, raster — entra no produto como **ilustração de marca**, em dois níveis, e **não substitui a
+`MarkPortal`**. A arte aparece onde é grande (hero e fecho da vitrine, marca do rail, cartão social);
+a `MarkPortal` continua onde é pequeno (favicon, vitrine de ícones, sub-itens do rail).
+
+**Por que não contradiz §8.6.1.** Aquela emenda abriu exceção para **marca de produto**: vetor no
+primitivo `Svg`, `currentColor`, dentro de `icons/marks.tsx`, contra um teto de 4. Esta arte não é
+nada disso — é raster, mora em `apps/web/public/marca/`, não entra no registro e **não ocupa vaga**.
+A quarta vaga de marca continua livre. O que a emenda abre é o direito de o produto ter uma
+ilustração além do seu glifo, que é o que qualquer marca faz.
+
+**A separação é medida, não gosto.** Duas medições forçaram os dois níveis:
+
+| O que foi medido                                                                            | Consequência                                                       |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Abaixo de ~120 px de largura a treliça some e o desenho vira mancha; a 16 px não sobra nada | a arte **não** serve para favicon, avatar nem rail estreito        |
+| O ouro da arte é uma **rampa metálica de três valores**; o token é chapado                  | a arte **não** é `currentColor` e nunca herdará tema como um glifo |
+| A arte é 1,46:1 horizontal; o disco de avatar é 1:1                                         | recorte circular ou sobra vazio ou corta as rodas                  |
+
+**Como a arte obedece ao tema mesmo sendo raster.** Um arquivo, dois papéis, um download:
+`background-image` entrega o metálico onde a superfície é escura e o desenho é grande;
+`mask-image` usa **só o canal alpha** do mesmo arquivo e a cor vem de `--bj-brand`, que é o que
+serve em superfície clara e em tamanho pequeno. A troca por tema usa os dois seletores de
+`tokens.css` — `:root[data-theme='light']` **e**
+`@media (prefers-color-scheme: light) { :root:not([data-theme='dark']) }`.
+
+**Trava do escopo — o que a exceção NÃO abre:**
+
+| Regra                                                                                                   |
+| ------------------------------------------------------------------------------------------------------- |
+| Ilustração de marca **não entra** em `icons/marks.tsx`, não é registrada e não conta contra o teto de 4 |
+| **Nunca** é identificador único de destino, e nunca aparece sem o nome em texto ao lado                 |
+| **Nunca carrega status** (§8.7), como qualquer marca                                                    |
+| Entra decorativa (`aria-hidden`): o nome ao lado é que o leitor de tela anuncia                         |
+| Cor chapada sai **sempre** de token, nunca de valor assado no arquivo                                   |
+| O que precisa sobreviver abaixo de ~120 px continua sendo vetor de uma cor — a `MarkPortal`             |
+
+**Efeito registrado:** `MarkPortal` saiu do hero e do fecho da vitrine (onde o CSS a esticava para
+96 px e 56 px) e passou a ser favicon. O inventário de ícones e o teto de marcas ficaram **intactos**:
+23/24 formas, 3/4 marcas.
+
 ### 8.7 Regra de ícone + texto para status
 
 **CT-3 aplicado à iconografia:** cada status tem **um glifo dedicado, de forma distinta**, e ele nunca

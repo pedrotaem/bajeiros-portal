@@ -5,6 +5,10 @@
 > Google (fase 12), que exige o domínio OAuth de qualquer forma". Fecha o item **12.5** do
 > [plano de produção v2](../../docs/plano-producao-v2.md).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `9856250` / PR #36). No ar em staging desde a
+  mesma data. Não vai para `spec.md`, que é do validador. Fecha o item 12.5 do plano de
+  produção v2.
+
 ## 1. Contexto e motivação
 
 Hoje entrar no portal exige criar uma senha no Managed Login do Cognito: e-mail, senha de 12+

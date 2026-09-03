@@ -8,6 +8,8 @@
 > Elite documenta e não publica o processo (praticas-elite.md, Prática 4) — o portal transforma a
 > prática em caminho padrão.
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `f70a236` / PR #33), no lote da evolução
+  DF-12…DF-16. Não vai para `spec.md`, que é do validador.
 - **Dependências:** DF-10 (página de equipe, papéis, trainee — implementado). Alimenta o DF-13
   (área `conhecimento` é toda computada daqui) e o DF-16 (atividade e passos no Início).
 - **Relação com DF-10 v2:** kits de passagem antecipam parte do valor de RF-5.5 (histórico de

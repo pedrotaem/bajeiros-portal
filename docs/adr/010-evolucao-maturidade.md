@@ -1,8 +1,13 @@
 # ADR-010: Evolução da equipe — maturidade por área, dirigida por evidência
 
-**Status:** proposto (2026-08-29 — direção de produto fixada pelo product owner no canvas
-["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b);
-vira "aceito" com o merge das specs DF-12…DF-16)
+**Status:** **aceito** (2026-08-30) — proposto em 2026-08-29, direção de produto fixada pelo
+product owner no canvas
+["Bajeiros — Experiência de Evolução"](https://claude.ai/code/artifact/0a10a019-dfc6-46bb-9b28-3f7ca7cf6f8b).
+A condição de promoção escrita aqui — "vira 'aceito' com o merge das specs DF-12…DF-16" —
+disparou com o merge do PR #33 (`f70a236`). A decisão 1 foi emendada depois pelo
+[ADR-011](011-patentes-gamificacao.md); o catálogo de critérios subiu para v2.0.0 no
+[DF-19](../../specs/drafts/df19-catalogo-maturidade.md) e ganhou contraprovas no
+[DF-20](../../specs/drafts/df20-afericao-declaracoes.md), ambos no PR #38.
 
 > **Emendado pelo [ADR-011](011-patentes-gamificacao.md)** (2026-08-30) nas decisões **1** e **2**.
 > A rejeição a pontos, moedas, _streaks_ e ranking público **continua valendo**; o que passa a ser

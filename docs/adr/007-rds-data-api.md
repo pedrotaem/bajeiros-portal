@@ -1,6 +1,6 @@
 # ADR-007: RDS Data API (Lambda fora de VPC)
 
-**Status:** aceito (2026-08-22, C4 da revisão v2) — verificar suporte engine/região no apply
+**Status:** aceito (2026-08-22, C4 da revisão v2) — **verificação fechada em 2026-09-02**: o apply rodou e staging e produção operam com Aurora PostgreSQL em `sa-east-1` pela Data API
 
 ## Contexto
 

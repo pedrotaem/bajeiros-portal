@@ -4,6 +4,11 @@
   [DF-12](df12-shell-navegacao.md); não vai para `spec.md`, que é do validador.
   - Rail recolhe a só-ícone (variante `rail-compact` do design-system C-02, que estava
     desenhada e **bloqueada** desde a fase 0 — ver §4.3).
+  - **Revisão de 2026-09-02 (PR #44):** a marca do rail ganhou a arte de `logo_bajeiros` em
+    linha própria a 112 px, acima do nome. Ao lado do nome ela teria 26 px — mancha — e
+    deixaria 110 px para um rótulo que pede 114. **No rail estreito ela some**, e a regra
+    precisa existir nos dois caminhos: a classe `.bj-shell-compacto` e a media query de
+    1199 px. Regra da arte em [design-system §8.6.2](../../docs/design-system.md).
   - Selecionar um destino abre embaixo os recursos dele (variante `sub` do C-02).
   - Duas **marcas de ferramenta** novas, categoria à parte do inventário de ícones, com
     exceção escrita no design-system §8.6.1.

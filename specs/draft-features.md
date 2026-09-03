@@ -6,6 +6,33 @@
   requisitos → modelo de dados → módulos → UI → critérios de aceite → questões em aberto →
   plano). Ao ser aprovada e implementada, a spec é promovida para `spec.md` (US/FR) e o
   arquivo em `drafts/` registra o link.
+- **Só feature do validador vai para `spec.md`.** Feature de portal (shell, equipe, evolução,
+  comunidade, identidade, administração, marca, operação) fecha no próprio draft — `spec.md` é
+  a spec do Validador de Gaiola B6, e diluí-la apagaria o recorte. O status de cada uma está
+  na linha `**Status:**` do draft, e resumido na tabela abaixo.
+
+## Placar (conferido contra a `main` em 2026-09-02)
+
+| Spec        | Feature                                                                       | Status | Onde fechou                                                                     |
+| ----------- | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------- |
+| DF-1…DF-7   | Validador: materiais, peso, Geraldão, manequim, volante, continuidade, juntas | ✅     | `spec.md` US-6…US-12                                                            |
+| DF-8        | Assistente de Regras (IA)                                                     | ✅     | PR #12; gateway SigV4 no #27                                                    |
+| DF-9        | Administração                                                                 | ✅     | PR #12; triagem de sugestões no #43                                             |
+| DF-10       | Gestão de equipe                                                              | ✅     | PR #28                                                                          |
+| DF-11       | Redesign de interface                                                         | —      | número **reservado** ([plano de design](../docs/plano-implementacao-design.md)) |
+| DF-12…DF-16 | Lote da evolução: shell, maturidade, conhecimento, comunidade, início         | ✅     | PR #33                                                                          |
+| DF-17       | Entrar com Google                                                             | ✅     | PR #36                                                                          |
+| DF-18…DF-20 | Lote das patentes: patentes, catálogo v2.0.0, aferição                        | ✅     | PR #38 (aferição em **onda V1**, 19 dos 51 critérios)                           |
+| DF-21       | Ficha do protótipo                                                            | ✅     | PR #37                                                                          |
+| DF-22…DF-23 | Planos, cotas, trava e vistas                                                 | ✅     | `spec.md` US-13…US-16 (PR #39)                                                  |
+| DF-24       | Menu recolhível e marcas de produto                                           | ✅     | PR #39                                                                          |
+| DF-25       | Vitrine pública                                                               | ✅     | PR #40                                                                          |
+| DF-26       | Sugestões de dentro da página                                                 | ✅     | PR #43 (sem mural e sem voto na v1)                                             |
+| DF-27       | Cortina "Em breve" em produção                                                | ✅ N1  | PR #45 (N2 §5.5 opcional, não entrou; **ligar é operação**)                     |
+
+**Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
+nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
+do DF-20, N2 do DF-27.
 
 ## Ordem de desenvolvimento
 
@@ -128,7 +155,7 @@ graph LR
   e por continuidade com o "benchmark nunca vira ranking" do DF-15. O ciclo fecha in-app, porque
   o portal não manda e-mail.
 
-## Lote "Evolução das equipes" (DF-12…DF-16)
+## Lote "Evolução das equipes" (DF-12…DF-16) — ✅ implementado em 2026-08-30 (PR #33)
 
 Direção de produto (2026-08-29): a evolução das equipes é o core; ferramentas são meios.
 Decisão em [`docs/adr/010-evolucao-maturidade.md`](../docs/adr/010-evolucao-maturidade.md);
@@ -149,7 +176,7 @@ aprovado no canvas
 | 8 ✅  | [DF-20](drafts/df20-afericao-declaracoes.md)  | DF-19, DF-13, DF-14    | Saída do autodeclarativo; só depois de 1 temporada de v1 |
 | 9 ✅  | [DF-21](drafts/df21-ficha-prototipo.md)       | DF-12, motor B6        | Independente; destrava a onda V2 do DF-20 e o Anexo B    |
 
-## Lote das patentes (DF-18…DF-20) — proposto em 2026-08-30
+## Lote das patentes (DF-18…DF-20) — proposto em 2026-08-30, ✅ implementado em 2026-08-31 (PR #38)
 
 Direção de produto: a medição de maturidade precisa de **um rosto que a equipe queira mostrar** e
 de **validação externa**. Decisão em
@@ -186,7 +213,7 @@ Três coisas que a implementação decidiu e que valem saber:
    equipes do acervo, e patente de terceiro não entra em agregado. A rota já devolve a vitrine
    (`GET /community/teams/:id`); a tela entra com o perfil de equipe, que é outra spec.
 
-## DF-21 — Ficha do protótipo (proposto em 2026-08-30)
+## DF-21 — Ficha do protótipo (proposto em 2026-08-30, ✅ implementada em 2026-08-31, PR #37)
 
 Lacuna encontrada ao escrever o DF-19: **17 dos 51 critérios se apoiam em informação de projeto
 que o portal não tem onde guardar.** Hoje `projects` tem `name`, `description` e os snapshots da
@@ -229,7 +256,7 @@ gente, não de código:
 - **Acervo do DF-15 não foi ingerido** em nenhum ambiente: o script roda em dry-run por
   padrão e o `--apply` é ato deliberado, com o diff conferido no PR.
 
-## DF-27 — Cortina "Em breve" em produção (proposto em 2026-09-02)
+## DF-27 — Cortina "Em breve" em produção (proposto em 2026-09-02, ✅ N1 implementada no mesmo dia, PR #45)
 
 Prod e staging rodam o mesmo artefato: tudo que entra em `main` aparece em `bajeiros.com.br` no
 mesmo dia — inclusive a vitrine do DF-25, que ainda não está pronta para receber gente. A

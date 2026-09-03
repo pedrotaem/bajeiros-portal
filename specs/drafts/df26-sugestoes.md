@@ -1,6 +1,8 @@
 # DF-26 — Sugestões: melhoria e implementação pedidas de dentro da página
 
-- **Status:** proposto (2026-08-31)
+- **Status:** ✅ **IMPLEMENTADA** (2026-09-02, `6a0e967` / PR #43). Migração `0011_feedback`,
+  contrato `feedback-item.odcs.yaml`, módulo `apps/api/src/modules/feedback`. **Sem mural e sem
+  voto na v1**, como a spec decidiu. Não vai para `spec.md`, que é do validador.
   - Quem usa o portal ganha um caminho para **sugerir melhoria, pedir implementação ou
     relatar problema** de qualquer página, com o **contexto da página preso
     automaticamente** ao envio.

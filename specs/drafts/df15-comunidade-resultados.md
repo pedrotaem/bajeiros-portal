@@ -9,6 +9,10 @@
 > competição no Brasil** — o portal vira a referência e, com isso, dá contexto à evolução
 > (DF-13).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-30, `f70a236` / PR #33), no lote da evolução
+  DF-12…DF-16. O acervo alimenta as patentes travadas do [DF-18](df18-patentes-prototipo.md) e
+  o panorama da vitrine do [DF-25](df25-vitrine-publica.md). Não vai para `spec.md`, que é do
+  validador.
 - **Dependências:** DF-12 (destino Comunidade), DF-13 (metas → fila; coorte p/ benchmark de
   maturidade). Admin (DF-9) ganha a superfície de correção de dados.
 - **Restrição de marca (spec.md §1):** nenhum uso da identidade "SAE". Competições são

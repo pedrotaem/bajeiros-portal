@@ -6,6 +6,10 @@
     **mapa do Brasil interativo** com o panorama das equipes por região.
   - Uma **marca de portal** (`MarkPortal`) entra na categoria de marcas do DF-24 — a
     terceira das quatro vagas.
+  - **Revisão de 2026-09-02 (PR #44):** o hero e o fecho passaram a usar a **arte de marca**
+    (`logo_bajeiros`, raster, `.bj-logo`) no lugar da `MarkPortal`, que virou favicon. A
+    `MarkPortal` continua registrada e ocupando a terceira vaga — a arte é ilustração e não
+    conta. Regra em [design-system §8.6.2](../../docs/design-system.md).
   - Os números vêm de um **instantâneo datado e versionado no front**, nunca de
     consulta ao banco (§5.2 explica por que essa é a decisão, não um atalho).
 - **Dependências:** DF-12 (shell e `PublicHome`), DF-24 (categoria de marcas e o guard

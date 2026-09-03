@@ -6,6 +6,9 @@
 > prancheta "Aferição". Decisão em
 > [`docs/adr/011-patentes-gamificacao.md`](../../docs/adr/011-patentes-gamificacao.md).
 
+- **Status:** ✅ **IMPLEMENTADA** (2026-08-31, `e7df2c2` / PR #38), no lote das patentes
+  DF-18…DF-20. **Onda V1**: cobre 19 dos 51 critérios, os que não exigem ferramenta nova. As
+  demais ondas seguem em aberto. Não vai para `spec.md`, que é do validador.
 - **Dependências:** DF-19 (o catálogo e o campo "aferição futura" de cada critério), DF-13 (motor,
   evidências), DF-14 (contadores de conhecimento), DF-10 (organograma), DF-18 (a patente é o que
   torna a aferição necessária).
