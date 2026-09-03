@@ -79,6 +79,10 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
 - Feature nova nasce como spec em `specs/drafts/` antes do código.
 - **O working tree pode estar compartilhado com outra sessão.** `git status` antes de
   commitar; só faça `git add` dos arquivos que você mesmo tocou.
+- **Ao fechar a sessão, rode `/handoff`** (`.claude/skills/handoff/`). Ela roteia o que a
+  sessão produziu: definição → doc normativo ou ADR, implementação → specs, aprendizado →
+  este arquivo, perecível → morre. Sem isso o `docs/handoff-sessao.md` volta a ser a única
+  memória, e ele não é revisado por ninguém.
 
 ## Ler sob demanda (não carregar por padrão)
 
