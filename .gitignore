@@ -25,3 +25,8 @@ apps/web/public/config.json
 
 # backup local do config em modo cognito (criado ao testar em dev)
 apps/web/public/config.json.*.bak
+
+# zips stub que o `data "archive_file"` do Terraform gera a cada plan/apply local —
+# o CI publica o código real da Lambda; o artefato local nunca é fonte
+infra/modules/api/lambda-stub.zip
+infra/modules/auth/idp-link-stub.zip
