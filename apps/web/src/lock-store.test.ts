@@ -61,7 +61,8 @@ describe('travar elemento no espaço (DF-23)', () => {
     load({ locked: ['traseira-amort-L'] })
     useStore.getState().moveAnchor('traseira-amort-L', { x: -1, y: -1, z: -1 })
     const a = (cage().anchors ?? []).find((x) => x.id === 'traseira-amort-L')!
-    expect(a.pos).toEqual({ x: -371, y: 378, z: -267 })
+    // compara com o template, não com número cravado: a posição da ancoragem muda com o template
+    expect(a.pos).toEqual(templateCage.anchors!.find((x) => x.id === 'traseira-amort-L')!.pos)
 
     useStore.getState().addSteering('central')
     useStore.getState().toggleLock('SW')

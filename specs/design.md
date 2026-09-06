@@ -55,6 +55,13 @@ A classificação primário/secundário define qual `TubeSection` a regra de mat
 **ou** consta em `namedExtra`. Consequência central: as regras de vão (B6.2.2.5.x) são
 recomputadas quando o usuário promove um nó — sem código especial por regra.
 
+**Re-identificação (DF-31).** As regras leem pontos por id, então um nó genérico no encontro certo
+é invisível para elas. `model/identify.ts` define cada letra como um encontro de tipos de membro
+(`LETTER_RULES`, em ordem de prioridade), propõe o id do regulamento só para nós sem letra, com
+lado pelo sinal de `x`, e recusa com razão (sem lado, vaga ocupada, candidatos duplos).
+`applyRenames` arrasta membros, continuidade, travas e `namedExtra`. É ação explícita do botão
+"Recalcular" — importar não renomeia.
+
 ### 3.3 Curvas
 
 Não há entidade "curva". Uma dobra é um **nó intermediário não denominado de grau 2**.
@@ -73,8 +80,19 @@ estado de UI (default 5 mm): afrouxar funde painéis vizinhos, apertar separa.
 ### 3.5 Ancoragens
 
 `Anchor { id, axle: dianteira|traseira, side: L|R, role: sup1|sup2|inf1|inf2|amort, pos: Vec3 }`
-— 20 fixas em identidade, livres em posição. Não referenciam tubos; o vínculo físico é
-verificado por distância ponto-segmento contra todos os membros (SUSP.1, limiar 25 mm).
+— fixas em identidade, livres em posição. Não referenciam tubos; o vínculo físico é
+verificado por distância ponto-segmento contra todos os membros (SUSP.1, limiar 25 mm). Sem
+módulo de suspensão são as 20 do duplo A; com ele, o conjunto é o que o tipo do eixo exige.
+
+### 3.6 Suspensão (DF-30)
+
+`Cage.suspension?: { wheelbaseMm, dianteira: AxleSuspension, traseira: AxleSuspension }`, com
+`AxleSuspension { type, wheelCenter (lado L), tire: { od, width, rim } }`. Opt-in e gravado no
+JSON. `model/suspension.ts` (puro) concentra: papéis por tipo (`ANCHOR_ROLES_BY_TYPE`),
+reconciliação do conjunto ao trocar o tipo (`reconcileAnchors`), medidas derivadas
+(`measuredWheelbase`, `measuredTrack`), saneamento na importação e os **corpos genéricos**
+(`suspensionBodies` → cilindros `{a, b, r}`) que a cena desenha e os testes contam. O centro de
+roda é um ponto por eixo; a trava (DF-23) usa `roda-<eixo>` e vale para os dois lados.
 
 ## 4. Módulos
 
@@ -198,6 +216,36 @@ passos" enquanto o assistente está ativo. Cancelar restaura snapshot da gaiola 
   tecla é inofensivo (o ponto passeia e chega), mas digitar "102" num ângulo passaria por 1° e 10° —
   e o plano deitado sobre o vizinho no caminho pode fundir os dois, mudando a identidade do plano
   que a próxima tecla ia editar.
+
+- **Rótulos** (DF-29): `showLabels` no store; o `Html` do nó só é montado com o alternador
+  ligado ou com o nó selecionado. Rótulo oculto é `null` no React, não `visibility: hidden` —
+  cada `Html` é um portal DOM e 40 portais invisíveis continuam custando layout.
+- **Cota flutuante** (DF-22 §11): `LengthField` é um `Html` com `pointer-events: auto` sobre o
+  ponto médio do membro selecionado. O formulário com o rascunho é um componente PRÓPRIO dentro do
+  `Html`: o drei monta o portal num root React separado, e um input controlado cujo estado mora fora
+  desse root perde teclas — o root do portal restaura o valor antigo antes de o estado chegar. Enter → `submit` → `blur` → commit; Esc marca um `ref` de cancelamento
+  antes do `blur`, porque `setDraft(null)` é assíncrono e o `onBlur` leria o rascunho antigo.
+- **Suspensão** (DF-30): `Suspension.tsx` desenha os corpos de `suspensionBodies` com `raycast`
+  nulo: braços, manga, cubo e amortecedor como tubos sólidos (`--bj-3d-suspension`, material dos
+  membros); a roda é geometria própria — `LatheGeometry` para carcaça e aro no referencial do
+  torno (eixo Y, face externa em −Y, grupo girado Y → ∓X por lado), `InstancedMesh` para garras e
+  letras (contagem fixa: mudar o pneu troca a chave e remonta). Centros de
+  roda são cubos arrastáveis (`kind: 'wheel'` no `DragState`, id `eixo|lado`); mover qualquer
+  lado grava o L. `cageBounds` recebe `withWheels` e inclui centro ± raio do pneu só com os
+  corpos visíveis — enquadrar pela roda com a camada desligada mostraria ar.
+
+- **Recalcular** (DF-31): `recalculate()` no store aplica `identifyNamedPoints` +
+  `applyRenames`, saneia como o `loadCage` (continuidade, travas, suspensão, seções,
+  `namedExtra`), reconcilia as ancoragens com o tipo de cada eixo e grava `recalcReport`. O
+  modelo saneado é um objeto novo, então tudo que deriva dele (regras, planos, análise de remoção)
+  recalcula sozinho — o botão não precisa de um "revision" para forçar nada.
+
+- **Desfazer/refazer** (DF-32): o `create` do store recebe um `set` envolvido — se `cage` mudou
+  de referência, a anterior vai para `past` e `future` esvazia; `undo`/`redo` usam o `set` cru e
+  não se gravam. Fusão por **gesto** (`histGesture`: 1 = aberto sem gravar, 2 = já gravou) e por
+  **assinatura** (`changeSignature`: chaves da gaiola + `nodes:<id>` por referência — `withMirror`
+  preserva a referência dos nós parados, então "moveu AL" e "moveu BL" têm assinaturas distintas)
+  dentro de 800 ms. `selectionFor` mantém só a seleção que existe na gaiola restaurada. Teto 100.
 
 ## 8. Evolução prevista
 

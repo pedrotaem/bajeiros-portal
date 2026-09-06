@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { useStore, type CameraView } from './store'
+import { useStore, type CameraView, type RecalcReport } from './store'
 import { evaluate, removalImpact } from '@bajeiros/core/rules/b6'
 import { estimateMass } from '@bajeiros/core/model/mass'
 import { detectPlanes } from '@bajeiros/core/model/planes'
@@ -25,6 +25,37 @@ import { mostrarCortina } from './cortina'
 import { appConfigAtual, useSession, track, TITULO_PAGINA as TITULOS } from './session'
 import './shell.css'
 
+/**
+ * Alternador de camada da barra do viewport. `aria-pressed` é o que dá o estado ao leitor
+ * de tela (design-system C-23) — a cor sozinha não conta.
+ */
+function Toggle({
+  on,
+  onToggle,
+  title,
+  disabled,
+  children,
+}: {
+  on: boolean
+  onToggle: (v: boolean) => void
+  title: string
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className={on ? 'toggle active' : 'toggle'}
+      aria-pressed={on}
+      title={title}
+      disabled={disabled}
+      onClick={() => onToggle(!on)}
+    >
+      {children}
+    </button>
+  )
+}
+
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
   const setShowGeraldao = useStore((s) => s.setShowGeraldao)
@@ -34,37 +65,152 @@ function ViewportToggles() {
   const setShowManikin = useStore((s) => s.setShowManikin)
   const showPlanes = useStore((s) => s.showPlanes)
   const setShowPlanes = useStore((s) => s.setShowPlanes)
+  const showLabels = useStore((s) => s.showLabels)
+  const setShowLabels = useStore((s) => s.setShowLabels)
+  const showSuspension = useStore((s) => s.showSuspension)
+  const setShowSuspension = useStore((s) => s.setShowSuspension)
+  const showAnchors = useStore((s) => s.showAnchors)
+  const setShowAnchors = useStore((s) => s.setShowAnchors)
+  const hasSuspension = useStore((s) => !!s.cage.suspension)
   return (
     <>
-      <button
-        className={showGeraldao ? 'toggle active' : 'toggle'}
+      <Toggle
+        on={showLabels}
+        onToggle={setShowLabels}
+        title="Rótulos com o id de cada nó (DF-29). Desligado, só o nó selecionado fica rotulado"
+      >
+        Rótulos
+      </Toggle>
+      <Toggle
+        on={showGeraldao}
+        onToggle={setShowGeraldao}
         title="Gabarito de habitáculo (Geraldão) do regulamento (B6.2.4.3), visualização apenas"
-        onClick={() => setShowGeraldao(!showGeraldao)}
       >
         Geraldão
-      </button>
-      <button
-        className={showManikin ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showManikin}
+        onToggle={setShowManikin}
         title="Manequim ergonômico do piloto (faixa de percentis), visualização apenas"
-        onClick={() => setShowManikin(!showManikin)}
       >
         Piloto
-      </button>
-      <button
-        className={showPlanes ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showPlanes}
+        onToggle={setShowPlanes}
         title="Planos formados por pontos denominados adjacentes (DF-22). Clique num plano para medir e editar ângulos"
-        onClick={() => setShowPlanes(!showPlanes)}
       >
         Planos
-      </button>
-      <button
-        className={showRedundant ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showSuspension && hasSuspension}
+        onToggle={setShowSuspension}
+        disabled={!hasSuspension}
+        title={
+          hasSuspension
+            ? 'Corpos genéricos da suspensão: bandejas, amortecedor, manga, roda e pneu (DF-30), visualização apenas'
+            : 'Sem suspensão configurada — configure na aba Suspensão do editor (DF-30)'
+        }
+      >
+        Suspensão
+      </Toggle>
+      <Toggle
+        on={showAnchors}
+        onToggle={setShowAnchors}
+        title="Marcadores das ancoragens da suspensão e dos centros de roda (DF-30)"
+      >
+        Ancoragens
+      </Toggle>
+      <Toggle
+        on={showRedundant}
+        onToggle={setShowRedundant}
         title="Destacar membros cuja remoção não infringe regras"
-        onClick={() => setShowRedundant(!showRedundant)}
       >
         Redundância
-      </button>
+      </Toggle>
     </>
+  )
+}
+
+/**
+ * Desfazer/refazer (DF-32). Só a gaiola tem histórico; os botões vivem no cabeçalho do painel
+ * de edição porque é onde a mudança acontece. Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y valem na página
+ * do editor fora de campo de texto (lá dentro, o desfazer é o do próprio campo).
+ */
+function HistoryButtons() {
+  const canUndo = useStore((s) => s.past.length > 0)
+  const canRedo = useStore((s) => s.future.length > 0)
+  const undo = useStore((s) => s.undo)
+  const redo = useStore((s) => s.redo)
+  return (
+    <div className="history-btns">
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        disabled={!canUndo}
+        title="Desfazer a última alteração na gaiola (Ctrl+Z)"
+        onClick={undo}
+      >
+        Desfazer
+      </button>
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        disabled={!canRedo}
+        title="Refazer (Ctrl+Shift+Z ou Ctrl+Y)"
+        onClick={redo}
+      >
+        Refazer
+      </button>
+    </div>
+  )
+}
+
+/** Resumo do último recálculo (DF-31) em uma linha — o que mudou, ou que nada precisou mudar. */
+function describeRecalc(r: RecalcReport): string {
+  const parts: string[] = []
+  if (r.renamed.length) {
+    parts.push(
+      `${r.renamed.length} ponto(s) identificado(s): ${r.renamed.map(([a, b]) => `${a}→${b}`).join(', ')}`,
+    )
+  }
+  if (r.skipped.length) {
+    parts.push(
+      `${r.skipped.length} não aplicado(s): ${r.skipped.map((k) => `${k.id}→${k.wanted} (${k.reason})`).join('; ')}`,
+    )
+  }
+  if (r.anchorsDelta)
+    parts.push(
+      `ancoragens ${r.anchorsDelta > 0 ? '+' : ''}${r.anchorsDelta} (reconciliadas com o tipo)`,
+    )
+  const orfas = r.prunedNamed + r.prunedLocked + r.prunedContinuity
+  if (orfas) parts.push(`${orfas} referência(s) órfã(s) removida(s)`)
+  if (r.suspensionDropped) parts.push('configuração de suspensão inválida descartada')
+  return parts.length
+    ? parts.join(' · ')
+    : 'nada a corrigir — pontos conferidos e regras reavaliadas'
+}
+
+/**
+ * "Recalcular" (DF-31): re-identifica os pontos denominados pela topologia, saneia o modelo
+ * como a importação faz e reavalia tudo. Vive no painel do checklist porque é o checklist que
+ * a pessoa está olhando quando desconfia de um resultado.
+ */
+function RecalcBar() {
+  const recalculate = useStore((s) => s.recalculate)
+  const report = useStore((s) => s.recalcReport)
+  return (
+    <div className="recalc-bar">
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        title="Re-identifica os pontos denominados pela topologia (nó genérico no encontro dos membros que definem uma letra do regulamento recebe o id dela), saneia continuidade, travas, ancoragens e suspensão, e reavalia todas as regras"
+        onClick={recalculate}
+      >
+        Recalcular pontos e regras
+      </button>
+      {report && <span className="recalc-report">{describeRecalc(report)}</span>}
+    </div>
   )
 }
 
@@ -184,6 +330,35 @@ function Portal() {
     if (selectedMember || selectedNode || selectedPlane) setRightOpen(true)
   }, [selectedMember, selectedNode, selectedPlane])
 
+  // DF-32: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y no editor. Dentro de input/select/textarea o atalho
+  // fica com o campo — desfazer a digitação ali não pode desfazer a gaiola.
+  useEffect(() => {
+    if (page !== 'editor') return
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable)
+      )
+        return
+      const k = e.key.toLowerCase()
+      if (k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) useStore.getState().redo()
+        else useStore.getState().undo()
+      } else if (k === 'y') {
+        e.preventDefault()
+        useStore.getState().redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [page])
+
   useEffect(() => {
     if (wizardActive) setRightOpen(true)
   }, [wizardActive])
@@ -263,6 +438,7 @@ function Portal() {
                 {(mass.weldKg * 1000).toFixed(0)} g ({mass.jointCount} juntas)
               </span>
             </div>
+            <RecalcBar />
             {/* DF-21 §3.5 — atalho para a ficha SEM desmontar o <Viewport>: a ida e
                 volta preserva a câmera porque o editor só é escondido, nunca removido */}
             {currentProject && (
@@ -308,7 +484,7 @@ function Portal() {
               <i style={{ background: viewport3d.selected }} /> atenção
             </span>
             <span>
-              <i style={{ background: viewport3d['anchor-ok'] }} /> ancoragem
+              <i style={{ background: viewport3d['anchor-ok'] }} /> ancoragem · suspensão
             </span>
           </div>
         </div>
@@ -316,6 +492,7 @@ function Portal() {
           <aside className="sidebar right">
             <div className="panel-head">
               <span>{wizardActive ? 'Nova gaiola' : 'Editar'}</span>
+              <HistoryButtons />
               <button
                 className="collapse-btn"
                 title="Recolher editor"

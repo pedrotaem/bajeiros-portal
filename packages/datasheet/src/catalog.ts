@@ -210,6 +210,7 @@ export const FIELDS: readonly Field[] = [
     typical: { min: 1300, max: 1700 },
     dual: true,
     comparable: true,
+    suggest: 'wheelbaseMm',
     help: 'Distância entre os centros das rodas dianteira e traseira do mesmo lado.',
   },
   {
@@ -222,6 +223,7 @@ export const FIELDS: readonly Field[] = [
     typical: { min: 1100, max: 1500 },
     dual: true,
     comparable: true,
+    suggest: 'trackFrontMm',
     help: 'Distância entre os planos médios das rodas dianteiras.',
   },
   {
@@ -234,6 +236,7 @@ export const FIELDS: readonly Field[] = [
     typical: { min: 1050, max: 1450 },
     dual: true,
     comparable: true,
+    suggest: 'trackRearMm',
     help: 'Distância entre os planos médios das rodas traseiras.',
   },
   {
@@ -367,6 +370,7 @@ export const FIELDS: readonly Field[] = [
     label: 'Tipo dianteiro',
     type: 'enum',
     options: SUSP_DIANT,
+    suggest: 'suspFrontType',
     help: 'Arquitetura da suspensão dianteira.',
   },
   {
@@ -375,6 +379,7 @@ export const FIELDS: readonly Field[] = [
     label: 'Tipo traseiro',
     type: 'enum',
     options: SUSP_TRAS,
+    suggest: 'suspRearType',
     help: 'Arquitetura da suspensão traseira.',
   },
   {

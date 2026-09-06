@@ -4,6 +4,7 @@ import { estimateMass } from '@bajeiros/core/model/mass'
 import { materialOf } from '@bajeiros/core/model/materials'
 import { defaultManikin, profileById, solveManikin } from '@bajeiros/core/model/manikin'
 import { dist, distPointToSegment } from '@bajeiros/core/rules/geometry'
+import { measuredTrack, measuredWheelbase } from '@bajeiros/core/model/suspension'
 import { FIELDS } from './catalog'
 import type { Suggestion } from './types'
 
@@ -143,6 +144,17 @@ export function suggestFrom(cage: Cage | null | undefined, ctx: SuggestContext =
 
   const folga = helmetClearanceMm(cage)
   if (folga != null) push('erg.folga-capacete', round(folga, 0))
+
+  // DF-30: medidas dos centros de roda e o tipo escolhido por eixo — só com o módulo
+  // configurado. Os ids dos tipos são os do catálogo (SUSP_DIANT/SUSP_TRAS), sem tradução.
+  const susp = cage.suspension
+  if (susp?.dianteira && susp.traseira) {
+    push('dim.entre-eixos', round(measuredWheelbase(susp), 0))
+    push('dim.bitola-dianteira', round(measuredTrack(susp, 'dianteira'), 0))
+    push('dim.bitola-traseira', round(measuredTrack(susp, 'traseira'), 0))
+    push('susp.tipo-dianteiro', susp.dianteira.type)
+    push('susp.tipo-traseiro', susp.traseira.type)
+  }
 
   return out
 }

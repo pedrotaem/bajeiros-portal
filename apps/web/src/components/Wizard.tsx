@@ -63,7 +63,7 @@ const STEPS: StepDef[] = [
   {
     title: '5 · Ancoragens da suspensão',
     guide:
-      'As 20 ancoragens entram agora: dianteiras já sobre LFS/SIM/FBM; traseiras ficam SOLTAS atrás do corta-fogo (a regra SUSP.1 vai acusar) até a amarração do próximo passo passar por elas. Ajuste fino depois, clicando em cada losango.',
+      'As ancoragens entram agora (20 no duplo A dos dois eixos, DF-30): dianteiras já sobre LFS/SIM/FBM; traseiras ficam SOLTAS atrás do corta-fogo (a regra SUSP.1 vai acusar) até a amarração do próximo passo passar por elas. Ajuste fino depois, clicando em cada losango.',
     fields: [],
   },
   {

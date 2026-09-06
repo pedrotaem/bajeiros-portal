@@ -1,17 +1,32 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '../store'
 import {
+  ANCHOR_ROLE_LABELS,
   TYPE_LABELS,
   anchorLabel,
   isLocked,
   isNamedNode,
   isNamedIn,
   mirrorId,
+  wheelLockId,
   type Anchor,
+  type Axle,
+  type Cage,
   type MemberType,
   type NodeId,
+  type SuspensionType,
   type TubeSection,
+  type Vec3,
 } from '@bajeiros/core/model/types'
+import {
+  ANCHOR_ROLES_BY_TYPE,
+  SUSPENSION_TYPES_BY_AXLE,
+  SUSPENSION_TYPE_LABELS,
+  WHEELBASE_TOL_MM,
+  measuredTrack,
+  measuredWheelbase,
+  wheelCenter,
+} from '@bajeiros/core/model/suspension'
 import {
   orientationLabel,
   planeAngle,
@@ -121,17 +136,227 @@ function CommitField({
 
 const ALL_TYPES = Object.keys(TYPE_LABELS) as MemberType[]
 
-type Group = 'sel' | 'build' | 'planes' | 'tubes' | 'analysis' | 'pilot' | 'file'
+type Group = 'sel' | 'build' | 'planes' | 'susp' | 'tubes' | 'analysis' | 'pilot' | 'file'
 
 const GROUPS: { id: Group; label: string; title: string }[] = [
-  { id: 'sel', label: 'Seleção', title: 'Nó / membro / ancoragem selecionados no 3D' },
+  {
+    id: 'sel',
+    label: 'Seleção',
+    title: 'Nó / membro / ancoragem / centro de roda selecionados no 3D',
+  },
   { id: 'build', label: 'Construir', title: 'Assistente, adicionar membros e nós' },
   { id: 'planes', label: 'Planos', title: 'Planos dos pontos denominados e ângulos entre eles' },
+  {
+    id: 'susp',
+    label: 'Suspensão',
+    title: 'Tipo por eixo, entre-eixos, pneus, centros de roda e ancoragens (DF-30)',
+  },
   { id: 'tubes', label: 'Tubos', title: 'Materiais, seções e referências do assento' },
   { id: 'analysis', label: 'Análise', title: 'Massa (DF-2) e juntas/solda (DF-7)' },
   { id: 'pilot', label: 'Piloto', title: 'Manequim (DF-4) e direção (DF-5)' },
   { id: 'file', label: 'Arquivo', title: 'Exportar, importar, restaurar' },
 ]
+
+/** Distância de um ponto ao eixo do tubo mais próximo — suporte físico (SUSP.1/STEER.1). */
+function supportDistance(cage: Cage, pos: Vec3): number {
+  let best = Infinity
+  for (const m of cage.members) {
+    const pa = cage.nodes[m.a]
+    const pb = cage.nodes[m.b]
+    if (pa && pb) best = Math.min(best, distPointToSegment(pos, pa, pb))
+  }
+  return best
+}
+
+/** Lista das ancoragens com o estado de suporte — casa única, na aba Suspensão (DF-30 §7). */
+function AnchorList() {
+  const cage = useStore((s) => s.cage)
+  const selectedAnchor = useStore((s) => s.selectedAnchor)
+  const selectAnchor = useStore((s) => s.selectAnchor)
+  const anchors = cage.anchors ?? []
+  const bad = anchors.filter((a) => supportDistance(cage, a.pos) > 25).length
+  return (
+    <div className="section">
+      <div className="section-title">
+        Ancoragens ({anchors.length})
+        {bad > 0 && <span className="anchor-bad"> · {bad} sem suporte</span>}
+      </div>
+      <div className="anchor-list">
+        {anchors.map((a) => {
+          const d = supportDistance(cage, a.pos)
+          return (
+            <button
+              key={a.id}
+              className={`anchor-row ${a.id === selectedAnchor ? 'active' : ''}`}
+              onClick={() => selectAnchor(a.id)}
+            >
+              <span>{anchorLabel(a)}</span>
+              <span className={d <= 25 ? 'anchor-ok' : 'anchor-bad'}>
+                {d <= 25 ? '✓' : `${d.toFixed(0)} mm`}
+              </span>
+            </button>
+          )
+        })}
+        {!anchors.length && <div className="member-info">nenhuma ancoragem neste projeto</div>}
+      </div>
+    </div>
+  )
+}
+
+function AxleBlock({ axle }: { axle: Axle }) {
+  const cage = useStore((s) => s.cage)
+  const setSuspensionType = useStore((s) => s.setSuspensionType)
+  const setTire = useStore((s) => s.setTire)
+  const moveWheelCenter = useStore((s) => s.moveWheelCenter)
+  const selectWheel = useStore((s) => s.selectWheel)
+  const susp = cage.suspension
+  if (!susp) return null
+  const ax = susp[axle]
+  const c = ax.wheelCenter
+  const locked = isLocked(cage, wheelLockId(axle))
+  return (
+    <div className="section">
+      <div className="section-title">Eixo {axle === 'dianteira' ? 'dianteiro' : 'traseiro'}</div>
+      <label className="num-field">
+        <span>tipo</span>
+        <select
+          value={ax.type}
+          onChange={(e) => setSuspensionType(axle, e.target.value as SuspensionType)}
+        >
+          {SUSPENSION_TYPES_BY_AXLE[axle].map((t) => (
+            <option key={t} value={t}>
+              {SUSPENSION_TYPE_LABELS[t]} · {ANCHOR_ROLES_BY_TYPE[t].length} pontos por roda
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
+        Trocar o tipo reconcilia as ancoragens do eixo: as com papel no tipo novo ficam, as sem
+        papel saem, as que faltam nascem a partir das vizinhas. Papéis:{' '}
+        {ANCHOR_ROLES_BY_TYPE[ax.type].map((r) => ANCHOR_ROLE_LABELS[r]).join(' · ')}.
+      </div>
+      <div className="section-title small">Centro de roda (lado L; o R é o espelho)</div>
+      <NumField
+        label="X (lateral)"
+        value={c.x}
+        disabled={locked}
+        onChange={(x) => moveWheelCenter(axle, 'L', { ...c, x })}
+      />
+      <NumField
+        label="Y (altura)"
+        value={c.y}
+        disabled={locked}
+        onChange={(y) => moveWheelCenter(axle, 'L', { ...c, y })}
+      />
+      <NumField
+        label="Z (frente)"
+        value={c.z}
+        disabled={locked}
+        onChange={(z) => moveWheelCenter(axle, 'L', { ...c, z })}
+      />
+      <LockField id={wheelLockId(axle)} />
+      <div className="member-info">
+        bitola medida: {measuredTrack(susp, axle).toFixed(0)} mm ·{' '}
+        <button className="mini" onClick={() => selectWheel({ axle, side: 'L' })}>
+          selecionar no 3D
+        </button>
+      </div>
+      <div className="section-title small">Pneu</div>
+      <NumField
+        label="Ø externo (mm)"
+        value={ax.tire.od}
+        step={1}
+        onChange={(od) => setTire(axle, { od })}
+      />
+      <NumField
+        label="largura (mm)"
+        value={ax.tire.width}
+        step={1}
+        onChange={(width) => setTire(axle, { width })}
+      />
+      <NumField
+        label="aro (mm)"
+        value={ax.tire.rim}
+        step={1}
+        onChange={(rim) => setTire(axle, { rim })}
+      />
+    </div>
+  )
+}
+
+/**
+ * Aba Suspensão (DF-30). Sem configuração o projeto tem só as ancoragens soltas e o SUSP.1;
+ * configurar é opt-in e vai para o JSON, como manequim e volante.
+ */
+function SuspensionGroup() {
+  const cage = useStore((s) => s.cage)
+  const enableSuspension = useStore((s) => s.enableSuspension)
+  const removeSuspension = useStore((s) => s.removeSuspension)
+  const setWheelbase = useStore((s) => s.setWheelbase)
+  const susp = cage.suspension
+  if (!susp) {
+    return (
+      <>
+        <div className="section">
+          <div className="section-title">Suspensão (DF-30)</div>
+          <div className="muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
+            Sem configuração, o projeto tem só as ancoragens soltas e a regra SUSP.1. Configurar
+            cria o tipo por eixo (inferido das ancoragens presentes), os centros de roda, o pneu e o
+            entre-eixos declarado — tudo vai para o JSON exportado.
+          </div>
+          <button className="full primary" onClick={enableSuspension}>
+            Configurar suspensão a partir das ancoragens
+          </button>
+        </div>
+        <AnchorList />
+      </>
+    )
+  }
+  const measured = measuredWheelbase(susp)
+  const diff = measured - susp.wheelbaseMm
+  const ok = Math.abs(diff) <= WHEELBASE_TOL_MM
+  return (
+    <>
+      <div className="section">
+        <div className="section-title">Entre-eixos</div>
+        <CommitField
+          label="declarado (mm) · Enter aplica"
+          value={susp.wheelbaseMm}
+          step={5}
+          onCommit={setWheelbase}
+        />
+        {ok ? (
+          <div className="removal-ok">
+            ✓ Medido {measured.toFixed(0)} mm entre os centros de roda, dentro de ±
+            {WHEELBASE_TOL_MM} mm do declarado.
+          </div>
+        ) : (
+          <div className="removal-bad">
+            ✕ Medido {measured.toFixed(0)} mm × declarado {susp.wheelbaseMm} mm (
+            {diff > 0 ? '+' : ''}
+            {diff.toFixed(0)} mm). Mova os centros de roda ou corrija o declarado (SUSP.2).
+          </div>
+        )}
+        <div className="muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
+          Os corpos no 3D são caricatura útil: braço reto, rótula a ±100 mm do centro, amortecedor
+          reto. Servem para ver volume e interferência grossa, não folga de 10 mm. Ligue "Suspensão"
+          e "Ancoragens" na barra do viewport.
+        </div>
+      </div>
+      <AxleBlock axle="dianteira" />
+      <AxleBlock axle="traseira" />
+      <AnchorList />
+      <div className="section">
+        <button className="danger full" onClick={removeSuspension}>
+          Remover configuração da suspensão
+        </button>
+        <div className="muted" style={{ fontSize: 11 }}>
+          As ancoragens ficam; saem o tipo, os centros de roda, o pneu e o entre-eixos declarado.
+        </div>
+      </div>
+    </>
+  )
+}
 
 function ManikinBlock() {
   const cage = useStore((s) => s.cage)
@@ -715,19 +940,18 @@ export function Inspector({
   const setWeightParams = useStore((s) => s.setWeightParams)
   const selectedSteering = useStore((s) => s.selectedSteering)
   const selectedPlane = useStore((s) => s.selectedPlane)
+  const selectedWheel = useStore((s) => s.selectedWheel)
+  const moveWheelCenter = useStore((s) => s.moveWheelCenter)
   const setDistance = useStore((s) => s.setDistance)
   const setLocked = useStore((s) => s.setLocked)
   const massReport = estimateMass(cage)
   const joints = detectJoints(cage)
 
   const [group, setGroup] = useState<Group>('build')
-  const [anchorsOpen, setAnchorsOpen] = useState(false)
   useEffect(() => {
-    if (selectedAnchor) setAnchorsOpen(true)
-  }, [selectedAnchor])
-  useEffect(() => {
-    if (!pending && (selectedNode || selectedMember || selectedAnchor)) setGroup('sel')
-  }, [pending, selectedNode, selectedMember, selectedAnchor])
+    if (!pending && (selectedNode || selectedMember || selectedAnchor || selectedWheel))
+      setGroup('sel')
+  }, [pending, selectedNode, selectedMember, selectedAnchor, selectedWheel])
   useEffect(() => {
     if (selectedSteering) setGroup('pilot')
   }, [selectedSteering])
@@ -738,17 +962,12 @@ export function Inspector({
   const node = selectedNode ? cage.nodes[selectedNode] : null
   const member = selectedMember ? cage.members.find((m) => m.id === selectedMember) : null
   const anchor = selectedAnchor ? (cage.anchors ?? []).find((a) => a.id === selectedAnchor) : null
+  // DF-30: o centro só existe com o módulo configurado
+  const wheel = selectedWheel && cage.suspension ? selectedWheel : null
+  const wheelPos = wheel ? wheelCenter(cage.suspension!, wheel.axle, wheel.side) : null
 
   // distância da ancoragem ao tubo mais próximo (suporte físico)
-  const anchorSupport = (a: Anchor) => {
-    let best = Infinity
-    for (const m of cage.members) {
-      const pa = cage.nodes[m.a]
-      const pb = cage.nodes[m.b]
-      if (pa && pb) best = Math.min(best, distPointToSegment(a.pos, pa, pb))
-    }
-    return best
-  }
+  const anchorSupport = (a: Anchor) => supportDistance(cage, a.pos)
   const nodeInUse = selectedNode
     ? cage.members.some((m) => m.a === selectedNode || m.b === selectedNode)
     : false
@@ -790,7 +1009,7 @@ export function Inspector({
     e.target.value = ''
   }
 
-  const hasSelection = !!(member || node || anchor)
+  const hasSelection = !!(member || node || anchor || wheel)
 
   return (
     <div className="inspector">
@@ -1094,52 +1313,58 @@ export function Inspector({
             </div>
           )}
 
-          {/* ---- lista de ancoragens (colapsável) ---- */}
-          <div className="section">
-            <button
-              className="section-toggle"
-              title="Mostrar/ocultar as 20 ancoragens da suspensão"
-              onClick={() => setAnchorsOpen(!anchorsOpen)}
-            >
-              <span className="section-title" style={{ marginBottom: 0 }}>
-                Ancoragens da suspensão
-                {(() => {
-                  const bad = (cage.anchors ?? []).filter((a) => anchorSupport(a) > 25).length
-                  return bad > 0 ? <span className="anchor-bad"> · {bad} sem suporte</span> : null
-                })()}
-              </span>
-              <span className="chevron">{anchorsOpen ? '▾' : '▸'}</span>
-            </button>
-            {anchorsOpen && (
-              <div className="anchor-list" style={{ marginTop: 8 }}>
-                {(cage.anchors ?? []).map((a) => {
-                  const d = anchorSupport(a)
-                  return (
-                    <button
-                      key={a.id}
-                      className={`anchor-row ${a.id === selectedAnchor ? 'active' : ''}`}
-                      onClick={() => useStore.getState().selectAnchor(a.id)}
-                    >
-                      <span>{anchorLabel(a)}</span>
-                      <span className={d <= 25 ? 'anchor-ok' : 'anchor-bad'}>
-                        {d <= 25 ? '✓' : `${d.toFixed(0)} mm`}
-                      </span>
-                    </button>
-                  )
-                })}
+          {/* ---- centro de roda selecionado (DF-30) ---- */}
+          {wheel && wheelPos && cage.suspension && (
+            <div className="section">
+              <div className="section-title">
+                Centro da roda {wheel.axle} {wheel.side}
               </div>
-            )}
-          </div>
+              <div className="member-info">
+                um ponto por eixo: o lado {wheel.side === 'L' ? 'R' : 'L'} é o espelho ·{' '}
+                {SUSPENSION_TYPE_LABELS[cage.suspension[wheel.axle].type]}
+              </div>
+              <NumField
+                label="X (lateral)"
+                value={wheelPos.x}
+                disabled={isLocked(cage, wheelLockId(wheel.axle))}
+                onChange={(x) => moveWheelCenter(wheel.axle, wheel.side, { ...wheelPos, x })}
+              />
+              <NumField
+                label="Y (altura)"
+                value={wheelPos.y}
+                disabled={isLocked(cage, wheelLockId(wheel.axle))}
+                onChange={(y) => moveWheelCenter(wheel.axle, wheel.side, { ...wheelPos, y })}
+              />
+              <NumField
+                label="Z (frente)"
+                value={wheelPos.z}
+                disabled={isLocked(cage, wheelLockId(wheel.axle))}
+                onChange={(z) => moveWheelCenter(wheel.axle, wheel.side, { ...wheelPos, z })}
+              />
+              <LockField id={wheelLockId(wheel.axle)} />
+              <div className="member-info">
+                bitola {measuredTrack(cage.suspension, wheel.axle).toFixed(0)} mm · entre-eixos
+                medido {measuredWheelbase(cage.suspension).toFixed(0)} mm (declarado{' '}
+                {cage.suspension.wheelbaseMm} mm)
+              </div>
+              <button className="full" onClick={() => setGroup('susp')}>
+                Abrir a aba Suspensão
+              </button>
+            </div>
+          )}
 
-          {!member && !node && !anchor && (
+          {!member && !node && !anchor && !wheel && (
             <div className="section muted">
-              Clique em um nó, tubo ou ancoragem (losango laranja) no 3D para editar.
+              Clique em um nó, tubo, ancoragem (losango) ou centro de roda (cubo) no 3D para editar.
+              A lista de ancoragens mora na aba Suspensão.
             </div>
           )}
         </>
       )}
 
       {group === 'planes' && <PlanesGroup planes={planes} />}
+
+      {group === 'susp' && <SuspensionGroup />}
 
       {group === 'tubes' && (
         <>

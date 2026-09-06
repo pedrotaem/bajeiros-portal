@@ -231,8 +231,12 @@ describe('DF-21 — ficha do protótipo (API)', () => {
     for (const sug of s.suggestions) {
       expect(fieldById(sug.fieldId)?.suggest).toBeTruthy()
       expect(sug.origin).toBe('modelo 3D · v1')
-      // sugestão NÃO é valor: não aparece em `values` nem conta no progresso
-      expect(s.values.some((v) => v.fieldId === sug.fieldId)).toBe(false)
+      // sugestão NÃO é valor: não aparece em `values` nem conta no progresso. O entre-eixos
+      // é a exceção legítima — foi DIGITADO num teste acima (1520) e o DF-30 também o sugere
+      // do modelo 3D; ficha com valor e sugestão lado a lado é o caso normal (DF-21 §3.3).
+      if (sug.fieldId !== 'dim.entre-eixos') {
+        expect(s.values.some((v) => v.fieldId === sug.fieldId)).toBe(false)
+      }
     }
   })
 

@@ -215,3 +215,36 @@ selectedPlane: string | null // id do plano; entra no mesmo grupo exclusivo das 
 4. App rodando: foi o que mostrou as duas correções de projeto — aplicar por tecla (virou Enter) e
    o giro que deixava a LDB para trás (virou `planeCarry`).
 5. Promoção para `spec.md` (US-13/US-14) e atualização de `design.md` e `docs/arquitetura.html`.
+
+## 11. Emenda 2026-09-05 — cota flutuante sobre o tubo selecionado (✅ implementada)
+
+**Motivação.** O comprimento editável do membro (FR-DF22.4) vive no inspetor, à direita. Quem
+está com o mouse no tubo precisa levar o olho até o painel, achar o campo, digitar e voltar. O
+pedido de uso em staging: "ao clicar num elemento com comprimento editável, deve aparecer um
+campo flutuante acima do elemento para editar o valor atual".
+
+**Definição.** Elemento com comprimento editável = **membro** (tubo entre dois nós). Nó,
+ancoragem, ponto do volante e plano não têm comprimento próprio — o nó tem a cota até outro
+ponto (FR-DF22.4), que segue no inspetor.
+
+- **FR-DF22.15** Ao selecionar um membro, um campo numérico flutuante (`drei/Html`, variante
+  `measure` de C-25, fonte mono) aparece **acima do ponto médio do tubo**, pré-preenchido com o
+  comprimento atual em mm, com o foco já no campo e o texto selecionado.
+- **FR-DF22.16** Mesmo contrato do `CommitField`: **Enter aplica**, Esc descarta, sair do campo
+  aplica. Aplicar chama `setDistance(a, b, alvo, 'b')` — desloca a ponta `b` sobre o eixo do
+  tubo, com o espelho e a trava (FR-DF23) valendo como no inspetor. O campo do inspetor continua
+  existindo: são duas entradas para a mesma ação.
+- **FR-DF22.17** Ponta `b` travada: o campo aparece **desabilitado**, com o cadeado e o nome do nó
+  na placa — a tela avisa antes da tentativa (FR-15.4), não depois.
+- **FR-DF22.18** O flutuante captura ponteiro e teclado (`pointer-events: auto`, `stopPropagation`)
+  para que clicar nele não conte como "clique fora" e desmarque o tubo. Sai de cena quando a
+  seleção muda, quando "adicionar membro" começa e quando o Esc é pressionado com o campo vazio de
+  edição.
+- **FR-DF22.19** O flutuante é um só e segue a seleção: não há modo "vários campos abertos".
+
+| #          | Critério                                                                                         | Verificação                           |
+| ---------- | ------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| AC-DF22.12 | Clicar num tubo abre o campo acima do ponto médio com o comprimento atual; Enter reposiciona `b` | manual/browser                        |
+| AC-DF22.13 | Esc fecha sem alterar; clicar fora desmarca o tubo e fecha o campo                               | manual/browser                        |
+| AC-DF22.14 | Com `b` travado o campo nasce desabilitado e diz qual nó destravar                               | manual/browser                        |
+| AC-DF22.15 | Digitar "1" e depois "2" não move o tubo para 1 mm no meio do caminho (aplica só no Enter)       | vitest ✔ (`setDistance` já é atômico) |

@@ -22,6 +22,12 @@ import type { Anchor, Cage, Member, Vec3 } from './types'
 // trocadas para SAE 1020 (Ø30×2 primário, Ø25,4×0,9 secundário). Única normalização:
 // as âncoras dianteira-inf2 vieram 29,6 mm fora do LFS (SUSP.1 falhava, limite 25 mm) e
 // foram encostadas no ponto mais próximo do tubo (de ±228/85/963 para ±200/79/955).
+// Revisão de 2026-09-06 ("gaiola-bajeiros_com-suspensao_02.json", editor em staging com o
+// módulo DF-30): traseira vira braço arrastado (2 pivôs + amortecedor por lado, 16 ancoragens
+// no total), vértices R e suportes do motor EM recuados e recentrados (x=±204 e ±93), sup2
+// dianteiro recuado, centros de roda reposicionados pelo usuário. Única normalização: o
+// entre-eixos declarado tinha ficado em 1102 enquanto os centros mediam 1121 (SUSP.2 falhava)
+// — o declarado passa a 1121.
 
 const nodes: Record<string, Vec3> = {
   // corta-fogo (octógono reclinado ~11°)
@@ -55,10 +61,10 @@ const nodes: Record<string, Vec3> = {
   U1: { x: 0, y: 0, z: 0 },
   U2: { x: 0, y: 15, z: 378 },
   // amarração traseira e suportes do motor
-  RL: { x: -330, y: 400, z: -450 },
-  RR: { x: 330, y: 400, z: -450 },
-  EML: { x: -280, y: 60, z: -430 },
-  EMR: { x: 280, y: 60, z: -430 },
+  RL: { x: -204, y: 505, z: -518 },
+  RR: { x: 204, y: 505, z: -518 },
+  EML: { x: -93, y: 53, z: -437 },
+  EMR: { x: 93, y: 53, z: -437 },
   // extremidades das diagonais do corta-fogo (sobre os montantes); só LDB1→LDB2 tem membro
   LDB1: { x: -369, y: 121, z: -27 },
   LDB2: { x: 340.4, y: 1023, z: -194.4 },
@@ -177,14 +183,14 @@ const anchors: Anchor[] = [
     axle: 'dianteira',
     side: 'L',
     role: 'sup2',
-    pos: { x: -218, y: 294, z: 1006 },
+    pos: { x: -230, y: 290, z: 939 },
   },
   {
     id: 'dianteira-sup2-R',
     axle: 'dianteira',
     side: 'R',
     role: 'sup2',
-    pos: { x: 218, y: 294, z: 1006 },
+    pos: { x: 230, y: 290, z: 939 },
   },
   {
     id: 'dianteira-amort-L',
@@ -205,70 +211,42 @@ const anchors: Anchor[] = [
     axle: 'traseira',
     side: 'L',
     role: 'inf1',
-    pos: { x: -342, y: 36, z: -166 },
+    pos: { x: -316, y: 8, z: -56 },
   },
   {
     id: 'traseira-inf1-R',
     axle: 'traseira',
     side: 'R',
     role: 'inf1',
-    pos: { x: 342, y: 36, z: -166 },
+    pos: { x: 316, y: 8, z: -56 },
   },
   {
     id: 'traseira-inf2-L',
     axle: 'traseira',
     side: 'L',
     role: 'inf2',
-    pos: { x: -297, y: 61, z: -398 },
+    pos: { x: -225, y: 29, z: -221 },
   },
   {
     id: 'traseira-inf2-R',
     axle: 'traseira',
     side: 'R',
     role: 'inf2',
-    pos: { x: 297, y: 61, z: -398 },
-  },
-  {
-    id: 'traseira-sup1-L',
-    axle: 'traseira',
-    side: 'L',
-    role: 'sup1',
-    pos: { x: -379.5, y: 361, z: -199.5 },
-  },
-  {
-    id: 'traseira-sup1-R',
-    axle: 'traseira',
-    side: 'R',
-    role: 'sup1',
-    pos: { x: 379.5, y: 361, z: -199.5 },
-  },
-  {
-    id: 'traseira-sup2-L',
-    axle: 'traseira',
-    side: 'L',
-    role: 'sup2',
-    pos: { x: -345.2, y: 388, z: -372.9 },
-  },
-  {
-    id: 'traseira-sup2-R',
-    axle: 'traseira',
-    side: 'R',
-    role: 'sup2',
-    pos: { x: 345.2, y: 388, z: -372.9 },
+    pos: { x: 225, y: 29, z: -221 },
   },
   {
     id: 'traseira-amort-L',
     axle: 'traseira',
     side: 'L',
     role: 'amort',
-    pos: { x: -371, y: 378, z: -267 },
+    pos: { x: -302, y: 419, z: -284 },
   },
   {
     id: 'traseira-amort-R',
     axle: 'traseira',
     side: 'R',
     role: 'amort',
-    pos: { x: 371, y: 378, z: -267 },
+    pos: { x: 302, y: 419, z: -284 },
   },
 ]
 
@@ -308,5 +286,21 @@ export const templateCage: Cage = {
     angles: { recline: 16, hip: 100, knee: 120, ankle: 100, shoulder: 30, elbow: 120 },
     seatPadMm: 40,
     helmetRadiusMm: 120,
+  },
+  // DF-30: duplo A na dianteira, braço arrastado na traseira — escolha do usuário no editor
+  // (2026-09-06), com os centros de roda posicionados à mão. Entre-eixos declarado igual ao
+  // medido entre os centros: o template passa SUSP.2 de saída. Pneu 22×7-10.
+  suspension: {
+    wheelbaseMm: 1121,
+    dianteira: {
+      type: 'duplo-a',
+      wheelCenter: { x: -557, y: 38, z: 718 },
+      tire: { od: 559, width: 178, rim: 254 },
+    },
+    traseira: {
+      type: 'trailing',
+      wheelCenter: { x: -614, y: 10, z: -403 },
+      tire: { od: 559, width: 178, rim: 254 },
+    },
   },
 }
