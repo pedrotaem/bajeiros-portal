@@ -1,14 +1,24 @@
 import { create } from 'zustand'
 import type {
+  Axle,
   Cage,
   Member,
   MemberType,
   NodeId,
+  Side,
   SteelMaterialRef,
   SteeringMount,
+  SuspensionType,
+  TireSpec,
   Vec3,
 } from '@bajeiros/core/model/types'
-import { isLocked, mirrorId, sanitizeLocked } from '@bajeiros/core/model/types'
+import { isLocked, mirrorId, sanitizeLocked, wheelLockId } from '@bajeiros/core/model/types'
+import {
+  defaultSuspension,
+  isTypeAllowed,
+  reconcileAnchors,
+  sanitizeSuspension,
+} from '@bajeiros/core/model/suspension'
 import {
   PLANE_TOL_MM,
   detectPlanes,
@@ -66,12 +76,18 @@ interface State {
   selectedAnchor: string | null
   selectedSteering: string | null
   selectedPlane: string | null
+  // DF-30: centro de roda selecionado (um ponto por eixo; o lado só muda o rótulo e o sinal de x)
+  selectedWheel: { axle: Axle; side: Side } | null
   highlightRule: string | null
   mirror: boolean
   showRedundant: boolean
   showGeraldao: boolean
   showManikin: boolean
   showPlanes: boolean
+  // DF-29: rótulos de id dos nós. DF-30: corpos da suspensão e marcadores de ancoragem.
+  showLabels: boolean
+  showSuspension: boolean
+  showAnchors: boolean
   planeTolMm: number
   cameraView: { view: CameraView; seq: number } | null
   setCameraView: (view: CameraView) => void
@@ -85,7 +101,17 @@ interface State {
   selectAnchor: (id: string | null) => void
   selectSteering: (id: string | null) => void
   selectPlane: (id: string | null) => void
+  selectWheel: (sel: { axle: Axle; side: Side } | null) => void
   setShowPlanes: (v: boolean) => void
+  setShowLabels: (v: boolean) => void
+  setShowSuspension: (v: boolean) => void
+  setShowAnchors: (v: boolean) => void
+  enableSuspension: () => void
+  removeSuspension: () => void
+  setSuspensionType: (axle: Axle, type: SuspensionType) => void
+  setWheelbase: (mm: number) => void
+  setTire: (axle: Axle, patch: Partial<TireSpec>) => void
+  moveWheelCenter: (axle: Axle, side: Side, pos: Vec3) => void
   setPlaneTol: (mm: number) => void
   setDistance: (a: NodeId, b: NodeId, targetMm: number, move: 'a' | 'b' | 'both') => void
   setPlaneAngle: (movingId: string, refId: string, deg: number) => void
@@ -133,12 +159,16 @@ export const useStore = create<State>((set, _get) => ({
   selectedAnchor: null,
   selectedSteering: null,
   selectedPlane: null,
+  selectedWheel: null,
   highlightRule: null,
   mirror: true,
   showRedundant: false,
   showGeraldao: false,
   showManikin: false,
   showPlanes: false,
+  showLabels: true,
+  showSuspension: true,
+  showAnchors: true,
   planeTolMm: PLANE_TOL_MM,
   cameraView: null,
   setCameraView: (view) =>
@@ -172,6 +202,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedAnchor: null,
       selectedSteering: null,
       selectedPlane: null,
+      selectedWheel: null,
       pending: null,
     }),
   selectNode: (id) =>
@@ -181,6 +212,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedAnchor: null,
       selectedSteering: null,
       selectedPlane: null,
+      selectedWheel: null,
       highlightRule: null,
     }),
   selectMember: (id) =>
@@ -190,6 +222,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedAnchor: null,
       selectedSteering: null,
       selectedPlane: null,
+      selectedWheel: null,
       highlightRule: null,
     }),
   selectAnchor: (id) =>
@@ -199,6 +232,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedSteering: null,
       selectedPlane: null,
+      selectedWheel: null,
       highlightRule: null,
     }),
   selectSteering: (id) =>
@@ -208,18 +242,88 @@ export const useStore = create<State>((set, _get) => ({
       selectedMember: null,
       selectedAnchor: null,
       selectedPlane: null,
+      selectedWheel: null,
       highlightRule: null,
     }),
   selectPlane: (id) =>
     set({
       selectedPlane: id,
+      selectedWheel: null,
       selectedNode: null,
       selectedMember: null,
       selectedAnchor: null,
       selectedSteering: null,
       highlightRule: null,
     }),
+  selectWheel: (sel) =>
+    set({
+      selectedWheel: sel,
+      selectedNode: null,
+      selectedMember: null,
+      selectedAnchor: null,
+      selectedSteering: null,
+      selectedPlane: null,
+      highlightRule: null,
+    }),
   setShowPlanes: (v) => set({ showPlanes: v }),
+  setShowLabels: (v) => set({ showLabels: v }),
+  setShowSuspension: (v) => set({ showSuspension: v }),
+  setShowAnchors: (v) => set({ showAnchors: v }),
+  // DF-30 — a configuração nasce do que a gaiola já tem (FR-DF30.3); com ela presente é no-op
+  enableSuspension: () =>
+    set((s) =>
+      s.cage.suspension ? {} : { cage: { ...s.cage, suspension: defaultSuspension(s.cage) } },
+    ),
+  removeSuspension: () =>
+    set((s) => {
+      if (!s.cage.suspension) return {}
+      const cage: Cage = { ...s.cage, suspension: undefined }
+      // as ancoragens ficam (FR-DF30.5); só a trava dos centros de roda morre com eles
+      return { cage: { ...cage, locked: sanitizeLocked(cage) }, selectedWheel: null }
+    }),
+  setSuspensionType: (axle, type) =>
+    set((s) => {
+      const susp = s.cage.suspension
+      if (!susp || susp[axle].type === type || !isTypeAllowed(axle, type)) return {}
+      const anchors = reconcileAnchors(s.cage.anchors ?? [], axle, type, susp[axle].wheelCenter)
+      const cage: Cage = {
+        ...s.cage,
+        anchors,
+        suspension: { ...susp, [axle]: { ...susp[axle], type } },
+      }
+      // ancoragem removida pela reconciliação não pode deixar trava fantasma (FR-15.5)
+      const locked = sanitizeLocked(cage)
+      const selectedAnchor =
+        s.selectedAnchor && anchors.some((a) => a.id === s.selectedAnchor) ? s.selectedAnchor : null
+      return { cage: { ...cage, locked }, selectedAnchor }
+    }),
+  setWheelbase: (mm) =>
+    set((s) =>
+      s.cage.suspension && Number.isFinite(mm) && mm > 0
+        ? { cage: { ...s.cage, suspension: { ...s.cage.suspension, wheelbaseMm: mm } } }
+        : {},
+    ),
+  setTire: (axle, patch) =>
+    set((s) => {
+      const susp = s.cage.suspension
+      if (!susp) return {}
+      const tire = { ...susp[axle].tire, ...patch }
+      if (!(tire.od > 0 && tire.width > 0 && tire.rim > 0)) return {}
+      return { cage: { ...s.cage, suspension: { ...susp, [axle]: { ...susp[axle], tire } } } }
+    }),
+  // o centro é um ponto por eixo, guardado para o lado L: mover o R move o par (FR-DF30.7)
+  moveWheelCenter: (axle, side, pos) =>
+    set((s) => {
+      const susp = s.cage.suspension
+      if (!susp || isLocked(s.cage, wheelLockId(axle))) return {}
+      const left: Vec3 = side === 'L' ? pos : { x: -pos.x, y: pos.y, z: pos.z }
+      return {
+        cage: {
+          ...s.cage,
+          suspension: { ...susp, [axle]: { ...susp[axle], wheelCenter: left } },
+        },
+      }
+    }),
   setPlaneTol: (mm) => set({ planeTolMm: Math.max(1, Math.min(50, mm)), selectedPlane: null }),
   setDistance: (a, b, targetMm, move) =>
     set((s) => {
@@ -423,6 +527,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedNode: null,
       selectedAnchor: null,
       selectedPlane: null,
+      selectedWheel: null,
     }),
   cancelPending: () => set({ pending: null }),
   pickNode: (id) =>
@@ -433,6 +538,7 @@ export const useStore = create<State>((set, _get) => ({
           selectedMember: null,
           selectedAnchor: null,
           selectedPlane: null,
+          selectedWheel: null,
           highlightRule: null,
         }
       if (!s.pending.first) return { pending: { ...s.pending, first: id } }
@@ -564,24 +670,30 @@ export const useStore = create<State>((set, _get) => ({
       return { cage: { ...s.cage, [key]: { ...cur, custom: { ...cur.custom, ...props } } } }
     }),
   loadCage: (cage) =>
-    set({
-      cage: {
-        ...cage,
-        // FR-DF1.6 — migração silenciosa de projetos exportados antes do DF-1
-        primarySection: migrateSection(cage.primarySection),
-        secondarySection: migrateSection(cage.secondarySection),
-        // FR-DF6.4/6.5 — saneia declarações de continuidade importadas
-        continuity: sanitizeContinuity(cage),
-        // DF-23 — trava de id que não existe mais no JSON importado é fantasma
-        locked: sanitizeLocked(cage),
-      },
-      selectedNode: null,
-      selectedMember: null,
-      selectedAnchor: null,
-      selectedSteering: null,
-      selectedPlane: null,
-      highlightRule: null,
-      pending: null,
+    set(() => {
+      // FR-DF30.6 — configuração de suspensão inválida é descartada inteira, e a trava do
+      // centro de roda depende dela existir: por isso sai antes de sanear as travas
+      const withSusp: Cage = { ...cage, suspension: sanitizeSuspension(cage) }
+      return {
+        cage: {
+          ...withSusp,
+          // FR-DF1.6 — migração silenciosa de projetos exportados antes do DF-1
+          primarySection: migrateSection(cage.primarySection),
+          secondarySection: migrateSection(cage.secondarySection),
+          // FR-DF6.4/6.5 — saneia declarações de continuidade importadas
+          continuity: sanitizeContinuity(cage),
+          // DF-23 — trava de id que não existe mais no JSON importado é fantasma
+          locked: sanitizeLocked(withSusp),
+        },
+        selectedNode: null,
+        selectedMember: null,
+        selectedAnchor: null,
+        selectedSteering: null,
+        selectedPlane: null,
+        selectedWheel: null,
+        highlightRule: null,
+        pending: null,
+      }
     }),
   reset: () =>
     set({
@@ -591,6 +703,7 @@ export const useStore = create<State>((set, _get) => ({
       selectedAnchor: null,
       selectedSteering: null,
       selectedPlane: null,
+      selectedWheel: null,
       highlightRule: null,
       pending: null,
     }),

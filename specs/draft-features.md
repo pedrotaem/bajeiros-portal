@@ -30,6 +30,8 @@
 | DF-26       | Sugestões de dentro da página                                                 | ✅     | PR #43 (sem mural e sem voto na v1)                                             |
 | DF-27       | Cortina "Em breve" em produção                                                | ✅ N1  | PR #45 (N2 §5.5 opcional, não entrou; **ligar é operação**)                     |
 | DF-28       | Assistente sem conta: demonstração no lugar da degustação                     | 🚧     | draft; substitui a FR-DF27.12                                                   |
+| DF-29       | Rótulos dos pontos na cena: mostrar e ocultar                                 | ✅     | FR-1.7 em `spec.md`                                                             |
+| DF-30       | Módulo de suspensão: tipo por eixo, centros de roda, entre-eixos, corpos      | ✅ v1  | `spec.md` US-17; SUSP.2/SUSP.3 em `rules.md`; pendências em §10 do draft        |
 
 **Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
 nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
@@ -41,17 +43,19 @@ A ordem deriva das dependências (materiais fundamentam massa; continuidade fund
 juntas; manequim fundamenta volante) e prioriza entregas de valor imediato e baixo risco
 antes das features maiores:
 
-| Ordem  | Spec                                      | Feature                                                  | Depende de      | Racional da posição                                                                       |
-| ------ | ----------------------------------------- | -------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------- |
-| 1 ✅   | [DF-1](drafts/df1-materiais.md)           | Material dos tubos (aços) por classe — **implementada**  | —               | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2 |
-| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)     | Estimativa de peso (v1) — **v1 implementada**            | DF-1            | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                |
-| 3 ✅   | [DF-3](drafts/df3-geraldao.md)            | Geraldão no cockpit (toggle) — **implementada**          | —               | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4      |
-| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)  | Continuidade de tubos — **implementada**                 | —               | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                    |
-| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md) | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1      | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)           |
-| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md) | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)   | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar      |
-| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)   | Ancoragem do volante — **implementada**                  | DF-4 (opcional) | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                     |
-| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)      | Planos e cotas — **implementada**                        | —               | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                    |
-| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)    | Trava e vistas de câmera — **implementada**              | DF-22           | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique     |
+| Ordem  | Spec                                      | Feature                                                  | Depende de         | Racional da posição                                                                        |
+| ------ | ----------------------------------------- | -------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| 1 ✅   | [DF-1](drafts/df1-materiais.md)           | Material dos tubos (aços) por classe — **implementada**  | —                  | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2  |
+| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)     | Estimativa de peso (v1) — **v1 implementada**            | DF-1               | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                 |
+| 3 ✅   | [DF-3](drafts/df3-geraldao.md)            | Geraldão no cockpit (toggle) — **implementada**          | —                  | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4       |
+| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)  | Continuidade de tubos — **implementada**                 | —                  | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                     |
+| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md) | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1         | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)            |
+| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md) | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)      | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar       |
+| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)   | Ancoragem do volante — **implementada**                  | DF-4 (opcional)    | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                      |
+| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)      | Planos e cotas — **implementada**                        | —                  | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                     |
+| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)    | Trava e vistas de câmera — **implementada**              | DF-22              | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique      |
+| 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)   | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                    |
+| 11 ✅  | [DF-30](drafts/df30-suspensao.md)         | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
 
 ## Grafo de dependências
 
@@ -155,6 +159,14 @@ graph LR
   status honesto: recusar **exige** motivo. **Sem mural e sem voto na v1**, por evidência de viés
   e por continuidade com o "benchmark nunca vira ranking" do DF-15. O ciclo fecha in-app, porque
   o portal não manda e-mail.
+
+- **DF-29 — Rótulos da cena:** alternador "Rótulos" na barra do viewport esconde os ids dos
+  nós; o selecionado continua rotulado. Estado de sessão, fora do JSON.
+- **DF-30 — Suspensão:** tipo por eixo (duplo A, McPherson, braço arrastado/semi-arrastado) define
+  os papéis de ancoragem e reconcilia o conjunto; centro de roda por eixo (cubo, espelhado) dá
+  bitola e entre-eixos; entre-eixos declarado é conferido por SUSP.2; corpos genéricos (pneu, aro,
+  manga, bandejas, amortecedor) com alternadores "Suspensão" e "Ancoragens"; ficha recebe
+  entre-eixos, bitolas e tipos como sugestão.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16) — ✅ implementado em 2026-08-30 (PR #33)
 
@@ -299,3 +311,25 @@ A porta fecha **na API**, não na tela: o módulo `/api/v1/assistant` sai da exc
 por IP, o `rateKey` anônimo, a variável `ASSISTANT_ANON_DAILY` (API e Terraform) e o middleware
 `optionalAuth`, que ficaria sem nenhum call site. Isso **substitui a FR-DF27.12** — sem conta não
 há assistente em ambiente nenhum, o que é mais fechado que o `0` que a cortina usava.
+
+## DF-29 — Rótulos dos pontos na cena (proposto e ✅ implementado em 2026-09-05)
+
+Todo nó carrega um rótulo `drei/Html` com o id, e numa gaiola completa são 30 a 40 placas em
+cima exatamente do que a pessoa quer ver quando avalia **forma**. O [alternador
+"Rótulos"](drafts/df29-rotulos-da-cena.md) na barra do viewport esconde todos e deixa só o nó
+selecionado rotulado. É estado de sessão, como Geraldão e Piloto — não vai para o JSON. Na mesma
+leva, o DF-22 ganhou a §11: a **cota flutuante** sobre o tubo selecionado (Enter aplica, Esc
+descarta), a segunda entrada para a mesma ação do comprimento editável do inspetor.
+
+## DF-30 — Módulo de suspensão (proposto e ✅ v1 implementado em 2026-09-05)
+
+As 20 ancoragens de US-4 assumiam duplo A nos dois eixos sem dizer, e a gaiola não sabia o que
+é uma roda. O [módulo](drafts/df30-suspensao.md) torna isso configuração de projeto, opt-in e no
+JSON: **tipo por eixo** (os ids do catálogo da ficha), com o conjunto de ancoragens **derivado do
+tipo** e reconciliado ao trocar; **centro de roda** por eixo (um ponto, espelhado), que dá bitola
+e entre-eixos medidos; **entre-eixos declarado** conferido por `SUSP.2` (± 5 mm) e conjunto de
+ancoragens conferido por `SUSP.3`; **corpos genéricos** (pneu, aro, manga, bandejas, amortecedor)
+como cilindros derivados, sem clique e sem massa, com dois alternadores no viewport; e a ficha
+recebendo entre-eixos, bitolas e tipos como sugestão. O template nasce configurado (duplo A,
+22×7-10, entre-eixos 1102 mm). Fora da v1, nomeado no §10 do draft: solo derivado do pneu,
+largura total × regulamento (após conferência da Emenda 7), bitola declarada, cinemática.

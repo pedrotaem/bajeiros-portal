@@ -39,7 +39,10 @@ export interface Range {
   max: number
 }
 
-/** Cálculos que o portal sabe fazer a partir do modelo 3D (DF-21 §5, seis campos). */
+/**
+ * Cálculos que o portal sabe fazer a partir do modelo 3D (DF-21 §5, seis campos; DF-30
+ * acrescenta cinco da suspensão, emitidos só quando `Cage.suspension` existe).
+ */
 export type SuggestId =
   | 'cageMassKg'
   | 'tubeLengthMm'
@@ -47,6 +50,11 @@ export type SuggestId =
   | 'primarySection'
   | 'secondarySection'
   | 'helmetClearanceMm'
+  | 'wheelbaseMm'
+  | 'trackFrontMm'
+  | 'trackRearMm'
+  | 'suspFrontType'
+  | 'suspRearType'
 
 export interface Field {
   id: string

@@ -10,6 +10,13 @@ import {
 import { spliceCandidates } from '../model/continuity'
 import { detectJoints } from '../model/joints'
 import {
+  AXLES,
+  SUSPENSION_TYPE_LABELS,
+  WHEELBASE_TOL_MM,
+  anchorMismatch,
+  measuredWheelbase,
+} from '../model/suspension'
+import {
   angleDeg,
   absXAtZ,
   centroid,
@@ -889,6 +896,51 @@ export function evaluate(cage: Cage): RuleResult[] {
           members: memberIds(ilc),
         })
       }
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // DF-30 — suspensão configurada (opt-in): entre-eixos e conjunto de ancoragens por tipo
+  {
+    const susp = cage.suspension
+    if (susp) {
+      const measured = measuredWheelbase(susp)
+      const diff = measured - susp.wheelbaseMm
+      const ok = Math.abs(diff) <= WHEELBASE_TOL_MM
+      results.push({
+        id: 'SUSP.2',
+        title: 'Entre-eixos do projeto batendo com os centros de roda',
+        status: ok ? 'pass' : 'fail',
+        measured: ok
+          ? `${fmt(measured, 0)} mm (declarado ${fmt(susp.wheelbaseMm, 0)} mm)`
+          : `${fmt(measured, 0)} mm medido × ${fmt(susp.wheelbaseMm, 0)} mm declarado (${diff > 0 ? '+' : ''}${fmt(diff, 0)} mm)`,
+        limit: `declarado ± ${WHEELBASE_TOL_MM} mm`,
+        members: [],
+        note: 'Cota de projeto do módulo de suspensão. Ajuste os centros de roda ou o valor declarado.',
+      })
+
+      const missing: string[] = []
+      const extra: string[] = []
+      for (const axle of AXLES) {
+        const mm = anchorMismatch(cage.anchors ?? [], axle, susp[axle].type)
+        missing.push(...mm.missing)
+        extra.push(...mm.extra)
+      }
+      const tipos = AXLES.map((a) => `${a} ${SUSPENSION_TYPE_LABELS[susp[a].type]}`).join(' · ')
+      const parts = [
+        missing.length ? `faltando: ${missing.join(', ')}` : '',
+        extra.length ? `sobrando: ${extra.join(', ')}` : '',
+      ].filter(Boolean)
+      results.push({
+        id: 'SUSP.3',
+        title: 'Ancoragens conforme o tipo de suspensão de cada eixo',
+        status: parts.length ? 'fail' : 'pass',
+        measured: parts.length ? parts.join(' · ') : tipos,
+        limit: 'papéis exigidos pelo tipo, nos dois lados',
+        members: [],
+        presence: missing.length > 0,
+        note: 'Trocar o tipo na aba Suspensão reconcilia o conjunto; JSON editado à mão pode divergir.',
+      })
     }
   }
 

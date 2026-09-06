@@ -309,4 +309,21 @@ export const templateCage: Cage = {
     seatPadMm: 40,
     helmetRadiusMm: 120,
   },
+  // DF-30: duplo A nos dois eixos (é o que as 20 ancoragens sempre assumiram). Centros de roda
+  // = `defaultSuspension` sobre as ancoragens acima (|x| máx + 250, altura e z médios das
+  // bandejas), congelados aqui para o template não depender da heurística. Entre-eixos
+  // declarado igual ao medido: o template passa SUSP.2 de saída. Pneu 22×7-10.
+  suspension: {
+    wheelbaseMm: 1102,
+    dianteira: {
+      type: 'duplo-a',
+      wheelCenter: { x: -553, y: 165, z: 818 },
+      tire: { od: 559, width: 178, rim: 254 },
+    },
+    traseira: {
+      type: 'duplo-a',
+      wheelCenter: { x: -629, y: 212, z: -284 },
+      tire: { od: 559, width: 178, rim: 254 },
+    },
+  },
 }

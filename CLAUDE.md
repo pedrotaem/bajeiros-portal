@@ -71,6 +71,8 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   já mentiram sobre o estado. Conferir contra o repo antes de agir sobre o que dizem.
 - Contador em prosa envelhece (testes, migrações, contratos). Medir, não citar.
 - three.js não interpreta `var()`: material 3D lê o token de `tokens.ts`, não do CSS.
+- `drei/Html` = **root React separado**. Input controlado dentro dele precisa do estado **dentro do
+  portal**; estado fora perde teclas (o root restaura o valor antigo antes do estado chegar).
 
 ## Trabalhar aqui
 

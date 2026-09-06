@@ -1969,3 +1969,43 @@ button.org-person:hover .org-person-name {
     transition: none;
   }
 }
+
+/* DF-22 §11 — cota flutuante sobre o tubo selecionado (variante `measure` de C-25).
+   Só tokens: a catraca de hex não sobe. */
+.length-field {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-1);
+  padding: var(--bj-space-1) var(--bj-space-2);
+  background: var(--bj-3d-label-bg);
+  border: 1px solid var(--bj-3d-selected);
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-3d-label-fg);
+  font: var(--bj-weight-medium) var(--bj-text-xs) var(--bj-font-mono);
+  white-space: nowrap;
+  transform: translateY(-100%);
+  pointer-events: auto;
+}
+.length-field input {
+  width: 72px;
+  padding: 2px 6px;
+  background: var(--bj-bg-inset);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-primary);
+  font: inherit;
+  text-align: right;
+}
+.length-field input:focus {
+  outline: none;
+  border-color: var(--bj-3d-selected);
+}
+.length-field input:disabled {
+  opacity: 0.5;
+}
+.length-field-label {
+  color: var(--bj-fg-muted);
+}
+.length-field-lock {
+  color: var(--bj-warn);
+}

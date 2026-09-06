@@ -25,6 +25,37 @@ import { mostrarCortina } from './cortina'
 import { appConfigAtual, useSession, track, TITULO_PAGINA as TITULOS } from './session'
 import './shell.css'
 
+/**
+ * Alternador de camada da barra do viewport. `aria-pressed` é o que dá o estado ao leitor
+ * de tela (design-system C-23) — a cor sozinha não conta.
+ */
+function Toggle({
+  on,
+  onToggle,
+  title,
+  disabled,
+  children,
+}: {
+  on: boolean
+  onToggle: (v: boolean) => void
+  title: string
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className={on ? 'toggle active' : 'toggle'}
+      aria-pressed={on}
+      title={title}
+      disabled={disabled}
+      onClick={() => onToggle(!on)}
+    >
+      {children}
+    </button>
+  )
+}
+
 function ViewportToggles() {
   const showGeraldao = useStore((s) => s.showGeraldao)
   const setShowGeraldao = useStore((s) => s.setShowGeraldao)
@@ -34,36 +65,69 @@ function ViewportToggles() {
   const setShowManikin = useStore((s) => s.setShowManikin)
   const showPlanes = useStore((s) => s.showPlanes)
   const setShowPlanes = useStore((s) => s.setShowPlanes)
+  const showLabels = useStore((s) => s.showLabels)
+  const setShowLabels = useStore((s) => s.setShowLabels)
+  const showSuspension = useStore((s) => s.showSuspension)
+  const setShowSuspension = useStore((s) => s.setShowSuspension)
+  const showAnchors = useStore((s) => s.showAnchors)
+  const setShowAnchors = useStore((s) => s.setShowAnchors)
+  const hasSuspension = useStore((s) => !!s.cage.suspension)
   return (
     <>
-      <button
-        className={showGeraldao ? 'toggle active' : 'toggle'}
+      <Toggle
+        on={showLabels}
+        onToggle={setShowLabels}
+        title="Rótulos com o id de cada nó (DF-29). Desligado, só o nó selecionado fica rotulado"
+      >
+        Rótulos
+      </Toggle>
+      <Toggle
+        on={showGeraldao}
+        onToggle={setShowGeraldao}
         title="Gabarito de habitáculo (Geraldão) do regulamento (B6.2.4.3), visualização apenas"
-        onClick={() => setShowGeraldao(!showGeraldao)}
       >
         Geraldão
-      </button>
-      <button
-        className={showManikin ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showManikin}
+        onToggle={setShowManikin}
         title="Manequim ergonômico do piloto (faixa de percentis), visualização apenas"
-        onClick={() => setShowManikin(!showManikin)}
       >
         Piloto
-      </button>
-      <button
-        className={showPlanes ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showPlanes}
+        onToggle={setShowPlanes}
         title="Planos formados por pontos denominados adjacentes (DF-22). Clique num plano para medir e editar ângulos"
-        onClick={() => setShowPlanes(!showPlanes)}
       >
         Planos
-      </button>
-      <button
-        className={showRedundant ? 'toggle active' : 'toggle'}
+      </Toggle>
+      <Toggle
+        on={showSuspension && hasSuspension}
+        onToggle={setShowSuspension}
+        disabled={!hasSuspension}
+        title={
+          hasSuspension
+            ? 'Corpos genéricos da suspensão: bandejas, amortecedor, manga, roda e pneu (DF-30), visualização apenas'
+            : 'Sem suspensão configurada — configure na aba Suspensão do editor (DF-30)'
+        }
+      >
+        Suspensão
+      </Toggle>
+      <Toggle
+        on={showAnchors}
+        onToggle={setShowAnchors}
+        title="Marcadores das ancoragens da suspensão e dos centros de roda (DF-30)"
+      >
+        Ancoragens
+      </Toggle>
+      <Toggle
+        on={showRedundant}
+        onToggle={setShowRedundant}
         title="Destacar membros cuja remoção não infringe regras"
-        onClick={() => setShowRedundant(!showRedundant)}
       >
         Redundância
-      </button>
+      </Toggle>
     </>
   )
 }
@@ -308,7 +372,7 @@ function Portal() {
               <i style={{ background: viewport3d.selected }} /> atenção
             </span>
             <span>
-              <i style={{ background: viewport3d['anchor-ok'] }} /> ancoragem
+              <i style={{ background: viewport3d['anchor-ok'] }} /> ancoragem · suspensão
             </span>
           </div>
         </div>

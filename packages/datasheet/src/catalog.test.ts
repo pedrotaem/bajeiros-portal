@@ -63,7 +63,8 @@ describe('catálogo da ficha v1 (DF-21 §5)', () => {
       const f = fieldById(id)!
       expect(validateValue(f, amostra(f)).ok, id).toBe(true)
     }
-    expect(SUGGESTED_FIELDS).toHaveLength(6)
+    // 6 do DF-21 + 5 do DF-30 (entre-eixos, duas bitolas, dois tipos de suspensão)
+    expect(SUGGESTED_FIELDS).toHaveLength(11)
   })
 
   it('todo campo traz rótulo e ajuda canônicos (RF-1.2)', () => {

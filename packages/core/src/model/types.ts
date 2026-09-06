@@ -109,12 +109,39 @@ export interface SteelMaterialRef {
 
 export type AnchorRole = 'sup1' | 'sup2' | 'inf1' | 'inf2' | 'amort'
 
+export type Axle = 'dianteira' | 'traseira'
+export type Side = 'L' | 'R'
+
 export interface Anchor {
   id: string
-  axle: 'dianteira' | 'traseira'
-  side: 'L' | 'R'
+  axle: Axle
+  side: Side
   role: AnchorRole
   pos: Vec3
+}
+
+// DF-30 — suspensão: tipo por eixo, centro de roda e pneu. Ids dos tipos são os MESMOS do
+// catálogo da ficha (DF-21 §5.4, SUSP_DIANT/SUSP_TRAS): o módulo sugere para a ficha sem tradução.
+export type SuspensionType = 'duplo-a' | 'mcpherson' | 'semi-trailing' | 'trailing'
+
+export interface TireSpec {
+  od: number // diâmetro externo do pneu, mm
+  width: number // largura do pneu, mm
+  rim: number // diâmetro do aro, mm
+}
+
+export interface AxleSuspension {
+  type: SuspensionType
+  // centro da roda do lado L (x < 0); o R é o espelho. Bitola do eixo = 2·|x|.
+  wheelCenter: Vec3
+  tire: TireSpec
+}
+
+export interface SuspensionConfig {
+  // cota de projeto: SUSP.2 confere contra |z(traseira) − z(dianteira)| dos centros de roda
+  wheelbaseMm: number
+  dianteira: AxleSuspension
+  traseira: AxleSuspension
 }
 
 export const ANCHOR_ROLE_LABELS: Record<AnchorRole, string> = {
@@ -149,6 +176,9 @@ export interface Cage {
   continuity?: Continuity[]
   // Ancoragem do suporte do volante (DF-5) — opt-in; STEER.1 valida quando presente
   steering?: SteeringMount
+  // Suspensão (DF-30) — opt-in; define o conjunto de ancoragens por tipo, centros de roda e
+  // entre-eixos declarado. Ausente, o projeto se comporta como antes do DF-30 (só SUSP.1).
+  suspension?: SuspensionConfig
   // Configuração do manequim ergonômico (DF-4) — decisão de projeto, vai para o JSON
   manikin?: import('./manikin').ManikinConfig
   // Parâmetros da estimativa de massa (DF-2); exportados no JSON p/ reprodutibilidade
@@ -180,12 +210,18 @@ export function isLocked(cage: Cage, id: string): boolean {
   return (cage.locked ?? []).includes(id)
 }
 
+/** Id de trava do centro de roda (DF-30): um por eixo — L e R são o mesmo ponto espelhado. */
+export function wheelLockId(axle: Axle): string {
+  return `roda-${axle}`
+}
+
 /** Ids travados que ainda existem na gaiola — usado ao importar JSON. */
 export function sanitizeLocked(cage: Cage): string[] {
   const known = new Set<string>([
     ...Object.keys(cage.nodes ?? {}),
     ...(cage.anchors ?? []).map((a) => a.id),
     ...(cage.steering?.points ?? []).map((p) => p.id),
+    ...(cage.suspension ? [wheelLockId('dianteira'), wheelLockId('traseira')] : []),
   ])
   return [...new Set(cage.locked ?? [])].filter((id) => known.has(id))
 }
