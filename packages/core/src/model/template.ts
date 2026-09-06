@@ -2,10 +2,10 @@ import type { Anchor, Cage, Member, Vec3 } from './types'
 
 // Sistema de coordenadas: mm. +Y para cima, +Z para frente do veículo, +X lado direito do piloto.
 //
-// Gaiola default do portal — projeto do usuário exportado do próprio editor
-// ("Novas referencias/gaiola-bajeiros (3).json", 2026-08-22), derivado da réplica FEI
-// (gabarito da corta-fogo octogonal, perfil GOM, Fig A5/A6 — ver "Novas referencias/"
-// e scratchpad/fei/). Normalizações aplicadas ao importar como template:
+// Gaiola default do portal — projeto do usuário exportado do próprio editor em staging
+// ("gaiola-bajeiros.json", 2026-09-05), evolução da versão de 2026-08-22 derivada da réplica
+// FEI (gabarito da corta-fogo octogonal, perfil GOM, Fig A5/A6 — ver "Novas referencias/"
+// e scratchpad/fei/). Normalizações aplicadas ao importar a primeira versão como template:
 // - simetria L/R: criado N1L (espelho do N1), X do assoalho completado (IL→FX, FX→FR),
 //   FX/U2 recentrados no eixo, diagonal espelhada do corta-fogo (LDB3→LDB4), base em y=0;
 // - N1 projetado sobre a reta C→N e o FBM dividido nele (CR→N1→NR / CL→N1L→NL);
@@ -13,9 +13,15 @@ import type { Anchor, Cage, Member, Vec3 } from './types'
 //   C→N = FBM_UP, SM→N = SIM (fecha a cadeia RRH→SIM→FBM), SM→I e N1→SM = FREE;
 // - USM prolongado até a ILC (B6.2.10/11) e continuidade RHO+FBM declarada no ponto C.
 // Sem cintura D/DLC: o FBM desce direto do teto ao quadro frontal N (dobra em N,
-// ponto denominado), nariz curto e elevado (F em y=81), lateral inteira na altura do
+// ponto denominado), nariz curto e elevado (F em y=86), lateral inteira na altura do
 // cinto (S/SM/N em y≈340) — B6.2.9 fecha com o Geraldão em y=105, que também dá
 // C 1041 mm acima do assento (B6.2.7.5).
+// Revisão de 2026-09-05, feita no editor e importada sem normalizar: nariz mais estreito
+// (F em x=±183), diagonal espelhada do corta-fogo (LDB3→LDB4) removida — LDB3/LDB4 ficam
+// como nós soltos, o editor os preserva —, âncoras dianteiras reposicionadas e seções
+// trocadas para SAE 1020 (Ø30×2 primário, Ø25,4×0,9 secundário). Única normalização:
+// as âncoras dianteira-inf2 vieram 29,6 mm fora do LFS (SUSP.1 falhava, limite 25 mm) e
+// foram encostadas no ponto mais próximo do tubo (de ±228/85/963 para ±200/79/955).
 
 const nodes: Record<string, Vec3> = {
   // corta-fogo (octógono reclinado ~11°)
@@ -36,8 +42,8 @@ const nodes: Record<string, Vec3> = {
   // quadro frontal (topo N, base F) — nariz curto e elevado
   NL: { x: -218, y: 342, z: 1002 },
   NR: { x: 218, y: 342, z: 1002 },
-  FL: { x: -217, y: 81, z: 1010 },
-  FR: { x: 217, y: 81, z: 1010 },
+  FL: { x: -183, y: 86, z: 1009 },
+  FR: { x: 183, y: 86, z: 1009 },
   IL: { x: -291, y: 41, z: 670 },
   IR: { x: 291, y: 41, z: 670 },
   // nó do SIM (denominado)
@@ -53,7 +59,7 @@ const nodes: Record<string, Vec3> = {
   RR: { x: 330, y: 400, z: -450 },
   EML: { x: -280, y: 60, z: -430 },
   EMR: { x: 280, y: 60, z: -430 },
-  // extremidades das diagonais do corta-fogo (sobre os montantes)
+  // extremidades das diagonais do corta-fogo (sobre os montantes); só LDB1→LDB2 tem membro
   LDB1: { x: -369, y: 121, z: -27 },
   LDB2: { x: 340.4, y: 1023, z: -194.4 },
   LDB3: { x: 369, y: 121, z: -27 },
@@ -71,7 +77,6 @@ const members: Member[] = [
   { id: 'BLC-7', type: 'BLC', a: 'BL', b: 'BR' },
   { id: 'SHC-8', type: 'SHC', a: 'HL', b: 'HR' },
   { id: 'LDB-9', type: 'LDB', a: 'LDB1', b: 'LDB2' },
-  { id: 'FREE-10', type: 'FREE', a: 'LDB3', b: 'LDB4' },
   { id: 'RHO-11', type: 'RHO', a: 'BL', b: 'CL' },
   { id: 'RHO-12', type: 'RHO', a: 'BR', b: 'CR' },
   { id: 'CLC-13', type: 'CLC', a: 'CL', b: 'CR' },
@@ -130,70 +135,70 @@ const anchors: Anchor[] = [
     axle: 'dianteira',
     side: 'L',
     role: 'inf1',
-    pos: { x: -291, y: 84, z: 665 },
+    pos: { x: -292, y: 64, z: 665 },
   },
   {
     id: 'dianteira-inf1-R',
     axle: 'dianteira',
     side: 'R',
     role: 'inf1',
-    pos: { x: 291, y: 84, z: 665 },
+    pos: { x: 292, y: 64, z: 665 },
   },
   {
     id: 'dianteira-inf2-L',
     axle: 'dianteira',
     side: 'L',
     role: 'inf2',
-    pos: { x: -220, y: 144, z: 1002 },
+    pos: { x: -200, y: 79, z: 955 },
   },
   {
     id: 'dianteira-inf2-R',
     axle: 'dianteira',
     side: 'R',
     role: 'inf2',
-    pos: { x: 220, y: 144, z: 1002 },
+    pos: { x: 200, y: 79, z: 955 },
   },
   {
     id: 'dianteira-sup1-L',
     axle: 'dianteira',
     side: 'L',
     role: 'sup1',
-    pos: { x: -304, y: 276, z: 638 },
+    pos: { x: -303, y: 221, z: 645 },
   },
   {
     id: 'dianteira-sup1-R',
     axle: 'dianteira',
     side: 'R',
     role: 'sup1',
-    pos: { x: 304, y: 276, z: 638 },
+    pos: { x: 303, y: 221, z: 645 },
   },
   {
     id: 'dianteira-sup2-L',
     axle: 'dianteira',
     side: 'L',
     role: 'sup2',
-    pos: { x: -216, y: 291, z: 1009 },
+    pos: { x: -218, y: 294, z: 1006 },
   },
   {
     id: 'dianteira-sup2-R',
     axle: 'dianteira',
     side: 'R',
     role: 'sup2',
-    pos: { x: 216, y: 291, z: 1009 },
+    pos: { x: 218, y: 294, z: 1006 },
   },
   {
     id: 'dianteira-amort-L',
     axle: 'dianteira',
     side: 'L',
     role: 'amort',
-    pos: { x: -265, y: 343, z: 796 },
+    pos: { x: -255, y: 345, z: 809 },
   },
   {
     id: 'dianteira-amort-R',
     axle: 'dianteira',
     side: 'R',
     role: 'amort',
-    pos: { x: 265, y: 343, z: 796 },
+    pos: { x: 255, y: 345, z: 809 },
   },
   {
     id: 'traseira-inf1-L',
@@ -272,11 +277,11 @@ export const templateCage: Cage = {
   members,
   geraldao: { x: 0, y: 105, z: 120 },
   seatBottomY: 100,
-  // Seções da FEI atual (Figura A5/Tabela A3): primário SAE 4130 Ø31,75×1,60 (passa a
-  // equivalência B6.3.3.2 c/ folga; SAE 1020 nominal Sy 350 MPa NÃO passa), secundário
-  // 4130 Ø25,4×0,9. Tubos livres reais (Ø19,05×1,25) aproximados pela seção secundária.
-  primarySection: { od: 31.75, wall: 1.6, materialId: '4130' },
-  secondarySection: { od: 25.4, wall: 0.9, materialId: '4130' },
+  // Seções escolhidas no editor (2026-09-05): primário SAE 1020 Ø30×2 — passa a equivalência
+  // B6.3.3.2 com ~3% de folga em Sy·I/c (1020 Ø31,75×1,60 NÃO passaria); secundário 1020
+  // Ø25,4×0,9. Tubos livres reais (Ø19,05×1,25) aproximados pela seção secundária.
+  primarySection: { od: 30, wall: 2, materialId: '1020' },
+  secondarySection: { od: 25.4, wall: 0.9, materialId: '1020' },
   namedExtra: ['SML', 'SMR', 'NL', 'NR'],
   anchors,
   continuity: [
