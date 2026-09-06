@@ -177,6 +177,10 @@ export const viewport3d = {
   'node-named': '#d5effd',
   pilot: '#6bb5ab',
   datum: '#4fb8d8',
+  // DF-30: braços/bandejas um passo acima do tubo secundário (estrutura, não membro da gaiola)
+  suspension: '#a89d94',
+  // DF-30: borracha do pneu — volume grande, lê por forma; acima do fundo, abaixo de tudo o mais
+  rubber: '#2b2622',
   'label-fg': '#ece7dd',
   'label-bg': '#241f19',
 } as const

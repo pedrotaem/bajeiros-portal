@@ -356,10 +356,18 @@ omissão (§9.1).
   --bj-3d-node-named: #d5effd;
   --bj-3d-pilot: #6bb5ab;
   --bj-3d-datum: #4fb8d8;
+  --bj-3d-suspension: #a89d94;
+  --bj-3d-rubber: #2b2622;
   --bj-3d-label-fg: #ece7dd;
   --bj-3d-label-bg: #241f19;
 }
 ```
+
+`--bj-3d-suspension` e `--bj-3d-rubber` (DF-30, 2026-09-06) são os dois papéis da suspensão na
+cena: braços, bandejas, manga e amortecedor em tubo sólido **um passo acima do secundário** (a
+suspensão é estrutura, mas não é membro da gaiola — a luminância separa sem disputar matiz), e a
+borracha do pneu, volume grande que lê por forma e fica logo acima do fundo. Não são medidos
+pela otimização de §9.4 — ver a nota lá.
 
 `--bj-3d-datum` é **alias de valor** de `--bj-accent` com papel fechado (gabarito de habitáculo, zona
 do punho, ponto normativo). Existe como nome próprio para que o 2D e a cena possam divergir sem
@@ -4077,18 +4085,20 @@ Seis conceitos ortogonais (tipo do membro, status, seleção, destaque de regra,
 redundância de remoção) disputavam **um** canal — `material.color` — numa cascata destrutiva:
 selecionar um tubo em infração apagava a infração da cena. A regra nova separa canais.
 
-| Conceito                           | Canal primário                               | Canal de reforço                    |
-| ---------------------------------- | -------------------------------------------- | ----------------------------------- |
-| Membro primário × secundário       | **`roughness`** (0,35 × 0,75) + rótulo       | Luminância (`member` × `secondary`) |
-| **INFRAÇÃO**                       | **Preenchimento + `emissive`**               | `--bj-3d-fail`                      |
-| **VERIFICAR**                      | **Contorno** + marcador ancorado             | `--bj-warn`                         |
-| Seleção                            | **Contorno aditivo**, `--bj-3d-selected`     | —                                   |
-| Destaque de regra                  | **Contorno tracejado**, `--bj-3d-datum`      | —                                   |
-| Cadeia de tubo físico contínuo     | **Contorno tracejado a 50%**, cor de seleção | Texto no Inspector                  |
-| Removível sem infração             | **Wireframe** sobre a cor de identidade      | `--bj-3d-removable`                 |
-| Ancoragem: suspensão × amortecedor | **Forma** (octaedro × cubo)                  | Mesma cor `--bj-3d-anchor-ok`       |
-| Manequim mínimo × máximo           | **Sólido × wireframe opaco**                 | Mesma cor `--bj-3d-pilot`           |
-| Nó nomeado × livre                 | **Peso do rótulo** + raio                    | `node-named` × `node`               |
+| Conceito                           | Canal primário                               | Canal de reforço                                        |
+| ---------------------------------- | -------------------------------------------- | ------------------------------------------------------- |
+| Membro primário × secundário       | **`roughness`** (0,35 × 0,75) + rótulo       | Luminância (`member` × `secondary`)                     |
+| **INFRAÇÃO**                       | **Preenchimento + `emissive`**               | `--bj-3d-fail`                                          |
+| **VERIFICAR**                      | **Contorno** + marcador ancorado             | `--bj-warn`                                             |
+| Seleção                            | **Contorno aditivo**, `--bj-3d-selected`     | —                                                       |
+| Destaque de regra                  | **Contorno tracejado**, `--bj-3d-datum`      | —                                                       |
+| Cadeia de tubo físico contínuo     | **Contorno tracejado a 50%**, cor de seleção | Texto no Inspector                                      |
+| Removível sem infração             | **Wireframe** sobre a cor de identidade      | `--bj-3d-removable`                                     |
+| Ancoragem: suspensão × amortecedor | **Forma** (octaedro × cubo)                  | Mesma cor `--bj-3d-anchor-ok`                           |
+| Manequim mínimo × máximo           | **Sólido × wireframe opaco**                 | Mesma cor `--bj-3d-pilot`                               |
+| Nó nomeado × livre                 | **Peso do rótulo** + raio                    | `node-named` × `node`                                   |
+| Suspensão × membro da gaiola       | **Raio** (11 mm × seção) + não é clicável    | `--bj-3d-suspension`, mais claro que `member-secondary` |
+| Pneu                               | **Volume** (carcaça, garras, letra branca)   | `--bj-3d-rubber`                                        |
 
 Quatro proibições que valem literalmente:
 
@@ -4154,6 +4164,13 @@ Mitigação vigente enquanto a reotimização não roda: os pares afetados **nã
 gabarito. É a aplicação da regra do §9.3, e é a razão pela qual o canal geométrico não é ornamento.
 **Ação registrada:** refazer a otimização max-min com os 13 tokens (78 pares × 4 modos) antes de
 fechar a fase 10 (separação de canal).
+
+**Emenda 2026-09-06 (DF-30).** Dois tokens novos fora do conjunto otimizado: `--bj-3d-suspension`
+(tubo sólido, mesmo material dos membros) e `--bj-3d-rubber` (borracha do pneu). O par que importa
+é `suspension` × `member-secondary`: separado por **luminância** e por **raio** (11 mm contra a seção
+declarada), e o corpo da suspensão **não é clicável** — clicar nele seleciona o que está atrás. O pneu
+é volume com garras e letra branca: forma resolve. Os dois entram na reotimização junto com `warn`
+e `datum` (15 tokens).
 
 ### 9.5 Contraste de rótulos, camadas e grade sobre o canvas
 

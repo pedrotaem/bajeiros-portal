@@ -218,8 +218,11 @@ passos" enquanto o assistente está ativo. Cancelar restaura snapshot da gaiola 
   `Html`: o drei monta o portal num root React separado, e um input controlado cujo estado mora fora
   desse root perde teclas — o root do portal restaura o valor antigo antes de o estado chegar. Enter → `submit` → `blur` → commit; Esc marca um `ref` de cancelamento
   antes do `blur`, porque `setDraft(null)` é assíncrono e o `onBlur` leria o rascunho antigo.
-- **Suspensão** (DF-30): `Suspension.tsx` desenha os cilindros de `suspensionBodies` com
-  `raycast` nulo, na cor de ancoragem translúcida + arame opaco (design-system §9.5). Centros de
+- **Suspensão** (DF-30): `Suspension.tsx` desenha os corpos de `suspensionBodies` com `raycast`
+  nulo: braços, manga, cubo e amortecedor como tubos sólidos (`--bj-3d-suspension`, material dos
+  membros); a roda é geometria própria — `LatheGeometry` para carcaça e aro no referencial do
+  torno (eixo Y, face externa em −Y, grupo girado Y → ∓X por lado), `InstancedMesh` para garras e
+  letras (contagem fixa: mudar o pneu troca a chave e remonta). Centros de
   roda são cubos arrastáveis (`kind: 'wheel'` no `DragState`, id `eixo|lado`); mover qualquer
   lado grava o L. `cageBounds` recebe `withWheels` e inclui centro ± raio do pneu só com os
   corpos visíveis — enquadrar pela roda com a camada desligada mostraria ar.

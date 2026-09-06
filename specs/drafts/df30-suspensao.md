@@ -150,11 +150,18 @@ wheelCenter (lado L), tire: { od, width, rim } }` em mm. Opt-in: ausente, nada m
 - **FR-DF30.14** Alternador **"Ancoragens"**: liga/desliga os marcadores de ancoragem **e** os
   centros de roda. Ligado por padrão. Desligar não desmarca a seleção atual, mas o marcador
   selecionado some com os demais.
-- **FR-DF30.15** Corpos por tipo, todos cilindros, cor `--bj-3d-anchor-ok` translúcida (0,35) com
-  arame opaco na mesma cor (§9.5): braços/bandejas r 11 mm, manga r 22, cubo r 18, amortecedor
-  r 16 (coluna McPherson r 20), pneu r `od/2` × largura `width`, aro r `rim/2` × 90 % da largura.
-  Rótula inferior/superior a ±100 mm do centro de roda, no plano do pneu deslocado 40 mm para
-  dentro da face interna (`x = cx ± (width/2 + 40)`).
+- **FR-DF30.15** Corpos por tipo. Braços/bandejas, manga, cubo e amortecedor são **tubos sólidos**
+  com o material dos membros da gaiola, na cor `--bj-3d-suspension` — um passo mais claro que o
+  tubo secundário: a suspensão lê como estrutura sem passar por membro. Raios: braços 11 mm, manga
+  22, cubo 18, amortecedor corpo 16 + haste 7 (coluna McPherson 20). Rótula inferior/superior a
+  ±100 mm do centro de roda, no plano do pneu deslocado 40 mm para dentro da face interna
+  (`x = cx ± (width/2 + 40)`). **Roda com volume**: carcaça do pneu revolucionada (talão no aro,
+  flanco abaulado, ombro arredondado, banda plana) em `--bj-3d-rubber`, garras off-road em duas
+  fileiras alternadas (passo ~45 mm, instanciadas), letra branca em dois arcos mais filete na
+  lateral **externa** (`--bj-3d-label-fg`); aro em prato até o cubo na cor do membro primário. O
+  cilindro `kind: 'tire'` de `suspensionBodies` segue sendo o envelope (centro, largura, raio) —
+  é o que o enquadramento e os testes usam. Emenda 2026-09-06: a v1 desenhava tudo como cilindro
+  translúcido na cor de ancoragem; o pedido de uso trouxe os tubos sólidos e o pneu concreto.
 - **FR-DF30.16** Ancoragem exigida pelo tipo mas ausente (JSON inconsistente): o corpo que dependia
   dela não é desenhado; a cena não quebra e `SUSP.3` explica.
 - **FR-DF30.17** A legenda do viewport nomeia a cor compartilhada: "ancoragem · suspensão".
