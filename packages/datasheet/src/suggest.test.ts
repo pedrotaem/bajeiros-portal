@@ -66,11 +66,11 @@ describe('sugestões do modelo 3D (DF-21 §3.2)', () => {
 describe('sugestões da suspensão (DF-30 FR-DF30.18)', () => {
   it('AC-DF30.8: template sugere entre-eixos, bitolas e tipos com os ids do catálogo', () => {
     const byId = new Map(suggestFrom(cage).map((s) => [s.fieldId, s.value]))
-    expect(byId.get('dim.entre-eixos')).toBe(1102)
-    expect(byId.get('dim.bitola-dianteira')).toBe(1106)
-    expect(byId.get('dim.bitola-traseira')).toBe(1258)
+    expect(byId.get('dim.entre-eixos')).toBe(1121)
+    expect(byId.get('dim.bitola-dianteira')).toBe(1114)
+    expect(byId.get('dim.bitola-traseira')).toBe(1228)
     expect(byId.get('susp.tipo-dianteiro')).toBe('duplo-a')
-    expect(byId.get('susp.tipo-traseiro')).toBe('duplo-a')
+    expect(byId.get('susp.tipo-traseiro')).toBe('trailing')
   })
 
   it('AC-DF30.2: sem módulo configurado, nada da suspensão é sugerido', () => {

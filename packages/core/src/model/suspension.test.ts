@@ -16,24 +16,27 @@ import {
 const clone = () => structuredClone(templateCage) as Cage
 
 describe('DF-30 — configuração default a partir das ancoragens', () => {
-  it('AC-DF30.1: o template nasce com duplo A nos dois eixos e entre-eixos igual ao medido', () => {
+  it('AC-DF30.1: o template nasce com duplo A na frente, braço arrastado atrás e entre-eixos igual ao medido', () => {
     const s = templateCage.suspension!
     expect(s.dianteira.type).toBe('duplo-a')
-    expect(s.traseira.type).toBe('duplo-a')
+    expect(s.traseira.type).toBe('trailing')
+    expect(templateCage.anchors).toHaveLength(16)
     expect(Math.round(measuredWheelbase(s))).toBe(s.wheelbaseMm)
+    expect(s.wheelbaseMm).toBe(1121)
   })
 
-  it('defaultSuspension infere duplo A e reproduz os centros congelados no template', () => {
+  it('defaultSuspension infere os tipos das ancoragens e põe o centro fora da mais externa', () => {
     const cage = clone()
     delete cage.suspension
     const d = defaultSuspension(cage)
     expect(d.dianteira.type).toBe('duplo-a')
-    expect(d.traseira.type).toBe('duplo-a')
-    expect(d.dianteira.wheelCenter).toEqual(templateCage.suspension!.dianteira.wheelCenter)
-    expect(d.traseira.wheelCenter).toEqual(templateCage.suspension!.traseira.wheelCenter)
-    expect(d.wheelbaseMm).toBe(1102)
+    expect(d.traseira.type).toBe('trailing')
+    // |x| máx + 250, altura e z médios das bandejas (sem o amortecedor)
+    expect(d.dianteira.wheelCenter).toEqual({ x: -553, y: 164, z: 801 })
+    expect(d.traseira.wheelCenter).toEqual({ x: -566, y: 19, z: -138 })
+    expect(d.wheelbaseMm).toBe(Math.round(measuredWheelbase(d)))
     expect(measuredTrack(d, 'dianteira')).toBe(1106)
-    expect(measuredTrack(d, 'traseira')).toBe(1258)
+    expect(measuredTrack(d, 'traseira')).toBe(1132)
   })
 
   it('sem bandeja superior o tipo inferido é o de três pontos do eixo', () => {
@@ -48,7 +51,7 @@ describe('DF-30 — reconciliação das ancoragens ao trocar o tipo (FR-DF30.4)'
     const cage = clone()
     const wc = cage.suspension!.dianteira.wheelCenter
     const next = reconcileAnchors(cage.anchors!, 'dianteira', 'mcpherson', wc)
-    expect(next).toHaveLength(16)
+    expect(next).toHaveLength(12)
     expect(
       next
         .filter((a) => a.axle === 'dianteira')
@@ -66,7 +69,7 @@ describe('DF-30 — reconciliação das ancoragens ao trocar o tipo (FR-DF30.4)'
     const wc = cage.suspension!.dianteira.wheelCenter
     const mc = reconcileAnchors(cage.anchors!, 'dianteira', 'mcpherson', wc)
     const back = reconcileAnchors(mc, 'dianteira', 'duplo-a', wc)
-    expect(back).toHaveLength(20)
+    expect(back).toHaveLength(16)
     const inf1L = back.find((a) => a.id === 'dianteira-inf1-L')!
     const sup1L = back.find((a) => a.id === 'dianteira-sup1-L')!
     const sup1R = back.find((a) => a.id === 'dianteira-sup1-R')!
@@ -91,10 +94,10 @@ describe('DF-30 — reconciliação das ancoragens ao trocar o tipo (FR-DF30.4)'
   it('anchorMismatch acusa faltando e sobrando', () => {
     const cage = clone()
     const semInf = cage.anchors!.filter((a) => a.id !== 'traseira-inf1-R')
-    expect(anchorMismatch(semInf, 'traseira', 'duplo-a').missing).toEqual(['traseira-inf1-R'])
-    const extra = anchorMismatch(cage.anchors!, 'traseira', 'trailing').extra
+    expect(anchorMismatch(semInf, 'traseira', 'trailing').missing).toEqual(['traseira-inf1-R'])
+    const extra = anchorMismatch(cage.anchors!, 'dianteira', 'mcpherson').extra
     expect(extra.sort()).toEqual(
-      ['traseira-sup1-L', 'traseira-sup1-R', 'traseira-sup2-L', 'traseira-sup2-R'].sort(),
+      ['dianteira-sup1-L', 'dianteira-sup1-R', 'dianteira-sup2-L', 'dianteira-sup2-R'].sort(),
     )
   })
 })
@@ -107,7 +110,8 @@ describe('DF-30 — corpos genéricos (FR-DF30.15/16)', () => {
     expect(kinds).toEqual(
       ['arm', 'arm', 'arm', 'arm', 'hub', 'knuckle', 'rim', 'shock', 'tire'].sort(),
     )
-    expect(bodies).toHaveLength(4 * 9)
+    // dianteira duplo A (9 por roda) + traseira braço arrastado (7 por roda: sem sup, 2 braços)
+    expect(bodies).toHaveLength(2 * 9 + 2 * 7)
     const tire = oneWheel.find((b) => b.kind === 'tire')!
     expect(tire.r).toBe(559 / 2)
     expect(Math.abs(tire.b.x - tire.a.x)).toBe(178)

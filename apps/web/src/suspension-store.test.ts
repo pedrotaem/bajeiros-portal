@@ -16,7 +16,9 @@ describe('DF-30 — módulo de suspensão no store', () => {
     st().enableSuspension()
     const s = st().cage.suspension!
     expect(s.dianteira.type).toBe('duplo-a')
-    expect(s.wheelbaseMm).toBe(1102)
+    expect(s.traseira.type).toBe('trailing')
+    // centros derivados das ancoragens (não os do template): declarado = medido
+    expect(s.wheelbaseMm).toBe(939)
     st().setWheelbase(1300)
     st().enableSuspension()
     expect(st().cage.suspension!.wheelbaseMm).toBe(1300)
@@ -30,7 +32,7 @@ describe('DF-30 — módulo de suspensão no store', () => {
     st().setSuspensionType('dianteira', 'mcpherson')
     const c = st().cage
     expect(c.suspension!.dianteira.type).toBe('mcpherson')
-    expect(c.anchors).toHaveLength(16)
+    expect(c.anchors).toHaveLength(12)
     expect(c.anchors!.some((a) => a.role.startsWith('sup') && a.axle === 'dianteira')).toBe(false)
     expect(c.locked).not.toContain('dianteira-sup1-L')
     // a ancoragem selecionada deixou de existir: seleção limpa, sem fantasma
@@ -42,7 +44,7 @@ describe('DF-30 — módulo de suspensão no store', () => {
     st().setSuspensionType('dianteira', 'mcpherson')
     st().setSuspensionType('dianteira', 'duplo-a')
     const a = st().cage.anchors!
-    expect(a).toHaveLength(20)
+    expect(a).toHaveLength(16)
     const l = a.find((x) => x.id === 'dianteira-sup2-L')!
     const r = a.find((x) => x.id === 'dianteira-sup2-R')!
     expect(r.pos).toEqual({ ...l.pos, x: -l.pos.x })
@@ -52,7 +54,7 @@ describe('DF-30 — módulo de suspensão no store', () => {
     load()
     st().setSuspensionType('dianteira', 'trailing')
     expect(st().cage.suspension!.dianteira.type).toBe('duplo-a')
-    expect(st().cage.anchors).toHaveLength(20)
+    expect(st().cage.anchors).toHaveLength(16)
   })
 
   it('AC-DF30.6: mover o centro R para x = +600 deixa o L em −600 (bitola 1200)', () => {
@@ -76,7 +78,7 @@ describe('DF-30 — módulo de suspensão no store', () => {
     load()
     st().setWheelbase(0)
     st().setWheelbase(Number.NaN)
-    expect(st().cage.suspension!.wheelbaseMm).toBe(1102)
+    expect(st().cage.suspension!.wheelbaseMm).toBe(1121)
     st().setTire('dianteira', { od: -10 })
     expect(st().cage.suspension!.dianteira.tire.od).toBe(559)
     st().setTire('dianteira', { od: 584 })
@@ -89,7 +91,7 @@ describe('DF-30 — módulo de suspensão no store', () => {
     st().selectWheel({ axle: 'traseira', side: 'L' })
     st().removeSuspension()
     expect(st().cage.suspension).toBeUndefined()
-    expect(st().cage.anchors).toHaveLength(20)
+    expect(st().cage.anchors).toHaveLength(16)
     expect(st().cage.locked).not.toContain(wheelLockId('traseira'))
     expect(st().selectedWheel).toBeNull()
   })

@@ -62,8 +62,8 @@ viewport — um para os corpos, outro para os pontos de ancoragem.
 
 **A suspensão é configuração de projeto, vai para o JSON** (como `manikin`, `steering` e
 `locked`) e é **opt-in**: projeto sem `suspension` continua exatamente como hoje — 20 ancoragens
-soltas, SUSP.1 e nada mais. O template do portal nasce **com** a configuração (duplo A nos dois
-eixos, pneu 22×7-10), porque é a gaiola de referência.
+soltas, SUSP.1 e nada mais. O template do portal nasce **com** a configuração (duplo A na
+dianteira, braço arrastado na traseira, pneu 22×7-10), porque é a gaiola de referência.
 
 **Um tipo define papéis, não posições.** Cada tipo lista os papéis de ancoragem que exige por
 roda (`ANCHOR_ROLES_BY_TYPE`). Trocar o tipo **reconcilia** as ancoragens do eixo: as que têm
@@ -205,18 +205,18 @@ interface Cage {
 
 ## 6. Módulos afetados
 
-| Módulo                                           | Mudança                                                                    |
-| ------------------------------------------------ | -------------------------------------------------------------------------- |
-| `core/model/types.ts`                            | tipos acima; `sanitizeLocked` conhece `roda-*`                             |
-| `core/model/suspension.ts`                       | **novo**: papéis por tipo, reconciliação, medidas, corpos, saneamento      |
-| `core/model/template.ts`                         | `suspension` do template (duplo A × 2, 22×7-10, entre-eixos 1102)          |
-| `core/rules/b6.ts`                               | `SUSP.2`, `SUSP.3`                                                         |
-| `datasheet/types.ts`, `catalog.ts`, `suggest.ts` | cinco `SuggestId` novos                                                    |
-| `web/store.ts`                                   | `showSuspension`, `showAnchors`, `selectedWheel`, ações do módulo          |
-| `web/components/Suspension.tsx`                  | **novo**: corpos genéricos a partir de `suspensionBodies`                  |
-| `web/components/Viewport.tsx`                    | marcadores de centro de roda; gating de ancoragens; enquadramento          |
-| `web/App.tsx`                                    | alternadores "Suspensão" e "Ancoragens"; legenda                           |
-| `web/components/Inspector.tsx`                   | aba **Suspensão** (config, centros, lista de ancoragens); painel do centro |
+| Módulo                                           | Mudança                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `core/model/types.ts`                            | tipos acima; `sanitizeLocked` conhece `roda-*`                                  |
+| `core/model/suspension.ts`                       | **novo**: papéis por tipo, reconciliação, medidas, corpos, saneamento           |
+| `core/model/template.ts`                         | `suspension` do template (duplo A + braço arrastado, 22×7-10, entre-eixos 1121) |
+| `core/rules/b6.ts`                               | `SUSP.2`, `SUSP.3`                                                              |
+| `datasheet/types.ts`, `catalog.ts`, `suggest.ts` | cinco `SuggestId` novos                                                         |
+| `web/store.ts`                                   | `showSuspension`, `showAnchors`, `selectedWheel`, ações do módulo               |
+| `web/components/Suspension.tsx`                  | **novo**: corpos genéricos a partir de `suspensionBodies`                       |
+| `web/components/Viewport.tsx`                    | marcadores de centro de roda; gating de ancoragens; enquadramento               |
+| `web/App.tsx`                                    | alternadores "Suspensão" e "Ancoragens"; legenda                                |
+| `web/components/Inspector.tsx`                   | aba **Suspensão** (config, centros, lista de ancoragens); painel do centro      |
 
 ## 7. UI/UX
 
@@ -231,19 +231,19 @@ interface Cage {
 
 ## 8. Critérios de aceite
 
-| #          | Critério                                                                                                                             | Verificação    |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| AC-DF30.1  | Template: `suspension` presente, `SUSP.2` e `SUSP.3` `pass`, `SUSP.1` inalterado                                                     | vitest ✔       |
-| AC-DF30.2  | Sem `suspension`, nenhum `SUSP.2`/`SUSP.3` é emitido; `suggestFrom` não sugere entre-eixos nem bitola                                | vitest ✔       |
-| AC-DF30.3  | Declarar entre-eixos 1400 no template → `SUSP.2` `fail` com medido, declarado e diferença                                            | vitest ✔       |
-| AC-DF30.4  | Trocar a dianteira para McPherson remove `sup1`/`sup2` dos dois lados (10 → 6 ancoragens dianteiras… 16 total) e limpa a trava delas | vitest ✔       |
-| AC-DF30.5  | Voltar para duplo A recria `sup1`/`sup2` em par espelhado, 200 mm acima das inferiores                                               | vitest ✔       |
-| AC-DF30.6  | Arrastar o centro de roda R para x = +600 deixa o L em −600 (bitola 1200)                                                            | vitest ✔       |
-| AC-DF30.7  | Apagar uma ancoragem exigida no JSON → `SUSP.3` `fail` com `presence: true`; a cena desenha os demais corpos                         | vitest ✔       |
-| AC-DF30.8  | `suggestFrom` do template sugere entre-eixos 1102, bitolas 1106/1258 e tipos `duplo-a`                                               | vitest ✔       |
-| AC-DF30.9  | JSON com `suspension.dianteira.type = 'trailing'` importa sem módulo (saneado)                                                       | vitest ✔       |
-| AC-DF30.10 | Alternadores "Suspensão" e "Ancoragens" escondem corpos e marcadores; "Suspensão" fica desabilitado sem config                       | manual/browser |
-| AC-DF30.11 | Vista Lateral com corpos ligados enquadra os pneus                                                                                   | manual/browser |
+| #          | Critério                                                                                                                                   | Verificação    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| AC-DF30.1  | Template (duplo A na frente, braço arrastado atrás, 16 ancoragens): `suspension` presente, `SUSP.2` e `SUSP.3` `pass`, `SUSP.1` inalterado | vitest ✔       |
+| AC-DF30.2  | Sem `suspension`, nenhum `SUSP.2`/`SUSP.3` é emitido; `suggestFrom` não sugere entre-eixos nem bitola                                      | vitest ✔       |
+| AC-DF30.3  | Declarar entre-eixos 1400 no template → `SUSP.2` `fail` com medido, declarado e diferença                                                  | vitest ✔       |
+| AC-DF30.4  | Trocar a dianteira para McPherson remove `sup1`/`sup2` dos dois lados (10 → 6 ancoragens dianteiras… 12 total) e limpa a trava delas       | vitest ✔       |
+| AC-DF30.5  | Voltar para duplo A recria `sup1`/`sup2` em par espelhado, 200 mm acima das inferiores                                                     | vitest ✔       |
+| AC-DF30.6  | Arrastar o centro de roda R para x = +600 deixa o L em −600 (bitola 1200)                                                                  | vitest ✔       |
+| AC-DF30.7  | Apagar uma ancoragem exigida no JSON → `SUSP.3` `fail` com `presence: true`; a cena desenha os demais corpos                               | vitest ✔       |
+| AC-DF30.8  | `suggestFrom` do template sugere entre-eixos 1121, bitolas 1114/1228 e tipos `duplo-a`/`trailing`                                          | vitest ✔       |
+| AC-DF30.9  | JSON com `suspension.dianteira.type = 'trailing'` importa sem módulo (saneado)                                                             | vitest ✔       |
+| AC-DF30.10 | Alternadores "Suspensão" e "Ancoragens" escondem corpos e marcadores; "Suspensão" fica desabilitado sem config                             | manual/browser |
+| AC-DF30.11 | Vista Lateral com corpos ligados enquadra os pneus                                                                                         | manual/browser |
 
 ## 9. Riscos e questões em aberto
 
