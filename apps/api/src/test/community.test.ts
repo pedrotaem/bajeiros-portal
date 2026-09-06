@@ -433,3 +433,246 @@ describe('DF-15 — API da comunidade', () => {
     expect(r.status).toBe(403)
   })
 })
+
+// DF-15 E2 — o "É a minha equipe" só significa alguma coisa com a fila da
+// administração do outro lado, e a aba só é navegável com os dois recortes.
+describe('DF-15 — registro canônico: filtros e curadoria', () => {
+  let cap: TestUser
+  let admin: TestUser
+  let teamId: string
+  let paulista: string
+  let mineiro: string
+  let semUf: string
+
+  const criar = async (body: unknown) =>
+    app.request(
+      '/api/v1/admin/community/teams',
+      authed(admin, { method: 'POST', body: json(body) }),
+    )
+
+  beforeAll(async () => {
+    ;[cap, admin] = await Promise.all([makeUser('CapReg'), makeUser('AdminReg')])
+    for (const u of [cap, admin]) await app.request('/api/v1/me', authed(u, { method: 'POST' }))
+    teamId = (
+      await (
+        await app.request(
+          '/api/v1/teams',
+          authed(cap, { method: 'POST', body: json({ name: 'Equipe Registro' }) }),
+        )
+      ).json()
+    ).id
+
+    const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
+    await client.connect()
+    await client.query('UPDATE users SET is_admin = true WHERE id = $1', [admin.sub])
+    // a linha "sem UF, com region" é o caso que justifica o fallback do filtro
+    const r = await client.query(
+      `INSERT INTO community_teams (display_name, university, uf, region)
+       VALUES ('Filtro Sem UF', 'Universidade Sem UF', NULL, 'Sul') RETURNING id`,
+    )
+    semUf = r.rows[0].id
+    await client.end()
+
+    paulista = (
+      await (
+        await criar({ displayName: 'Filtro Paulista', university: 'USP Fictícia', uf: 'SP' })
+      ).json()
+    ).id
+    mineiro = (
+      await (
+        await criar({ displayName: 'Filtro Mineiro', university: 'UFMG Fictícia', uf: 'MG' })
+      ).json()
+    ).id
+  })
+
+  const listar = async (qs: string) =>
+    (await (await app.request(`/api/v1/community/teams?${qs}`, authed(cap))).json()) as {
+      id: string
+      uf: string | null
+      region: string | null
+      regionId: string | null
+    }[]
+
+  it('a região sai da UF, não da coluna — quem só tem UF entra no recorte', async () => {
+    const criada = await (
+      await app.request(`/api/v1/community/teams?q=Filtro Paulista`, authed(cap))
+    ).json()
+    expect(criada[0].regionId).toBe('SE')
+    expect(criada[0].region).toBe('Sudeste')
+
+    const sudeste = await listar('region=SE')
+    const ids = sudeste.map((t) => t.id)
+    expect(ids).toContain(paulista)
+    expect(ids).toContain(mineiro)
+    expect(ids).not.toContain(semUf)
+    expect(sudeste.every((t) => t.regionId === 'SE')).toBe(true)
+  })
+
+  it('sem UF, a coluna `region` ainda vale — a linha não some do recorte', async () => {
+    const sul = await listar('region=S')
+    expect(sul.map((t) => t.id)).toContain(semUf)
+  })
+
+  it('filtro por estado recorta dentro da região', async () => {
+    const sp = await listar('uf=SP')
+    expect(sp.map((t) => t.id)).toContain(paulista)
+    expect(sp.map((t) => t.id)).not.toContain(mineiro)
+    expect(await listar('uf=sp')).toHaveLength(sp.length) // sigla em minúscula vale igual
+
+    const combinado = await listar('region=SE&uf=MG')
+    expect(combinado.map((t) => t.id)).toEqual([mineiro])
+    // combinação impossível devolve vazio, não a lista inteira
+    expect(await listar('region=S&uf=SP')).toHaveLength(0)
+  })
+
+  it('região desconhecida é ignorada em vez de zerar a lista', async () => {
+    const tudo = await listar('')
+    expect((await listar('region=XX')).length).toBe(tudo.length)
+  })
+
+  it('a administração corrige a linha, e a região acompanha a UF', async () => {
+    const r = await app.request(
+      `/api/v1/admin/community/teams/${mineiro}`,
+      authed(admin, {
+        method: 'PATCH',
+        body: json({ displayName: 'Filtro Mineiro (corrigido)', city: 'Belo Horizonte', uf: 'BA' }),
+      }),
+    )
+    expect(r.status).toBe(200)
+    const body = await r.json()
+    expect(body.displayName).toBe('Filtro Mineiro (corrigido)')
+    expect(body.city).toBe('Belo Horizonte')
+    expect(body.regionId).toBe('NE')
+
+    expect((await listar('region=SE')).map((t) => t.id)).not.toContain(mineiro)
+    expect((await listar('region=NE')).map((t) => t.id)).toContain(mineiro)
+
+    // devolve à UF de origem para não contaminar os outros testes do arquivo
+    await app.request(
+      `/api/v1/admin/community/teams/${mineiro}`,
+      authed(admin, { method: 'PATCH', body: json({ uf: 'MG' }) }),
+    )
+  })
+
+  it('curadoria é do admin: capitania não cria, não edita e não exclui', async () => {
+    expect((await app.request('/api/v1/admin/community/teams', authed(cap))).status).toBe(403)
+    expect(
+      (
+        await app.request(
+          '/api/v1/admin/community/teams',
+          authed(cap, { method: 'POST', body: json({ displayName: 'Pirata' }) }),
+        )
+      ).status,
+    ).toBe(403)
+    expect(
+      (
+        await app.request(
+          `/api/v1/admin/community/teams/${paulista}`,
+          authed(cap, { method: 'DELETE' }),
+        )
+      ).status,
+    ).toBe(403)
+  })
+
+  it('UF inválida é recusada na borda', async () => {
+    const r = await criar({ displayName: 'Filtro Errado', uf: 'São Paulo' })
+    expect(r.status).toBe(400)
+  })
+
+  it('excluir vale para duplicata sem rastro; linha com resultado ou vínculo resiste', async () => {
+    const duplicata = (await (await criar({ displayName: 'Filtro Duplicado', uf: 'PR' })).json()).id
+    const apagou = await app.request(
+      `/api/v1/admin/community/teams/${duplicata}`,
+      authed(admin, { method: 'DELETE' }),
+    )
+    expect(apagou.status).toBe(204)
+    expect((await listar('q=Filtro Duplicado')).length).toBe(0)
+
+    // com resultado no acervo, apagar levaria junto a colocação de uma competição
+    const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
+    await client.connect()
+    const comp = await client.query(
+      `INSERT INTO competitions (season, kind, region, name)
+       VALUES (2019, 'nacional', NULL, 'Nacional 2019') RETURNING id`,
+    )
+    await client.query(
+      `INSERT INTO competition_results (competition_id, community_team_id, position)
+       VALUES ($1, $2, 1)`,
+      [comp.rows[0].id, paulista],
+    )
+    await client.end()
+
+    const recusa = await app.request(
+      `/api/v1/admin/community/teams/${paulista}`,
+      authed(admin, { method: 'DELETE' }),
+    )
+    expect(recusa.status).toBe(409)
+  })
+
+  it('AC-DF15.3 (fim a fim) — pedido entra na fila do admin, é aprovado e some dela', async () => {
+    const pedido = await app.request(
+      '/api/v1/community/claims',
+      authed(cap, {
+        method: 'POST',
+        body: json({ teamId, communityTeamId: paulista, evidence: 'e-mail institucional' }),
+      }),
+    )
+    expect(pedido.status).toBe(201)
+
+    // o pedido volta para a PRÓPRIA equipe: é o que mantém "em análise" após recarregar
+    const minhas = await (await app.request('/api/v1/community/claims', authed(cap))).json()
+    expect(
+      minhas.find((cl: { communityTeamId: string }) => cl.communityTeamId === paulista).status,
+    ).toBe('aberta')
+
+    const fila = await (
+      await app.request('/api/v1/admin/community/claims?status=aberta', authed(admin))
+    ).json()
+    const naFila = fila.find((cl: { communityTeamId: string }) => cl.communityTeamId === paulista)
+    expect(naFila.teamName).toBe('Equipe Registro')
+    expect(naFila.communityTeamName).toBe('Filtro Paulista')
+    expect(naFila.requestedByEmail).toBe(cap.email)
+    expect(naFila.evidence).toBe('e-mail institucional')
+    expect(naFila.communityTeamTaken).toBe(false)
+
+    const aprova = await app.request(
+      `/api/v1/admin/community/claims/${naFila.id}/resolve`,
+      authed(admin, { method: 'POST', body: json({ approve: true }) }),
+    )
+    expect(aprova.status).toBe(204)
+
+    const depois = await (
+      await app.request('/api/v1/admin/community/claims?status=aberta', authed(admin))
+    ).json()
+    expect(depois.find((cl: { id: string }) => cl.id === naFila.id)).toBeUndefined()
+
+    const linha = (await listar('q=Filtro Paulista'))[0] as unknown as {
+      claimed: boolean
+      claimedByTeamId: string
+    }
+    expect(linha.claimed).toBe(true)
+    expect(linha.claimedByTeamId).toBe(teamId)
+  })
+
+  it('RF-2.3 — desfazer o vínculo é do admin, e libera a linha para novo pedido', async () => {
+    const naoPode = await app.request(
+      `/api/v1/admin/community/teams/${paulista}/unlink`,
+      authed(cap, { method: 'POST' }),
+    )
+    expect(naoPode.status).toBe(403)
+
+    const desfaz = await app.request(
+      `/api/v1/admin/community/teams/${paulista}/unlink`,
+      authed(admin, { method: 'POST' }),
+    )
+    expect(desfaz.status).toBe(204)
+    expect((await listar('q=Filtro Paulista'))[0]).toMatchObject({ claimed: false })
+
+    // desfazer duas vezes não é erro silencioso: a segunda diz que não há vínculo
+    const denovo = await app.request(
+      `/api/v1/admin/community/teams/${paulista}/unlink`,
+      authed(admin, { method: 'POST' }),
+    )
+    expect(denovo.status).toBe(404)
+  })
+})

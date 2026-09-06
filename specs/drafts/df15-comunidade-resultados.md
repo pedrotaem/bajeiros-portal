@@ -91,6 +91,21 @@ fonte; admin aplica com registro (`audit_events`). O portal nunca edita silencio
   mesma) resolve-se por evidência (e-mail institucional, site da equipe) — processo documentado
   no runbook.
 - RF-2.4 Equipe sem vínculo vê a tabela normalmente, com convite discreto para vincular.
+- RF-2.5 **Pedido em análise é estado do servidor**, não da tela: enquanto houver claim `aberta`,
+  a aba mostra "VÍNCULO EM ANÁLISE" no lugar do botão — inclusive depois de recarregar. Uma
+  solicitação por equipe de cada vez, dita antes do erro em vez de depois (a API responde 409).
+- RF-2.6 **Fila de vínculos na administração** (DF-9): pedido pendente com equipe do acervo,
+  equipe do portal, quem pediu e a evidência; aprovar ou recusar em um clique. A fila avisa
+  quando a linha do acervo já foi vinculada a outra equipe — aprovar ali falharia (409).
+- RF-2.7 **Curadoria do registro pela administração**: criar, editar (nome, instituição,
+  cidade/UF, links) e excluir linha do acervo. Excluir vale só para duplicata sem rastro —
+  linha com resultado ou com vínculo é recusada, porque apagá-la levaria junto a colocação de
+  uma competição inteira. A região é derivada da UF, então editar o estado corrige o recorte.
+- RF-2.8 **Recorte por estado e por região** na aba, com filtragem no SERVIDOR (`?uf=`,
+  `?region=`) — recortar depois de paginar mostraria meia região. A região vem do agrupamento
+  do IBGE aplicado à **UF**, não da coluna `region`: ela está preenchida em menos da metade do
+  acervo, e filtrar por ela esconderia a maioria das equipes de uma região. A coluna sobra como
+  fallback para a linha sem UF, onde é a única origem que existe.
 
 ### E3 — Benchmark e metas
 
@@ -179,18 +194,23 @@ CREATE TABLE result_corrections (
 
 ## 6. API (módulo novo `community`)
 
-| Método/rota                                | Ação                                        | Permissão             |
-| ------------------------------------------ | ------------------------------------------- | --------------------- |
-| `GET  /community/competitions?season=`     | calendário                                  | autenticado           |
-| `GET  /community/competitions/:id/results` | classificação (+ posição da própria equipe) | autenticado           |
-| `GET  /community/teams?q=&region=`         | registro canônico                           | autenticado           |
-| `GET  /community/teams/:id`                | perfil + histórico                          | autenticado           |
-| `POST /community/claims`                   | solicitar vínculo (capitania)               | owner/admin da equipe |
-| `POST /community/corrections`              | solicitar correção                          | autenticado           |
-| `GET  /community/benchmark?competitionId=` | medianas por prova da coorte da equipe      | membro c/ vínculo     |
-| `POST /admin/community/*`                  | CRUD calendário/resultados/claims/correções | admin (DF-9)          |
+| Método/rota                                          | Ação                                        | Permissão             |
+| ---------------------------------------------------- | ------------------------------------------- | --------------------- |
+| `GET  /community/competitions?season=`               | calendário                                  | autenticado           |
+| `GET  /community/competitions/:id/results`           | classificação (+ posição da própria equipe) | autenticado           |
+| `GET  /community/teams?q=&uf=&region=`               | registro canônico (recorte no servidor)     | autenticado           |
+| `GET  /community/teams/:id`                          | perfil + histórico                          | autenticado           |
+| `POST /community/claims`                             | solicitar vínculo (capitania)               | owner/admin da equipe |
+| `POST /community/corrections`                        | solicitar correção                          | autenticado           |
+| `GET  /community/benchmark?competitionId=`           | medianas por prova da coorte da equipe      | membro c/ vínculo     |
+| `GET  /community/claims`                             | pedidos da própria equipe (estado do botão) | membro da equipe      |
+| `POST /admin/community/*`                            | CRUD calendário/resultados/claims/correções | admin (DF-9)          |
+| `GET  /admin/community/claims?status=`               | fila de vínculos, com nome dos dois lados   | admin (DF-9)          |
+| `GET/POST/PATCH/DELETE /admin/community/teams[/:id]` | curadoria do registro canônico              | admin (DF-9)          |
+| `POST /admin/community/teams/:id/unlink`             | desfazer vínculo (RF-2.3)                   | admin (DF-9)          |
 
-Auditoria: `community.claim.*`, `community.correction.*`, `admin.community.*`.
+Auditoria: `community.claim.*`, `community.correction.*`, `admin.community.*` —
+`admin.community.team_create`, `team_update`, `team_delete`, `team_unlink`.
 
 ## 7. Pontos de falha e mitigação
 

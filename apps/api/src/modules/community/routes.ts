@@ -40,6 +40,54 @@ function asJson<T>(value: unknown, fallback: T): T {
   return value as T
 }
 
+// ---------- região do Brasil ----------
+
+/**
+ * Agrupamento do IBGE. Gêmeo de `UFS_DA_REGIAO` em `apps/web/src/data/panorama.ts`
+ * (a web já tem o mapa para desenhar o panorama; a API precisa dele para FILTRAR).
+ * Mudar um lado sem o outro é o único jeito de isto divergir — e as macrorregiões
+ * não mudam desde 1990.
+ */
+export const UFS_DA_REGIAO: Readonly<Record<RegiaoId, readonly string[]>> = {
+  N: ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'],
+  NE: ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'],
+  CO: ['DF', 'GO', 'MT', 'MS'],
+  SE: ['ES', 'MG', 'RJ', 'SP'],
+  S: ['PR', 'RS', 'SC'],
+}
+
+export type RegiaoId = 'N' | 'NE' | 'CO' | 'SE' | 'S'
+
+export const REGIAO_IDS = ['N', 'NE', 'CO', 'SE', 'S'] as const
+
+export const REGIAO_NOME: Readonly<Record<RegiaoId, string>> = {
+  N: 'Norte',
+  NE: 'Nordeste',
+  CO: 'Centro-Oeste',
+  SE: 'Sudeste',
+  S: 'Sul',
+}
+
+const REGIAO_DA_UF: Readonly<Record<string, RegiaoId>> = Object.fromEntries(
+  REGIAO_IDS.flatMap((id) => UFS_DA_REGIAO[id].map((uf) => [uf, id])),
+)
+
+/**
+ * A região é DERIVADA da UF, não lida da coluna `region`.
+ *
+ * O acervo tem 189 equipes com UF em 178 delas e `region` preenchida em menos da
+ * metade — filtrar pela coluna esconderia a maioria das equipes de uma região que
+ * de fato está no registro. A coluna vira fallback: vale só para a linha sem UF,
+ * onde ela é a única informação de origem que existe.
+ */
+export function regiaoDe(uf: unknown, region: unknown): RegiaoId | null {
+  const sigla = typeof uf === 'string' ? uf.trim().toUpperCase() : ''
+  if (REGIAO_DA_UF[sigla]) return REGIAO_DA_UF[sigla]
+  const nome = typeof region === 'string' ? region.trim().toLowerCase() : ''
+  const achado = REGIAO_IDS.find((id) => REGIAO_NOME[id].toLowerCase() === nome)
+  return achado ?? null
+}
+
 // ---------- calendário e resultados ----------
 
 community.get('/competitions', async (c) => {
@@ -128,11 +176,20 @@ function toResult(row: Record<string, unknown>) {
 
 // ---------- registro canônico das equipes ----------
 
+/**
+ * Registro canônico, com os dois recortes que a aba oferece: estado e região.
+ *
+ * O filtro de região roda pela LISTA DE UFS da região (`$4::jsonb`), com a coluna
+ * `region` só como fallback para a linha sem UF — é a mesma regra de `regiaoDe`,
+ * escrita em SQL para o recorte acontecer antes do `LIMIT`. Filtrar depois de
+ * paginar devolveria meia página e uma contagem mentirosa.
+ */
 community.get('/teams', async (c) => {
   const { sub } = c.get('auth')
   const q = (c.req.query('q') ?? '').trim()
-  const region = c.req.query('region')
-  const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 200)
+  const uf = (c.req.query('uf') ?? '').trim().toUpperCase()
+  const regiao = REGIAO_IDS.find((id) => id === c.req.query('region')) ?? null
+  const limit = Math.min(Number(c.req.query('limit') ?? 200) || 200, 500)
   const rows = await withUser(
     sub,
     async (db) =>
@@ -141,9 +198,18 @@ community.get('/teams', async (c) => {
           `SELECT * FROM community_teams
            WHERE ($2::text IS NULL OR display_name ILIKE '%' || $2 || '%'
                   OR university ILIKE '%' || $2 || '%')
-             AND ($3::text IS NULL OR region = $3)
+             AND ($3::text IS NULL OR upper(uf) = $3)
+             AND ($4::text IS NULL
+                  OR upper(uf) IN (SELECT jsonb_array_elements_text($5::jsonb))
+                  OR (uf IS NULL AND lower(region) = lower($4)))
            ORDER BY display_name LIMIT $1`,
-          [limit, q || null, region ?? null],
+          [
+            limit,
+            q || null,
+            uf || null,
+            regiao ? REGIAO_NOME[regiao] : null,
+            JSON.stringify(regiao ? UFS_DA_REGIAO[regiao] : []),
+          ],
         )
       ).rows,
   )
@@ -190,15 +256,20 @@ community.get('/teams/:id', async (c) => {
  * carrega rótulo de faixa — o objetivo é benchmark, não constrangimento.
  */
 function toCommunityTeam(row: Record<string, unknown>) {
+  const regiao = regiaoDe(row.uf, row.region)
   return {
     id: row.id,
     displayName: row.display_name,
     university: row.university ?? null,
     city: row.city ?? null,
     uf: row.uf ?? null,
-    region: row.region ?? null,
+    // `region` sai DERIVADA da UF: a tela e o filtro leem a mesma regra, e a coluna
+    // meio preenchida do acervo deixa de ser fonte de verdade (só de fallback).
+    regionId: regiao,
+    region: regiao ? REGIAO_NOME[regiao] : null,
     links: asJson<unknown[]>(row.links, []),
     claimed: row.claimed_by_team_id != null,
+    claimedByTeamId: (row.claimed_by_team_id as string | null) ?? null,
   }
 }
 
@@ -642,6 +713,306 @@ communityAdmin.get('/cohorts', async (c) => {
       cohort: r.cohort,
       label: COHORT_LABELS[r.cohort as string] ?? r.cohort,
       teams: Number(r.teams),
+    })),
+  )
+})
+
+// ---------- curadoria do registro canônico (DF-15 RF-2.1, admin) ----------
+
+/**
+ * A lista de "Equipes do Brasil" nasceu de um levantamento e cresceu com o que os
+ * resultados trouxeram: nome grafado de três jeitos, UF faltando, equipe que mudou
+ * de instituição. Sem edição pela administração, a única saída era rodar o script de
+ * ingestão de novo — e ele não conserta o que veio torto da fonte.
+ */
+const teamBody = z.object({
+  displayName: z.string().trim().min(1).max(200),
+  university: z.string().trim().max(200).nullable().optional(),
+  city: z.string().trim().max(120).nullable().optional(),
+  uf: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$/, 'UF é a sigla de dois caracteres')
+    .nullable()
+    .optional(),
+  links: z.array(z.url().max(500)).max(8).optional(),
+})
+
+const teamPatch = teamBody.partial()
+
+/** Nome de região coerente com a UF — o dado novo nunca nasce divergente. */
+function regionNameOf(uf: string | null): string | null {
+  const id = uf ? regiaoDe(uf, null) : null
+  return id ? REGIAO_NOME[id] : null
+}
+
+/** Lista de curadoria: os mesmos recortes da aba pública, mais o estado do vínculo. */
+communityAdmin.get('/teams', async (c) => {
+  const { sub } = c.get('auth')
+  const q = (c.req.query('q') ?? '').trim()
+  const uf = (c.req.query('uf') ?? '').trim().toUpperCase()
+  const regiao = REGIAO_IDS.find((id) => id === c.req.query('region')) ?? null
+  const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 200)
+  const offset = Math.max(Number(c.req.query('offset') ?? 0) || 0, 0)
+
+  const rows = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `SELECT ct.*, t.name AS claimed_team_name,
+              (SELECT count(*)::int FROM competition_results cr
+                WHERE cr.community_team_id = ct.id) AS results
+       FROM community_teams ct
+       LEFT JOIN teams t ON t.id = ct.claimed_by_team_id
+       WHERE ($3::text IS NULL OR ct.display_name ILIKE '%' || $3 || '%'
+              OR ct.university ILIKE '%' || $3 || '%')
+         AND ($4::text IS NULL OR upper(ct.uf) = $4)
+         AND ($5::text IS NULL
+              OR upper(ct.uf) IN (SELECT jsonb_array_elements_text($6::jsonb))
+              OR (ct.uf IS NULL AND lower(ct.region) = lower($5)))
+       ORDER BY ct.display_name LIMIT $1 OFFSET $2`,
+      [
+        limit,
+        offset,
+        q || null,
+        uf || null,
+        regiao ? REGIAO_NOME[regiao] : null,
+        JSON.stringify(regiao ? UFS_DA_REGIAO[regiao] : []),
+      ],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.view',
+      resourceType: 'admin',
+      resourceId: 'community.teams',
+      ip: clientIp(c.req.raw.headers),
+      metadata: { q, uf, region: regiao, limit, offset },
+    })
+    return r.rows
+  })
+
+  return c.json(
+    rows.map((row) => ({
+      ...toCommunityTeam(row),
+      claimedTeamName: (row.claimed_team_name as string | null) ?? null,
+      results: Number(row.results ?? 0),
+    })),
+  )
+})
+
+communityAdmin.post('/teams', async (c) => {
+  const parsed = teamBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const b = parsed.data
+  const uf = b.uf ?? null
+
+  const row = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `INSERT INTO community_teams (display_name, university, city, uf, region, links)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb) RETURNING *`,
+      [
+        b.displayName,
+        b.university ?? null,
+        b.city ?? null,
+        uf,
+        regionNameOf(uf),
+        JSON.stringify(b.links ?? []),
+      ],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.community.team_create',
+      resourceType: 'community_team',
+      resourceId: r.rows[0].id as string,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { displayName: b.displayName, uf },
+    })
+    return r.rows[0]
+  })
+
+  return c.json(toCommunityTeam(row), 201)
+})
+
+communityAdmin.patch('/teams/:id', async (c) => {
+  const parsed = teamPatch.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
+  const { sub } = c.get('auth')
+  const id = c.req.param('id')
+  const b = parsed.data
+
+  const row = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `UPDATE community_teams SET
+         display_name = COALESCE($2, display_name),
+         university = CASE WHEN $3::boolean THEN $4 ELSE university END,
+         city = CASE WHEN $5::boolean THEN $6 ELSE city END,
+         uf = CASE WHEN $7::boolean THEN $8 ELSE uf END,
+         region = CASE WHEN $7::boolean THEN $9 ELSE region END,
+         links = CASE WHEN $10::boolean THEN $11::jsonb ELSE links END
+       WHERE id = $1 RETURNING *`,
+      [
+        id,
+        b.displayName ?? null,
+        b.university !== undefined,
+        b.university ?? null,
+        b.city !== undefined,
+        b.city ?? null,
+        // UF e região andam juntas: trocar o estado sem corrigir a região deixaria a
+        // linha com a região velha — que é exatamente o dado de que o filtro depende
+        b.uf !== undefined,
+        b.uf ?? null,
+        regionNameOf(b.uf ?? null),
+        b.links !== undefined,
+        JSON.stringify(b.links ?? []),
+      ],
+    )
+    if (!r.rowCount) return null
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.community.team_update',
+      resourceType: 'community_team',
+      resourceId: id,
+      ip: clientIp(c.req.raw.headers),
+      metadata: { patch: Object.keys(b) },
+    })
+    return r.rows[0]
+  })
+
+  if (!row) return problem(c, 404, 'Equipe não encontrada no acervo')
+  return c.json(toCommunityTeam(row))
+})
+
+/**
+ * Excluir só o que não deixou rastro. Uma linha com resultado é a âncora daquele
+ * resultado no acervo: apagá-la levaria junto a colocação de uma competição inteira
+ * (ON DELETE CASCADE em `competition_results`). Duplicata sem resultado é o caso
+ * real — nome grafado de outro jeito na ingestão.
+ */
+communityAdmin.delete('/teams/:id', async (c) => {
+  const { sub } = c.get('auth')
+  const id = c.req.param('id')
+
+  const result = await withUser(sub, async (db) => {
+    const ct = await db.query('SELECT claimed_by_team_id FROM community_teams WHERE id = $1', [id])
+    if (!ct.rowCount) return 'notfound' as const
+    if (ct.rows[0].claimed_by_team_id) return 'claimed' as const
+    const res = await db.query(
+      'SELECT count(*)::int AS n FROM competition_results WHERE community_team_id = $1',
+      [id],
+    )
+    if (Number(res.rows[0].n) > 0) return 'has-results' as const
+    // a fila não pode ficar apontando para uma linha que deixou de existir
+    await db.query(
+      `UPDATE community_claims SET status = 'recusada', resolved_by = $2, resolved_at = now()
+       WHERE community_team_id = $1 AND status = 'aberta'`,
+      [id, sub],
+    )
+    await db.query('DELETE FROM community_teams WHERE id = $1', [id])
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.community.team_delete',
+      resourceType: 'community_team',
+      resourceId: id,
+      ip: clientIp(c.req.raw.headers),
+      metadata: {},
+    })
+    return 'ok' as const
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada no acervo')
+  if (result === 'claimed')
+    return problem(
+      c,
+      409,
+      'Equipe vinculada',
+      'Desfaça o vínculo antes de excluir esta equipe do acervo.',
+    )
+  if (result === 'has-results')
+    return problem(
+      c,
+      409,
+      'Equipe com resultados',
+      'Esta equipe tem resultados no acervo e não pode ser excluída. Corrija os dados em vez de apagar.',
+    )
+  return c.body(null, 204)
+})
+
+/** RF-2.3 — desfazer o vínculo é ato de administração. */
+communityAdmin.post('/teams/:id/unlink', async (c) => {
+  const { sub } = c.get('auth')
+  const id = c.req.param('id')
+
+  const result = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `UPDATE community_teams SET claimed_by_team_id = NULL
+       WHERE id = $1 AND claimed_by_team_id IS NOT NULL
+       RETURNING id`,
+      [id],
+    )
+    if (!r.rowCount) return 'notfound' as const
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.community.team_unlink',
+      resourceType: 'community_team',
+      resourceId: id,
+      ip: clientIp(c.req.raw.headers),
+      metadata: {},
+    })
+    return 'ok' as const
+  })
+
+  if (result === 'notfound') return problem(c, 404, 'Vínculo não encontrado')
+  return c.body(null, 204)
+})
+
+/**
+ * Fila de vínculos da administração. `GET /community/claims` já existe, mas devolve
+ * o que a RLS deixa passar SEM o nome da equipe do portal — e é justamente ele que a
+ * administração precisa ler para decidir. Aqui o join é explícito.
+ */
+communityAdmin.get('/claims', async (c) => {
+  const { sub } = c.get('auth')
+  const pedido = c.req.query('status') ?? ''
+  const status = ['aberta', 'aprovada', 'recusada'].includes(pedido) ? pedido : null
+  const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 200)
+  const offset = Math.max(Number(c.req.query('offset') ?? 0) || 0, 0)
+
+  const rows = await withUser(sub, async (db) => {
+    const r = await db.query(
+      `SELECT cl.*, ct.display_name, ct.university, ct.uf, ct.region,
+              ct.claimed_by_team_id, t.name AS team_name, t.university AS team_university,
+              u.display_name AS requested_by_name, u.email AS requested_by_email
+       FROM community_claims cl
+       JOIN community_teams ct ON ct.id = cl.community_team_id
+       LEFT JOIN teams t ON t.id = cl.team_id
+       LEFT JOIN users u ON u.id = cl.requested_by
+       WHERE ($3::text IS NULL OR cl.status = $3)
+       ORDER BY (cl.status = 'aberta') DESC, cl.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset, status],
+    )
+    await audit(db, {
+      actorUserId: sub,
+      action: 'admin.view',
+      resourceType: 'admin',
+      resourceId: 'community.claims',
+      ip: clientIp(c.req.raw.headers),
+      metadata: { status, limit, offset },
+    })
+    return r.rows
+  })
+
+  return c.json(
+    rows.map((row) => ({
+      ...toClaim(row),
+      teamName: (row.team_name as string | null) ?? null,
+      teamUniversity: (row.team_university as string | null) ?? null,
+      communityTeamUniversity: (row.university as string | null) ?? null,
+      communityTeamUf: (row.uf as string | null) ?? null,
+      // já vinculada a OUTRA equipe: aprovar vai falhar com 409, e a fila avisa antes
+      communityTeamTaken: row.claimed_by_team_id != null && row.claimed_by_team_id !== row.team_id,
+      requestedBy: (row.requested_by_name as string | null) ?? null,
+      requestedByEmail: (row.requested_by_email as string | null) ?? null,
     })),
   )
 })
