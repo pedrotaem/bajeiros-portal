@@ -1,11 +1,12 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useSession, ApiError } from '../session'
 import { ondeFoi, STATUS_LABEL, type SugestaoItem } from './FeedbackPanel'
+import { AdminCalendar } from './AdminCalendar'
 
 // DF-9 — painel administrativo (users.is_admin). O backend é a autoridade:
 // aqui só renderizamos; não-admin recebe 403 e mensagem.
 
-type Tab = 'overview' | 'users' | 'teams' | 'activity' | 'assistant' | 'feedback'
+type Tab = 'overview' | 'users' | 'teams' | 'activity' | 'assistant' | 'feedback' | 'calendar'
 
 interface Overview {
   usersActive: number
@@ -98,6 +99,7 @@ export function AdminPanel() {
             ['activity', 'Atividade'],
             ['assistant', 'Chat IA'],
             ['feedback', 'Sugestões'],
+            ['calendar', 'Calendário'],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -140,6 +142,7 @@ export function AdminPanel() {
       {tab === 'activity' && <ActivityTab api={api} fail={fail} userId={userFilter?.id} />}
       {tab === 'assistant' && <AssistantTab api={api} fail={fail} userId={userFilter?.id} />}
       {tab === 'feedback' && <SugestoesTab api={api} fail={fail} />}
+      {tab === 'calendar' && <AdminCalendar />}
     </div>
   )
 }

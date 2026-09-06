@@ -2920,3 +2920,573 @@
   cursor: default;
   color: var(--bj-fg-secondary);
 }
+
+/* ---------- DF-33 · calendário de competições ----------------------------
+
+   C-09 `fonte` (faixa fixa do disclaimer) e C-26 (linha do tempo). Toda cor é token;
+   a FORMA do marco (losango, barra, faixa, círculo vazado, quadrado vazado) é o
+   portador do tipo — a cor só reforça (FR-DF33.5, DS §9.3). */
+
+.bj-cal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+}
+.bj-cal-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-3);
+  flex-wrap: wrap;
+}
+.bj-cal-chips,
+.bj-cal-vistas,
+.bj-cal-lista-cab {
+  display: flex;
+  gap: var(--bj-space-1);
+  flex-wrap: wrap;
+}
+.bj-cal-pessoal {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.bj-cal-dica {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+}
+
+/* C-09 variante `fonte`: não fecha, não colapsa, não some ao rolar */
+.bj-fonte-aviso {
+  position: sticky;
+  top: 0;
+  z-index: var(--bj-z-sticky);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  background: var(--bj-info-bg);
+  border: 1px solid var(--bj-info-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-fonte-aviso > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.bj-fonte-aviso p {
+  margin: 0;
+}
+
+.bj-cal-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--bj-space-4);
+  align-items: start;
+}
+.bj-cal-corpo--painel {
+  grid-template-columns: minmax(0, 1fr) var(--bj-panel-w);
+}
+.bj-cal-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-5);
+  min-width: 0;
+}
+.bj-cal-data {
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+  white-space: nowrap;
+}
+
+/* ----- C-26 · linha do tempo ----- */
+
+.bj-cal-linha {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+  background: var(--bj-bg-base);
+  overflow: hidden;
+}
+.bj-cal-raia {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  border-top: 1px solid var(--bj-border);
+}
+.bj-cal-raia--meses {
+  border-top: 0;
+  background: var(--bj-bg-sunken);
+}
+.bj-cal-raia--equipe {
+  background: var(--bj-selected);
+}
+.bj-cal-raia-cab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border-right: 1px solid var(--bj-border);
+  font-size: var(--bj-text-sm);
+  min-width: 0;
+}
+.bj-cal-raia-cab strong {
+  color: var(--bj-fg-primary);
+}
+.bj-cal-raia-chips {
+  display: flex;
+  gap: var(--bj-space-1);
+  flex-wrap: wrap;
+}
+.bj-cal-raia-nota {
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-xs);
+  line-height: var(--bj-leading-normal);
+}
+.bj-cal-raia-nota a {
+  color: var(--bj-accent);
+}
+.bj-cal-vinculo {
+  display: flex;
+  gap: var(--bj-space-1);
+  flex-wrap: wrap;
+}
+.bj-cal-vinculo [aria-pressed='true'],
+.bj-marco [aria-pressed='true'] {
+  background: var(--bj-brand-bg);
+  border-color: var(--bj-brand-border);
+  color: var(--bj-brand);
+}
+.bj-cal-meses {
+  display: grid;
+  min-height: var(--bj-control-h);
+  align-items: center;
+  font-size: var(--bj-text-xs);
+  font-weight: var(--bj-weight-medium);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+  color: var(--bj-fg-muted);
+}
+.bj-cal-meses span {
+  padding-left: var(--bj-space-1);
+  border-left: 1px solid var(--bj-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* altura da raia: 56px (DS C-26) = 14 × 4 */
+.bj-cal-trilho {
+  position: relative;
+  min-height: 56px;
+  overflow: hidden;
+}
+.bj-cal-passado {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--bj-bg-sunken);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.bj-cal-hoje {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--bj-warn);
+  pointer-events: none;
+}
+.bj-cal-hoje-rotulo {
+  position: absolute;
+  top: 0;
+  left: var(--bj-space-1);
+  font-size: var(--bj-text-xs);
+  color: var(--bj-warn);
+  text-transform: uppercase;
+  letter-spacing: var(--bj-tracking-wide);
+}
+.bj-cal-vazia {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 56px;
+  padding: 0 var(--bj-space-3);
+  font-size: var(--bj-text-sm);
+}
+.bj-cal-evento,
+.bj-cal-janela {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--bj-space-5);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--bj-space-1);
+  border-radius: var(--bj-radius-sm);
+  font: inherit;
+  font-size: var(--bj-text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 4px;
+}
+.bj-cal-evento {
+  background: var(--bj-brand-bg);
+  border: 1px solid var(--bj-brand-border);
+  color: var(--bj-brand);
+}
+.bj-cal-janela {
+  height: var(--bj-space-3);
+  background: var(--bj-accent-bg);
+  border: 1px solid var(--bj-accent-border);
+  color: var(--bj-accent);
+  cursor: pointer;
+}
+.bj-cal-evento--passado,
+.bj-cal-janela--passado {
+  color: var(--bj-fg-muted);
+  border-style: dashed;
+}
+
+/* marco: botão absoluto com alvo mínimo de 32px mesmo com desenho menor (DS §10.8) */
+.bj-cal-marco {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-1);
+  min-width: var(--bj-target-min);
+  min-height: var(--bj-target-min);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: var(--bj-fg-primary);
+  font: inherit;
+  font-size: var(--bj-text-xs);
+  cursor: pointer;
+  /* a forma tem 12px: o centro dela cai na data */
+  transform: translate(-6px, -50%);
+  white-space: nowrap;
+}
+.bj-cal-marco--alto {
+  transform: translate(-6px, -100%);
+}
+.bj-cal-marco--baixo {
+  transform: translate(-6px, 0);
+}
+.bj-cal-marco--meio {
+  transform: translate(-6px, -50%);
+}
+.bj-cal-marco--barra {
+  transform: translateY(-50%);
+  min-width: 0;
+  height: var(--bj-space-3);
+}
+.bj-cal-marco--barra .bj-cal-forma--barra {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+}
+.bj-cal-marco--barra .bj-cal-rotulo {
+  position: relative;
+  padding-left: var(--bj-space-1);
+}
+.bj-cal-marco--passado {
+  color: var(--bj-fg-muted);
+}
+.bj-cal-marco--em-breve,
+.bj-cal-marco--hoje {
+  color: var(--bj-warn);
+}
+.bj-cal-marco--sel .bj-cal-rotulo {
+  text-decoration: underline;
+}
+.bj-cal-marco:focus-visible {
+  outline: 2px solid var(--bj-focus-ring);
+  outline-offset: var(--bj-focus-ring-offset);
+  border-radius: var(--bj-radius-sm);
+}
+.bj-cal-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bj-space-1);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bj-cal-rotulo .bj-chip {
+  padding: 0 var(--bj-space-1);
+}
+
+/* formas — 16px, borda de 2px com a cor corrente (currentColor herda o estado) */
+.bj-cal-forma {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+}
+.bj-cal-forma--losango {
+  transform: rotate(45deg);
+  background: currentColor;
+}
+.bj-cal-forma--barra {
+  width: 20px;
+  height: 8px;
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-accent-bg);
+  border-color: var(--bj-accent-border);
+}
+.bj-cal-forma--faixa {
+  width: 20px;
+  height: 12px;
+  border-radius: var(--bj-radius-sm);
+  background: var(--bj-brand-bg);
+  border-color: var(--bj-brand-border);
+}
+.bj-cal-forma--circulo {
+  border-radius: 50%;
+  background: transparent;
+}
+.bj-cal-forma--quadrado {
+  background: transparent;
+  color: var(--bj-accent);
+}
+.bj-cal-raia--equipe .bj-cal-marco {
+  color: var(--bj-accent);
+}
+.bj-cal-raia--equipe .bj-cal-marco--passado {
+  color: var(--bj-fg-muted);
+}
+.bj-cal-legenda {
+  padding: var(--bj-space-2) var(--bj-space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-1);
+  flex-wrap: wrap;
+}
+.bj-cal-legenda .bj-cal-forma {
+  color: var(--bj-fg-secondary);
+}
+
+/* ----- lista ----- */
+
+.bj-cal-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+}
+.bj-cal-mes-titulo {
+  margin: 0 0 var(--bj-space-2);
+  font-size: var(--bj-text-xs);
+  font-weight: var(--bj-weight-medium);
+  letter-spacing: var(--bj-tracking-wide);
+  text-transform: uppercase;
+  color: var(--bj-fg-muted);
+}
+.bj-cal-itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+}
+.bj-cal-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--bj-space-3);
+  width: 100%;
+  min-height: var(--bj-control-h-lg);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.bj-cal-item[aria-pressed='true'] {
+  border-color: var(--bj-brand-border);
+  background: var(--bj-selected);
+}
+.bj-cal-item--passado {
+  color: var(--bj-fg-muted);
+}
+.bj-cal-item-titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bj-cal-item-sub {
+  color: var(--bj-fg-muted);
+}
+.bj-cal-item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+}
+.bj-cal-links a,
+.bj-cal-painel-fonte a {
+  color: var(--bj-accent);
+}
+.bj-cal-passou summary {
+  cursor: pointer;
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  padding: var(--bj-space-2) 0;
+}
+.bj-cal-passou .bj-cal-mes {
+  margin-top: var(--bj-space-3);
+}
+.bj-chip-interesse {
+  background: var(--bj-bg-sunken);
+  border: 1px dashed var(--bj-border-strong);
+  color: var(--bj-fg-secondary);
+}
+.bj-chip-equipe,
+.bj-chip-brand {
+  background: var(--bj-brand-bg);
+  border: 1px solid var(--bj-brand-border);
+  color: var(--bj-brand);
+}
+.bj-chip-equipe {
+  background: var(--bj-accent-bg);
+  border-color: var(--bj-accent-border);
+  color: var(--bj-accent);
+}
+
+/* ----- painel do marco (C-10 `right`, como a ficha do DF-21) ----- */
+
+.bj-cal-painel {
+  position: sticky;
+  top: var(--bj-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  padding: var(--bj-space-4);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius-lg);
+  max-height: calc(100vh - var(--bj-topbar-h) - var(--bj-space-8));
+  overflow: auto;
+}
+.bj-cal-painel h3 {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-xl);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-cal-painel h3:focus-visible {
+  outline: 2px solid var(--bj-focus-ring);
+  outline-offset: var(--bj-focus-ring-offset);
+}
+.bj-cal-painel h4 {
+  margin: 0 0 var(--bj-space-1);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+}
+.bj-cal-painel-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.bj-cal-painel-data {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+}
+.bj-cal-painel-campos {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--bj-space-1) var(--bj-space-3);
+  margin: 0;
+  font-size: var(--bj-text-sm);
+}
+.bj-cal-painel-campos dt {
+  color: var(--bj-fg-muted);
+}
+.bj-cal-painel-campos dd {
+  margin: 0;
+}
+.bj-cal-painel-resumo {
+  margin: 0;
+  line-height: var(--bj-leading-normal);
+}
+.bj-cal-painel-fonte p {
+  margin: 0;
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-cal-painel-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--bj-space-2);
+}
+.bj-cal-painel-aviso {
+  padding-top: var(--bj-space-3);
+  border-top: 1px solid var(--bj-border);
+  color: var(--bj-fg-muted);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+
+/* Início: a linha do próximo prazo */
+.bj-inicio-prazo {
+  margin: 0;
+  color: var(--bj-fg-secondary);
+}
+.bj-marco-nome {
+  min-width: 200px;
+}
+
+/* administração */
+.bj-admin-cal,
+.bj-admin-cal-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+}
+.bj-admin-cal-corpo section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+}
+.bj-admin-cal-corpo h4 {
+  margin: 0;
+}
+
+/* FR-DF33.8: abaixo de 1024px a linha do tempo não é desenhada; o painel vira bloco */
+@media (max-width: 1023px) {
+  .bj-cal-linha {
+    display: none;
+  }
+  .bj-cal-corpo--painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bj-cal-painel {
+    position: static;
+    max-height: none;
+    order: -1;
+  }
+  .bj-cal-item {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+  .bj-cal-item-meta {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .bj-cal-pessoal {
+    margin-left: 0;
+  }
+}

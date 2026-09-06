@@ -1,7 +1,15 @@
 import { useState } from 'react'
+import type { CalendarPayload, RegistrationKind, TeamBond } from '@bajeiros/calendar/types'
+import { cycleOf } from '@bajeiros/calendar/cycle'
+import { dataCurta, todayIso } from '@bajeiros/calendar/dates'
+import { REGISTRATION_LABEL } from '@bajeiros/calendar/labels'
+import { REGISTRATION_KINDS } from '@bajeiros/calendar/types'
 import { useSession } from '../session'
 import { mensagem, useFetch } from '../lib/useFetch'
 import { IconArrow, IconCheck } from '../icons/glyphs'
+
+/** Teto de marcos da temporada — o mesmo da API (DF-33 §10.8: era 12). */
+const MAX_MARCOS = 24
 
 /**
  * Aba Equipe · Projetos (DF-12 §3.3). Existe porque o "projeto da temporada" é a
@@ -15,11 +23,22 @@ interface ProjectRow {
   lastSeq?: number
 }
 
+interface Marco {
+  title: string
+  date: string
+  kind?: 'marco' | 'entrega'
+  sourceMilestoneId?: string
+}
+
 interface SeasonView {
   label: string
   seasonProjectId: string | null
-  milestones: { title: string; date: string }[]
+  milestones: Marco[]
+  competitionIds: string[]
+  interestCompetitionIds: string[]
+  registrationKind: RegistrationKind | null
   next: { title: string; date: string; daysLeft: number } | null
+  nextCompetition: { id: string; name: string; startsOn: string; daysLeft: number } | null
 }
 
 export function ProjectsTab({ teamId, canManage }: { teamId: string; canManage: boolean }) {
@@ -38,12 +57,12 @@ export function ProjectsTab({ teamId, canManage }: { teamId: string; canManage: 
     setErro(null)
     setSalvando(true)
     try {
+      // só o projeto: o resto da temporada (marcos, competições) é preservado pela API
       await api(`/api/v1/teams/${teamId}/season`, {
         method: 'PUT',
         body: JSON.stringify({
-          label: season.data?.label ?? String(new Date().getFullYear() + 1),
+          label: season.data?.label ?? String(cycleOf(todayIso())),
           seasonProjectId: projectId,
-          milestones: season.data?.milestones ?? [],
         }),
       })
       season.recarregar()
@@ -144,10 +163,19 @@ function Temporada({
   onSalvo: () => void
 }) {
   const api = useSession((s) => s.api)
+  const goToCalendar = useSession((s) => s.goToCalendar)
   const [editando, setEditando] = useState(false)
   const [label, setLabel] = useState(season?.label ?? '')
-  const [marcos, setMarcos] = useState(season?.milestones ?? [])
+  const [marcos, setMarcos] = useState<Marco[]>(season?.milestones ?? [])
+  const [inscritas, setInscritas] = useState<string[]>(season?.competitionIds ?? [])
+  const [interesse, setInteresse] = useState<string[]>(season?.interestCompetitionIds ?? [])
+  const [categoria, setCategoria] = useState<RegistrationKind | ''>(season?.registrationKind ?? '')
   const [erro, setErro] = useState<string | null>(null)
+  // DF-33 FR-DF33.12 — as competições do ciclo vêm do calendário público (mesmo dado da aba)
+  const ciclo = cycleOf(todayIso())
+  const calendario = useFetch<CalendarPayload>(`/api/v1/public/calendar?season=${ciclo}`)
+  const competicoes = calendario.data?.competitions ?? []
+  const nomeDe = (id: string) => competicoes.find((c) => c.id === id)?.name ?? 'competição'
 
   const salvar = async () => {
     setErro(null)
@@ -158,6 +186,9 @@ function Temporada({
           label: label.trim(),
           seasonProjectId: season?.seasonProjectId ?? null,
           milestones: marcos.filter((m) => m.title.trim() && m.date),
+          competitionIds: inscritas,
+          interestCompetitionIds: interesse,
+          registrationKind: categoria || null,
         }),
       })
       setEditando(false)
@@ -167,11 +198,27 @@ function Temporada({
     }
   }
 
+  const vinculoDe = (id: string): TeamBond | null =>
+    inscritas.includes(id) ? 'inscrita' : interesse.includes(id) ? 'interesse' : null
+  const setVinculo = (id: string, bond: TeamBond | null) => {
+    setInscritas((v) =>
+      bond === 'inscrita' ? [...new Set([...v, id])] : v.filter((x) => x !== id),
+    )
+    setInteresse((v) =>
+      bond === 'interesse' ? [...new Set([...v, id])] : v.filter((x) => x !== id),
+    )
+  }
+
   if (!editando) {
     return (
       <section className="bj-card">
         <header>
           <h3>Temporada {season?.label ?? 'não configurada'}</h3>
+          {season?.registrationKind && (
+            <span className="bj-chip bj-chip-neutro">
+              {REGISTRATION_LABEL[season.registrationKind].toUpperCase()}
+            </span>
+          )}
         </header>
         {season?.next ? (
           <p>
@@ -183,21 +230,43 @@ function Temporada({
             regressiva no Início.
           </p>
         )}
-        {canManage && (
-          <div className="bj-card-acoes">
+        {season &&
+        (season.competitionIds.length > 0 || season.interestCompetitionIds.length > 0) ? (
+          <p className="bj-card-estado">
+            {season.competitionIds.length > 0 &&
+              `Inscrita: ${season.competitionIds.map(nomeDe).join(', ')}`}
+            {season.competitionIds.length > 0 && season.interestCompetitionIds.length > 0 && ' · '}
+            {season.interestCompetitionIds.length > 0 &&
+              `Acompanha: ${season.interestCompetitionIds.map(nomeDe).join(', ')}`}
+            {season.nextCompetition &&
+              ` · próxima: ${season.nextCompetition.name} em ${dataCurta(season.nextCompetition.startsOn)}`}
+          </p>
+        ) : (
+          <p className="bj-card-estado">
+            Nenhuma competição marcada — o calendário mostra tudo, sem recorte.
+          </p>
+        )}
+        <div className="bj-card-acoes">
+          {canManage && (
             <button
               type="button"
               className="bj-btn"
               onClick={() => {
-                setLabel(season?.label ?? String(new Date().getFullYear() + 1))
+                setLabel(season?.label ?? String(ciclo))
                 setMarcos(season?.milestones ?? [])
+                setInscritas(season?.competitionIds ?? [])
+                setInteresse(season?.interestCompetitionIds ?? [])
+                setCategoria(season?.registrationKind ?? '')
                 setEditando(true)
               }}
             >
               Configurar temporada
             </button>
-          </div>
-        )}
+          )}
+          <button type="button" className="bj-btn" onClick={() => goToCalendar()}>
+            Ver o calendário <IconArrow size={16} />
+          </button>
+        </div>
       </section>
     )
   }
@@ -220,7 +289,53 @@ function Temporada({
           required
         />
       </label>
-      <h4>Marcos (até 12)</h4>
+      {/* DF-33 FR-DF33.12 — inscrita · interesse · categoria, por competição do ciclo */}
+      <h4>Competições da temporada {ciclo}</h4>
+      {calendario.estado === 'loading' && <span className="bj-skeleton" style={{ height: 40 }} />}
+      {calendario.estado === 'ok' && competicoes.length === 0 && (
+        <p className="bj-legenda">A organização ainda não publicou a agenda deste ciclo.</p>
+      )}
+      {competicoes.map((c) => {
+        const v = vinculoDe(c.id)
+        return (
+          <div className="bj-marco" key={c.id} role="group" aria-label={c.name}>
+            <span className="bj-marco-nome">{c.name}</span>
+            <button
+              type="button"
+              className="bj-btn bj-btn-sm"
+              aria-pressed={v === 'inscrita'}
+              onClick={() => setVinculo(c.id, v === 'inscrita' ? null : 'inscrita')}
+            >
+              Estamos inscritos
+            </button>
+            <button
+              type="button"
+              className="bj-btn bj-btn-sm"
+              aria-pressed={v === 'interesse'}
+              onClick={() => setVinculo(c.id, v === 'interesse' ? null : 'interesse')}
+            >
+              Acompanhar
+            </button>
+          </div>
+        )
+      })}
+      <label>
+        Categoria de inscrição
+        <select
+          className="bj-eq-seletor"
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value as RegistrationKind | '')}
+        >
+          <option value="">não informada (mostra todos os lotes)</option>
+          {REGISTRATION_KINDS.map((k) => (
+            <option key={k} value={k}>
+              {REGISTRATION_LABEL[k]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <h4>Marcos (até {MAX_MARCOS})</h4>
       {marcos.map((m, i) => (
         <div className="bj-marco" key={i}>
           <input
@@ -240,6 +355,29 @@ function Temporada({
               setMarcos(marcos.map((x, j) => (i === j ? { ...x, date: e.target.value } : x)))
             }
           />
+          <select
+            className="bj-eq-seletor"
+            aria-label="Tipo do marco"
+            value={m.kind ?? 'marco'}
+            onChange={(e) =>
+              setMarcos(
+                marcos.map((x, j) =>
+                  i === j ? { ...x, kind: e.target.value as 'marco' | 'entrega' } : x,
+                ),
+              )
+            }
+          >
+            <option value="marco">marco</option>
+            <option value="entrega">entrega</option>
+          </select>
+          {m.sourceMilestoneId && (
+            <span
+              className="bj-chip bj-chip-neutro"
+              title="Copiado de um marco oficial do calendário"
+            >
+              DO CALENDÁRIO
+            </span>
+          )}
           <button
             type="button"
             className="bj-link"
@@ -249,7 +387,7 @@ function Temporada({
           </button>
         </div>
       ))}
-      {marcos.length < 12 && (
+      {marcos.length < MAX_MARCOS && (
         <button
           type="button"
           className="bj-btn bj-btn-sm"

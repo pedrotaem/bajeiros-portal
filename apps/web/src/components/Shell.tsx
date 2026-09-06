@@ -35,6 +35,11 @@ export interface SubItem {
   label: string
   /** Marca de produto (DF-24). Só ferramenta tem; aba de página não ganha uma. */
   Mark?: (p: { size: 16 }) => JSX.Element
+  /**
+   * Exceção DECLARADA ao `subsExigemConta` do pai (DF-33 FR-DF33.2): o Calendário é
+   * informação pública sobre fonte pública e abre sem sessão, como a vitrine.
+   */
+  semConta?: boolean
 }
 
 export interface Destino {
@@ -81,9 +86,18 @@ export const DESTINOS: Destino[] = [
     subs: [
       { kind: 'communityTab', id: 'resultados', label: 'Resultados' },
       { kind: 'communityTab', id: 'equipes', label: 'Equipes do Brasil' },
+      // DF-33: sem marca e sem glifo — sub-item de aba não ganha ícone (design-system §8.4)
+      { kind: 'communityTab', id: 'calendario', label: 'Calendário', semConta: true },
     ],
   },
 ]
+
+/** Os sub-itens que este visitante vê: com conta, todos; sem conta, só os declarados públicos. */
+export function subsParaVisitante(d: Destino, temConta: boolean): SubItem[] {
+  const subs = d.subs ?? []
+  if (!d.subsExigemConta || temConta) return subs
+  return subs.filter((s) => s.semConta)
+}
 
 /** Obrigação de interface do spec.md §1 — agora com posição fixa em TODA página. */
 export const DISCLAIMER =
@@ -131,8 +145,7 @@ export function Shell({ title, children }: { title: string; children: React.Reac
    * identificador (C-02), e não existe glifo para "aba de página" nem se inventa um
    * (design-system §8.4).
    */
-  const subsVisiveis = (d: Destino) =>
-    !compacto && ativo(d) && (!d.subsExigemConta || !!user) ? (d.subs ?? []) : []
+  const subsVisiveis = (d: Destino) => (!compacto && ativo(d) ? subsParaVisitante(d, !!user) : [])
 
   return (
     <div className={compacto ? 'bj-shell bj-shell-compacto' : 'bj-shell'}>

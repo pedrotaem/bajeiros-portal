@@ -17,7 +17,20 @@ interface Home {
   team: { id: string; name: string; role: string } | null
   teams: { id: string; name: string }[]
   state: 'normal' | 'bootstrap' | 'sem-equipe'
-  season?: { label: string; next: { title: string; daysLeft: number } | null } | null
+  season?: {
+    label: string
+    next: { title: string; daysLeft: number } | null
+    nextCompetition?: { id: string; name: string; startsOn: string; daysLeft: number } | null
+  } | null
+  /** DF-33 AC-DF33.11 — próximo prazo que afeta a equipe (oficial ou da temporada). */
+  deadline?: {
+    id: string
+    title: string
+    dueOn: string
+    daysLeft: number
+    kind: string
+    competition: string | null
+  } | null
   /** DF-18 RF-2.5 — sem opt-in a evolução some do shell inteiro, Início incluído. */
   optIn?: boolean
   rank?: {
@@ -70,6 +83,7 @@ export function HomePage() {
   const setActiveTeam = useSession((s) => s.setActiveTeam)
   const setPage = useSession((s) => s.setPage)
   const goToTeam = useSession((s) => s.goToTeam)
+  const goToCalendar = useSession((s) => s.goToCalendar)
   const setCurrentProject = useSession((s) => s.setCurrentProject)
   const home = useFetch<Home>(`/api/v1/me/home${activeTeamId ? `?teamId=${activeTeamId}` : ''}`, [
     activeTeamId,
@@ -145,6 +159,26 @@ export function HomePage() {
             ? ` · faltam ${d.season.next.daysLeft} dias para ${d.season.next.title}`
             : ''}
         </p>
+        {/* DF-33 — o prazo vem do calendário (marco oficial ou da temporada, o que vier
+            antes); o CTA cai na aba com o marco já aberto */}
+        {d.deadline && (
+          <p className="bj-inicio-prazo">
+            Próximo prazo: <b>{d.deadline.title}</b>
+            {d.deadline.competition ? ` (${d.deadline.competition})` : ''}
+            {d.deadline.daysLeft === 0
+              ? ' · vence hoje'
+              : d.deadline.daysLeft === 1
+                ? ' · falta 1 dia'
+                : ` · faltam ${d.deadline.daysLeft} dias`}{' '}
+            <button
+              type="button"
+              className="bj-link"
+              onClick={() => goToCalendar({ selected: d.deadline!.id, season: null })}
+            >
+              Ver no calendário
+            </button>
+          </p>
+        )}
         {d.teams.length > 1 && (
           <select
             className="bj-eq-seletor"
