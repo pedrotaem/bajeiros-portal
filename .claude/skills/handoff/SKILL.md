@@ -91,7 +91,7 @@ que fazer].`
 - Ruim: "Durante a implementação da marca, descobrimos que a guarda de tokens também analisa
   comentários, o que causou uma falha inesperada no lint."
 
-**Teto duro: 150 linhas no `CLAUDE.md` inteiro.** Se estourar, não anexe — escolha. Substitua a
+**Teto duro: 500 linhas no `CLAUDE.md` inteiro.** Se estourar, não anexe — escolha. Substitua a
 lição mais fraca ou funda duas numa. O arquivo carrega em toda sessão; cada linha é imposto
 permanente. Relate ao usuário o que foi cortado.
 

@@ -50,7 +50,7 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
 
 ## Convenções que já custaram caro
 
-<!-- caveman ultra: uma linha por lição, só o que muda decisão futura. Teto 150 linhas no
+<!-- caveman ultra: uma linha por lição, só o que muda decisão futura. Teto 500 linhas no
      arquivo inteiro. Lição que virou teste ou guarda SAI daqui — a guarda é o registro. -->
 
 - `check-tokens` **não isenta comentário**. Hex em comentário quebra o lint.
