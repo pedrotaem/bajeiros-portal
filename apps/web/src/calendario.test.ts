@@ -132,6 +132,18 @@ describe('DF-33 — linha do tempo e lista (FR-DF33.5/6/8/10)', () => {
   })
 })
 
+describe('DF-33 — a linha do tempo só desenha o ciclo', () => {
+  it('marco fora da faixa fica de fora do desenho, mas continua na lista', () => {
+    // a inscrição das regionais fecha em junho, antes de o ciclo começar em 1º de julho:
+    // clampado, o marco apareceria colado na borda como se fosse de julho
+    expect(timeline).toContain('const noCiclo =')
+    expect(timeline).toContain("m.kind === 'equipe' && noCiclo(m)")
+    expect(timeline).toContain('m.competitionId === c.id && noCiclo(m)')
+    // a Lista não filtra por faixa — o histórico do ciclo continua lá
+    expect(list).not.toContain('noCiclo')
+  })
+})
+
 describe('DF-33 — tokens (AC-DF33.12)', () => {
   it('a seção do calendário não tem hex nem cor literal', () => {
     const secao = css.slice(css.indexOf('DF-33 · calendário'))
