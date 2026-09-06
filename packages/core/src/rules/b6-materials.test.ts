@@ -10,7 +10,7 @@ function withPrimary(section: TubeSection): Cage {
 }
 
 describe('B6.3.3.1 / B6.3.3.2 (DF-1)', () => {
-  it('template padrão (4130 Ø31,75×1,60 da literatura): passa via equivalência B6.3.3.2', () => {
+  it('template padrão (1020 Ø30×2 do editor): passa via equivalência B6.3.3.2', () => {
     const cage = structuredClone(templateCage)
     expect(byId(cage, 'B6.3.3.1')?.status).toBe('pass')
     expect(byId(cage, 'B6.3.3.2')?.status).toBe('pass')
