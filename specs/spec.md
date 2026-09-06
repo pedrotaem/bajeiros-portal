@@ -224,6 +224,16 @@ Como projetista que modela livre, quero que o nó que eu criei no encontro dos t
 - **FR-18.5** Botão **"Recalcular pontos e regras"** no painel Checklist B6, abaixo da massa, com o resumo do último recálculo (pontos identificados, recusas com razão, ancoragens criadas/removidas, referências órfãs removidas — ou "nada a corrigir"). Importar JSON continua **não** renomeando: renomear é ação explícita.
 - **FR-18.6** Efeito concreto no template: `N→D` faz o B6.2.4.5 passar a conferir a cadeia do SIM (antes pulada por não existir `DL`).
 
+### US-19 — Desfazer e refazer (DF-32, implementada)
+
+Como projetista, quero voltar atrás em qualquer mudança na gaiola — inclusive importar, recalcular e trocar o tipo da suspensão — com Ctrl+Z, e refazer com Ctrl+Shift+Z.
+
+- **FR-19.1** Só a **gaiola** tem histórico: `past`/`future` no store; toda ação que muda `cage` empilha a gaiola anterior e esvazia o futuro. Desfazer e refazer não se gravam. Estado de tela (seleção, alternadores, espelho, câmera) não entra.
+- **FR-19.2** Granularidade humana por dois mecanismos: **gesto** (`beginGesture`/`endGesture` no arrasto do 3D — um arrasto é um passo, clique sem mover não grava) e **assinatura + janela** (mudanças com a mesma assinatura — chaves da gaiola e ids dos nós tocados — em menos de 800 ms fundem no passo anterior: digitar "1250" num campo é um passo).
+- **FR-19.3** Restaurar ajusta a seleção ao que existe na gaiola restaurada (o resto vira `null`) e cancela "adicionar membro" pendente. Teto de 100 passos.
+- **FR-19.4** Botões **Desfazer**/**Refazer** no cabeçalho do painel de edição, desabilitados sem o que fazer; atalhos Ctrl/⌘+Z, Ctrl/⌘+Shift+Z e Ctrl/⌘+Y na página do editor, **fora** de campo de texto (dentro, o atalho é do campo).
+- **FR-19.5** Importar JSON, restaurar o template e recalcular (US-18) são passos normais: desfazer uma importação devolve a gaiola anterior.
+
 ## 4. Critérios de aceite (estado verificado)
 
 | #     | Critério                                                                                                                                                                                                                                                                                                                                    | Verificação                                                                                             |
@@ -251,6 +261,7 @@ Como projetista que modela livre, quero que o nó que eu criei no encontro dos t
 | AC-21 | DF-22 §11: clicar num tubo abre a cota flutuante com o comprimento; Enter reposiciona `b`; Esc fecha sem alterar; `b` travado nasce desabilitado                                                                                                                                                                                            | manual/browser ✔                                                                                        |
 | AC-22 | DF-30: template passa SUSP.2/SUSP.3; entre-eixos 1400 falha com −279; McPherson na dianteira deixa 12 ancoragens e limpa travas; voltar a duplo A recria as superiores espelhadas; centro R em +600 põe o L em −600; JSON com tipo inválido importa sem módulo; ficha sugere 1121/1114/1228, `duplo-a` e `trailing`                         | vitest ✔ (`suspension.test.ts`, `b6-suspension.test.ts`, `suspension-store.test.ts`, `suggest.test.ts`) |
 | AC-23 | DF-31: no template a identificação propõe exatamente NL→DL e NR→DR; nó com letra nunca é renomeado; vaga ocupada e candidatos duplos ficam de fora com razão; `applyRenames` arrasta membros, continuidade, travas e namedExtra; com N→D um trecho do SIM faltando vira `fail` em B6.2.4.5; o store segue a seleção e reconcilia ancoragens | vitest ✔ (`identify.test.ts`, `recalc-store.test.ts`)                                                   |
+| AC-24 | DF-32: mover/desfazer/refazer; três mudanças no mesmo nó em < 800 ms viram um passo e outro nó abre outro; gesto de cinco movimentos é um passo; ação nova descarta o refazer; desfazer "novo nó" limpa a seleção; importar, template e recálculo são desfazíveis; estado de tela não entra; teto de 100                                    | vitest ✔ (`history-store.test.ts`)                                                                      |
 
 ## 5. Fora de escopo do MVP (backlog)
 

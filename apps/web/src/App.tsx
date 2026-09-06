@@ -132,6 +132,40 @@ function ViewportToggles() {
   )
 }
 
+/**
+ * Desfazer/refazer (DF-32). Só a gaiola tem histórico; os botões vivem no cabeçalho do painel
+ * de edição porque é onde a mudança acontece. Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y valem na página
+ * do editor fora de campo de texto (lá dentro, o desfazer é o do próprio campo).
+ */
+function HistoryButtons() {
+  const canUndo = useStore((s) => s.past.length > 0)
+  const canRedo = useStore((s) => s.future.length > 0)
+  const undo = useStore((s) => s.undo)
+  const redo = useStore((s) => s.redo)
+  return (
+    <div className="history-btns">
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        disabled={!canUndo}
+        title="Desfazer a última alteração na gaiola (Ctrl+Z)"
+        onClick={undo}
+      >
+        Desfazer
+      </button>
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        disabled={!canRedo}
+        title="Refazer (Ctrl+Shift+Z ou Ctrl+Y)"
+        onClick={redo}
+      >
+        Refazer
+      </button>
+    </div>
+  )
+}
+
 /** Resumo do último recálculo (DF-31) em uma linha — o que mudou, ou que nada precisou mudar. */
 function describeRecalc(r: RecalcReport): string {
   const parts: string[] = []
@@ -296,6 +330,35 @@ function Portal() {
     if (selectedMember || selectedNode || selectedPlane) setRightOpen(true)
   }, [selectedMember, selectedNode, selectedPlane])
 
+  // DF-32: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y no editor. Dentro de input/select/textarea o atalho
+  // fica com o campo — desfazer a digitação ali não pode desfazer a gaiola.
+  useEffect(() => {
+    if (page !== 'editor') return
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable)
+      )
+        return
+      const k = e.key.toLowerCase()
+      if (k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) useStore.getState().redo()
+        else useStore.getState().undo()
+      } else if (k === 'y') {
+        e.preventDefault()
+        useStore.getState().redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [page])
+
   useEffect(() => {
     if (wizardActive) setRightOpen(true)
   }, [wizardActive])
@@ -429,6 +492,7 @@ function Portal() {
           <aside className="sidebar right">
             <div className="panel-head">
               <span>{wizardActive ? 'Nova gaiola' : 'Editar'}</span>
+              <HistoryButtons />
               <button
                 className="collapse-btn"
                 title="Recolher editor"

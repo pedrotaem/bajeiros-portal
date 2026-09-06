@@ -33,6 +33,7 @@
 | DF-29       | Rótulos dos pontos na cena: mostrar e ocultar                                 | ✅     | FR-1.7 em `spec.md`                                                             |
 | DF-30       | Módulo de suspensão: tipo por eixo, centros de roda, entre-eixos, corpos      | ✅ v1  | `spec.md` US-17; SUSP.2/SUSP.3 em `rules.md`; pendências em §10 do draft        |
 | DF-31       | Recalcular: re-identificar pontos denominados e reavaliar o checklist         | ✅     | `spec.md` US-18                                                                 |
+| DF-32       | Desfazer e refazer no editor                                                  | ✅     | `spec.md` US-19                                                                 |
 
 **Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
 nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
@@ -58,6 +59,7 @@ antes das features maiores:
 | 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)            | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                    |
 | 11 ✅  | [DF-30](drafts/df30-suspensao.md)                  | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
 | 12 ✅  | [DF-31](drafts/df31-recalcular-e-reidentificar.md) | Recalcular pontos e regras — **implementada**            | DF-30              | O motor lê ponto por id; o nó genérico no encontro certo ganha a letra num clique          |
+| 13 ✅  | [DF-32](drafts/df32-desfazer-refazer.md)           | Desfazer e refazer — **implementada**                    | DF-31              | Toda ação de ida ganha volta; o recálculo deixa de ser o único caminho sem retorno         |
 
 ## Grafo de dependências
 
@@ -174,6 +176,10 @@ graph LR
   topologia (nó genérico no encontro dos membros que definem a letra vira `SL`, `DL`…), saneia o
   modelo como a importação, reconcilia ancoragens com o tipo de suspensão e reavalia tudo, com
   resumo do que mudou. Nunca toca em nó que já tem letra.
+
+- **DF-32 — Desfazer/refazer:** histórico só da gaiola (`past`/`future`), gesto de arrasto = um
+  passo, digitação funde por assinatura em 800 ms, seleção ajustada ao restaurar; botões no painel
+  de edição e Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y fora de campo de texto.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16) — ✅ implementado em 2026-08-30 (PR #33)
 
@@ -351,3 +357,13 @@ regras"](drafts/df31-recalcular-e-reidentificar.md) no Checklist B6 identifica a
 renomeia só o que é inequívoco e nunca um nó que já tem letra, saneia o modelo como a importação,
 reconcilia as ancoragens com o tipo de cada eixo (DF-30) e reavalia tudo, mostrando o resumo. No
 template, `NL/NR → DL/DR`. Importar JSON continua sem renomear: é ação explícita.
+
+## DF-32 — Desfazer e refazer (proposto e ✅ implementado em 2026-09-06)
+
+O editor tinha ~40 ações de ida e nenhuma de volta — e o DF-31 registrou o risco por escrito. O
+[histórico](drafts/df32-desfazer-refazer.md) envolve o `set` do store: quando a **gaiola** muda,
+a anterior vai para `past`. Só a gaiola: seleção, alternadores e câmera não são edição. Dois
+mecanismos dão granularidade humana — o **gesto** do arrasto (um passo do `pointerdown` ao
+`pointerup`) e a **assinatura** da mudança (chaves e nós tocados) que funde digitação em 800 ms.
+Restaurar ajusta a seleção ao que existe. Botões Desfazer/Refazer no cabeçalho do painel de edição
+e os atalhos clássicos fora de campo de texto. Importar, template e recálculo são desfazíveis.

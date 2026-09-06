@@ -240,6 +240,13 @@ passos" enquanto o assistente está ativo. Cancelar restaura snapshot da gaiola 
   modelo saneado é um objeto novo, então tudo que deriva dele (regras, planos, análise de remoção)
   recalcula sozinho — o botão não precisa de um "revision" para forçar nada.
 
+- **Desfazer/refazer** (DF-32): o `create` do store recebe um `set` envolvido — se `cage` mudou
+  de referência, a anterior vai para `past` e `future` esvazia; `undo`/`redo` usam o `set` cru e
+  não se gravam. Fusão por **gesto** (`histGesture`: 1 = aberto sem gravar, 2 = já gravou) e por
+  **assinatura** (`changeSignature`: chaves da gaiola + `nodes:<id>` por referência — `withMirror`
+  preserva a referência dos nós parados, então "moveu AL" e "moveu BL" têm assinaturas distintas)
+  dentro de 800 ms. `selectionFor` mantém só a seleção que existe na gaiola restaurada. Teto 100.
+
 ## 8. Evolução prevista
 
 - **Ruleset versionado:** `evaluate` hoje implementa a Emenda 7; a assinatura prevista é

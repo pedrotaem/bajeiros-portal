@@ -2026,3 +2026,17 @@ button.org-person:hover .org-person-name {
   line-height: var(--bj-leading-normal);
   color: var(--bj-fg-muted);
 }
+
+/* DF-32 — desfazer/refazer no cabeçalho do painel de edição. Só tokens. */
+.history-btns {
+  display: flex;
+  gap: var(--bj-space-1);
+  margin-left: auto;
+  margin-right: var(--bj-space-2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.history-btns .bj-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

@@ -337,6 +337,8 @@ function Scene({ results, removalMap, planes }: Props) {
     camera.getWorldDirection(normal)
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, pos)
     drag.current = { kind, id, plane, start: pos.clone(), active: false }
+    // DF-32: o arrasto inteiro é um passo só de desfazer
+    useStore.getState().beginGesture()
     if (controls) controls.enabled = false
     ;(e.target as Element).setPointerCapture(e.pointerId)
   }
@@ -362,6 +364,7 @@ function Scene({ results, removalMap, planes }: Props) {
   function endDrag(e: ThreeEvent<PointerEvent>) {
     if (!drag.current) return
     drag.current = null
+    useStore.getState().endGesture()
     if (controls) controls.enabled = true
     ;(e.target as Element).releasePointerCapture(e.pointerId)
   }
