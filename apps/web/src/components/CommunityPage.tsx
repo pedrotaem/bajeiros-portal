@@ -3,6 +3,8 @@ import { useSession } from '../session'
 import { mensagem, useFetch } from '../lib/useFetch'
 import { IconArrow } from '../icons/glyphs'
 import { StatusChip } from '../icons/statusIcon'
+import { UFS } from '../data/brasil-uf'
+import { REGIOES, UFS_DA_REGIAO, type RegiaoId } from '../data/panorama'
 import { CalendarTab } from './CalendarTab'
 import { PrecisaDeConta } from './PublicHome'
 
@@ -53,8 +55,22 @@ interface CommunityTeam {
   displayName: string
   university: string | null
   uf: string | null
+  /** Nome da região, DERIVADO da UF pela API — não a coluna crua do acervo. */
   region: string | null
+  regionId: RegiaoId | null
   claimed: boolean
+  claimedByTeamId: string | null
+}
+
+interface Claim {
+  id: string
+  teamId: string
+  communityTeamId: string
+  communityTeamName: string | null
+  evidence: string | null
+  status: 'aberta' | 'aprovada' | 'recusada'
+  createdAt: string
+  resolvedAt: string | null
 }
 
 export function CommunityPage({ teamId }: { teamId: string | null }) {
@@ -364,78 +380,228 @@ function SolicitarCorrecao({ competitionId }: { competitionId: string | null }) 
   )
 }
 
+/**
+ * Equipes do Brasil — o registro canônico, com busca, estado e região.
+ *
+ * Os dois filtros são do SERVIDOR (`?uf=` / `?region=`), não da página: a lista tem
+ * quase duzentas equipes e recortar depois de paginar mostraria meia região. Região
+ * é DERIVADA da UF (a API resolve), então o recorte não depende de uma coluna que só
+ * metade do acervo preencheu.
+ */
 function EquipesDoBrasil({ teamId }: { teamId: string | null }) {
   const [busca, setBusca] = useState('')
-  const equipes = useFetch<CommunityTeam[]>(
-    `/api/v1/community/teams?q=${encodeURIComponent(busca)}`,
-    [busca],
+  const [uf, setUf] = useState('')
+  const [regiao, setRegiao] = useState('')
+
+  const query = new URLSearchParams()
+  if (busca.trim()) query.set('q', busca.trim())
+  if (uf) query.set('uf', uf)
+  if (regiao) query.set('region', regiao)
+  const equipes = useFetch<CommunityTeam[]>(`/api/v1/community/teams?${query}`, [busca, uf, regiao])
+
+  // O pedido em análise vem do SERVIDOR: sem isto o botão volta ao estado inicial a
+  // cada recarga e a solicitação enviada some da tela (AC-DF15.3).
+  const claims = useFetch<Claim[]>(teamId ? '/api/v1/community/claims' : null, [teamId])
+  const emAnalise = new Set(
+    (claims.data ?? []).filter((cl) => cl.status === 'aberta').map((cl) => cl.communityTeamId),
   )
+  const temPedidoAberto = emAnalise.size > 0
+
+  const ufsVisiveis = regiao ? UFS.filter((u) => u.regiao === regiao) : UFS
+  const lista = equipes.data ?? []
 
   return (
     <>
-      <input
-        className="bj-eq-seletor bj-busca"
-        type="search"
-        placeholder="Buscar equipe ou instituição"
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-      />
+      <div className="bj-eq-head">
+        <input
+          className="bj-eq-seletor bj-busca"
+          type="search"
+          placeholder="Buscar equipe ou instituição"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+        <select
+          className="bj-eq-seletor"
+          aria-label="Filtrar por região"
+          value={regiao}
+          onChange={(e) => {
+            setRegiao(e.target.value)
+            // a UF escolhida pode não pertencer à nova região: um filtro não pode
+            // deixar o outro apontando para o vazio
+            if (e.target.value && uf && !UFS_DA_REGIAO[e.target.value as RegiaoId].includes(uf)) {
+              setUf('')
+            }
+          }}
+        >
+          <option value="">Todas as regiões</option>
+          {REGIOES.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.nome}
+            </option>
+          ))}
+        </select>
+        <select
+          className="bj-eq-seletor"
+          aria-label="Filtrar por estado"
+          value={uf}
+          onChange={(e) => setUf(e.target.value)}
+        >
+          <option value="">Todos os estados</option>
+          {ufsVisiveis.map((u) => (
+            <option key={u.sigla} value={u.sigla}>
+              {u.sigla} — {u.nome}
+            </option>
+          ))}
+        </select>
+        {(busca || uf || regiao) && (
+          <button
+            type="button"
+            className="bj-btn bj-btn-sm"
+            onClick={() => {
+              setBusca('')
+              setUf('')
+              setRegiao('')
+            }}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
+      {equipes.estado === 'ok' && (
+        <p className="bj-legenda" aria-live="polite">
+          {lista.length === 1 ? '1 equipe' : `${lista.length} equipes`}
+          {(uf || regiao || busca) && ' no recorte atual'}
+        </p>
+      )}
       {equipes.estado === 'loading' && <span className="bj-skeleton" style={{ height: 200 }} />}
-      {equipes.estado === 'ok' && (equipes.data ?? []).length === 0 && (
-        <p className="bj-vazio">Nenhuma equipe encontrada no registro.</p>
+      {equipes.estado === 'error' && (
+        <p className="bj-erro" role="alert">
+          {equipes.erro}{' '}
+          <button type="button" className="bj-link" onClick={equipes.recarregar}>
+            tentar de novo
+          </button>
+        </p>
+      )}
+      {equipes.estado === 'ok' && lista.length === 0 && (
+        <p className="bj-vazio">Nenhuma equipe encontrada neste recorte do registro.</p>
       )}
       <ul className="bj-cards">
-        {(equipes.data ?? []).map((t) => (
+        {lista.map((t) => (
           <li key={t.id} className="bj-card">
             <header>
               <h3>{t.displayName}</h3>
             </header>
             <p>{t.university ?? 'instituição não informada'}</p>
             <p className="bj-card-estado">
-              {[t.uf, t.region].filter(Boolean).join(' · ') || 'região não informada'}
+              {[t.uf, t.region].filter(Boolean).join(' · ') || 'origem não informada'}
             </p>
             <div className="bj-card-acoes">
-              {t.claimed ? (
-                <span className="bj-chip bj-chip-neutro">VINCULADA A UMA EQUIPE DO PORTAL</span>
+              {emAnalise.has(t.id) ? (
+                <span className="bj-chip bj-chip-info">VÍNCULO EM ANÁLISE</span>
+              ) : t.claimed ? (
+                <span className="bj-chip bj-chip-neutro">
+                  {teamId && t.claimedByTeamId === teamId
+                    ? 'VINCULADA À SUA EQUIPE'
+                    : 'VINCULADA A UMA EQUIPE DO PORTAL'}
+                </span>
+              ) : // sem equipe no portal não há o que vincular — dizer isso vale mais
+              // que uma área de ação vazia, que lê como botão quebrado
+              teamId ? (
+                <Vincular
+                  teamId={teamId}
+                  communityTeamId={t.id}
+                  bloqueado={temPedidoAberto}
+                  onPedido={claims.recarregar}
+                />
               ) : (
-                teamId && <Vincular teamId={teamId} communityTeamId={t.id} />
+                <span className="bj-legenda">
+                  Crie ou entre numa equipe do portal para pedir o vínculo.
+                </span>
               )}
             </div>
           </li>
         ))}
       </ul>
+      <p className="bj-hub-foot">
+        O vínculo não é automático: a solicitação vai para a administração do portal, que confere e
+        aprova. Enquanto isso a equipe continua vendo a tabela normalmente.
+      </p>
     </>
   )
 }
 
-function Vincular({ teamId, communityTeamId }: { teamId: string; communityTeamId: string }) {
+function Vincular({
+  teamId,
+  communityTeamId,
+  bloqueado,
+  onPedido,
+}: {
+  teamId: string
+  communityTeamId: string
+  bloqueado: boolean
+  onPedido: () => void
+}) {
   const api = useSession((s) => s.api)
-  const [estado, setEstado] = useState<'ocioso' | 'pedido' | 'erro'>('ocioso')
+  const [aberto, setAberto] = useState(false)
+  const [evidencia, setEvidencia] = useState('')
+  const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  if (estado === 'pedido') return <span className="bj-chip bj-chip-info">VÍNCULO EM ANÁLISE</span>
+  // um pedido por vez (a API responde 409): dizer isso antes vale mais que o erro
+  if (bloqueado)
+    return <span className="bj-legenda">Sua equipe já tem um pedido de vínculo em análise.</span>
 
-  return (
-    <>
-      <button
-        type="button"
-        className="bj-btn bj-btn-sm"
-        onClick={async () => {
-          try {
-            await api('/api/v1/community/claims', {
-              method: 'POST',
-              body: JSON.stringify({ teamId, communityTeamId }),
-            })
-            setEstado('pedido')
-          } catch (e) {
-            setErro(mensagem(e))
-            setEstado('erro')
-          }
-        }}
-      >
+  if (!aberto)
+    return (
+      <button type="button" className="bj-btn bj-btn-sm" onClick={() => setAberto(true)}>
         É a minha equipe <IconArrow size={16} />
       </button>
-      {estado === 'erro' && <span className="bj-erro">{erro}</span>}
-    </>
+    )
+
+  return (
+    <form
+      className="bj-form"
+      onSubmit={async (e) => {
+        e.preventDefault()
+        setEnviando(true)
+        setErro(null)
+        try {
+          await api('/api/v1/community/claims', {
+            method: 'POST',
+            body: JSON.stringify({
+              teamId,
+              communityTeamId,
+              evidence: evidencia.trim() || undefined,
+            }),
+          })
+          setAberto(false)
+          onPedido()
+        } catch (err) {
+          setErro(mensagem(err))
+        } finally {
+          setEnviando(false)
+        }
+      }}
+    >
+      <label>
+        Como a administração confere que é a sua equipe? (opcional)
+        <textarea
+          className="bj-eq-seletor bj-textarea"
+          placeholder="E-mail institucional, página da equipe, inscrição na competição…"
+          maxLength={1000}
+          value={evidencia}
+          onChange={(e) => setEvidencia(e.target.value)}
+        />
+      </label>
+      {erro && <p className="bj-erro">{erro}</p>}
+      <div className="bj-card-acoes">
+        <button type="submit" className="bj-btn bj-btn-sm bj-btn-primary" disabled={enviando}>
+          {enviando ? 'Enviando…' : 'Enviar solicitação'}
+        </button>
+        <button type="button" className="bj-btn bj-btn-sm" onClick={() => setAberto(false)}>
+          Cancelar
+        </button>
+      </div>
+    </form>
   )
 }
