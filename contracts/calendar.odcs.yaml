@@ -1,0 +1,156 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:calendar
+name: calendar
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Calendário de competições (DF-33) — marcos que a equipe precisa cumprir ou saber
+    (prazos, janelas, eventos, comunicados) e os documentos-fonte oficiais de onde cada marco
+    saiu (informativos, páginas, regulamento, templates). Compartilhado com o DF-34.
+  usage: >-
+    Aba Comunidade › Calendário (pública, sem conta), o "próximo prazo" do Início (DF-16), a
+    faixa de temporada (DF-13) e a exportação .ics. Curado na administração (DF-9), com
+    `checked_at` em toda linha — o portal mostra de onde tirou e quando olhou. Sem raspagem
+    automática: a fonte bloqueia cliente não-browser (DF-33 §10.1).
+schema:
+  - name: source_document
+    logicalType: object
+    physicalType: table
+    physicalName: source_documents
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: competition_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: NULL quando o documento vale para todas as competições (regulamento).
+      - name: kind
+        logicalType: string
+        required: true
+        description: informativo | pagina | regulamento | template | forum | canal | outro
+      - name: number
+        logicalType: integer
+        required: false
+        description: '"Informativo 09" → 9.'
+      - name: title
+        logicalType: string
+        required: true
+        description: Como a organização nomeia o documento (≤ 200). Título é fato, não obra.
+      - name: url
+        logicalType: string
+        required: true
+        description: Única por documento — a fonte é citada por URL, nunca por marca (DF-15).
+      - name: published_on
+        logicalType: date
+        required: false
+      - name: edition
+        logicalType: string
+        required: false
+        description: '"emenda-07", "Ver27".'
+      - name: supersedes_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+      - name: checked_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+        description: Quando alguém do portal conferiu a fonte pela última vez.
+      - name: created_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        description: Quem curou; anonimizado (SET NULL) na exclusão de conta.
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: acervo histórico; anonimizado na exclusão da conta do titular
+  - name: competition_milestone
+    logicalType: object
+    physicalType: table
+    physicalName: competition_milestones
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: competition_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+      - name: kind
+        logicalType: string
+        required: true
+        description: inscricao | pagamento | pessoas | documento | logistica | evento | comunicado
+      - name: title
+        logicalType: string
+        required: true
+        description: ≤ 140, no vocabulário do DS §11 ("Inscrição de integrantes").
+      - name: summary
+        logicalType: string
+        required: false
+        description: Paráfrase curada ≤ 280 — nunca cópia do informativo (DF-33 §8).
+      - name: starts_on
+        logicalType: date
+        required: false
+        description: Início da janela; NULL em prazo simples.
+      - name: due_on
+        logicalType: date
+        required: true
+        description: Prazo, fim da janela ou data do evento/comunicado.
+      - name: applies_to
+        logicalType: array
+        physicalType: text[]
+        required: true
+        description: Categorias de inscrição a que o marco se aplica; vazio = todas.
+      - name: source_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: O documento-fonte que instituiu o marco.
+      - name: section_id
+        logicalType: string
+        required: false
+        description: Seção do regulamento relacionada (DF-34), quando houver.
+      - name: status
+        logicalType: string
+        required: true
+        description: previsto | confirmado | cancelado
+      - name: checked_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+      - name: updated_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: acervo histórico; anonimizado na exclusão da conta do titular
+customProperties:
+  - property: visibility
+    value: leitura pública (RLS USING true) — é o que o portal promete antes do cadastro
+  - property: retention
+    value: indefinida — acervo histórico, como competitions
+  - property: brand
+    value: nenhum logotipo, nome de programa ou identidade da organização fora do texto do link
+  - property: content
+    value: o portal guarda título, número, data e link; o conteúdo do informativo é lido na fonte
+  - property: dedup
+    value: UNIQUE (competition_id, kind, title, due_on) nos marcos; UNIQUE (url) nos documentos
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

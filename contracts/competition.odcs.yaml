@@ -2,15 +2,16 @@ apiVersion: v3.0.2
 kind: DataContract
 id: urn:bajeiros:contract:competition
 name: competition
-version: 1.0.0
+version: 1.1.0
 status: draft
 domain: engineering
 dataProduct: bajeiros-portal
 description:
   purpose: Calendário de competições (DF-15 E1) — a série histórica que o portal publica.
   usage: >-
-    Alimenta a tela Resultados, a faixa de temporada do DF-13 e o benchmark por prova.
-    Semeado pelo script de ingestão, curado pelo admin.
+    Alimenta a tela Resultados, a faixa de temporada do DF-13, o benchmark por prova e, desde a
+    1.1.0 (DF-33), a aba Calendário pública: janela de inscrição, página oficial e a data em que
+    o portal conferiu a fonte. Semeado pelo script de ingestão, curado pelo admin.
 schema:
   - name: competition
     logicalType: object
@@ -49,8 +50,26 @@ schema:
       - name: source_url
         logicalType: string
         required: false
-        description: Fonte pública citada por linha — nada é publicado sem origem.
+        description: Fonte pública dos RESULTADOS, citada por linha — nada é publicado sem origem.
+      - name: registration_opens_on
+        logicalType: date
+        required: false
+        description: Abertura da janela de inscrição de equipe (DF-33) — a janela é da competição.
+      - name: registration_closes_on
+        logicalType: date
+        required: false
+      - name: official_url
+        logicalType: string
+        required: false
+        description: Página oficial do evento (DF-33); citada por URL, nunca por marca.
+      - name: checked_at
+        logicalType: date
+        physicalType: timestamptz
+        required: false
+        description: Última conferência da fonte pela curadoria; > 30 dias com marco futuro exibe VERIFICAR.
 customProperties:
+  - property: visibility
+    value: leitura pública desde a 1.1.0 (DF-33 §3.3) — resultados e registro continuam exigindo conta
   - property: pii
     value: nenhum campo pessoal; a ingestão descarta campos de pessoa física na origem
   - property: brand
