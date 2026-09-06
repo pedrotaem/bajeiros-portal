@@ -55,6 +55,13 @@ A classificação primário/secundário define qual `TubeSection` a regra de mat
 **ou** consta em `namedExtra`. Consequência central: as regras de vão (B6.2.2.5.x) são
 recomputadas quando o usuário promove um nó — sem código especial por regra.
 
+**Re-identificação (DF-31).** As regras leem pontos por id, então um nó genérico no encontro certo
+é invisível para elas. `model/identify.ts` define cada letra como um encontro de tipos de membro
+(`LETTER_RULES`, em ordem de prioridade), propõe o id do regulamento só para nós sem letra, com
+lado pelo sinal de `x`, e recusa com razão (sem lado, vaga ocupada, candidatos duplos).
+`applyRenames` arrasta membros, continuidade, travas e `namedExtra`. É ação explícita do botão
+"Recalcular" — importar não renomeia.
+
 ### 3.3 Curvas
 
 Não há entidade "curva". Uma dobra é um **nó intermediário não denominado de grau 2**.
@@ -226,6 +233,12 @@ passos" enquanto o assistente está ativo. Cancelar restaura snapshot da gaiola 
   roda são cubos arrastáveis (`kind: 'wheel'` no `DragState`, id `eixo|lado`); mover qualquer
   lado grava o L. `cageBounds` recebe `withWheels` e inclui centro ± raio do pneu só com os
   corpos visíveis — enquadrar pela roda com a camada desligada mostraria ar.
+
+- **Recalcular** (DF-31): `recalculate()` no store aplica `identifyNamedPoints` +
+  `applyRenames`, saneia como o `loadCage` (continuidade, travas, suspensão, seções,
+  `namedExtra`), reconcilia as ancoragens com o tipo de cada eixo e grava `recalcReport`. O
+  modelo saneado é um objeto novo, então tudo que deriva dele (regras, planos, análise de remoção)
+  recalcula sozinho — o botão não precisa de um "revision" para forçar nada.
 
 ## 8. Evolução prevista
 

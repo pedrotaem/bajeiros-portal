@@ -2009,3 +2009,20 @@ button.org-person:hover .org-person-name {
 .length-field-lock {
   color: var(--bj-warn);
 }
+
+/* DF-31 — "Recalcular" no painel do checklist: botão + resumo do último recálculo. Só tokens. */
+.recalc-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  border-bottom: 1px solid var(--bj-border);
+}
+.recalc-bar .bj-btn {
+  align-self: flex-start;
+}
+.recalc-report {
+  font-size: var(--bj-text-xs);
+  line-height: var(--bj-leading-normal);
+  color: var(--bj-fg-muted);
+}

@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { useStore, type CameraView } from './store'
+import { useStore, type CameraView, type RecalcReport } from './store'
 import { evaluate, removalImpact } from '@bajeiros/core/rules/b6'
 import { estimateMass } from '@bajeiros/core/model/mass'
 import { detectPlanes } from '@bajeiros/core/model/planes'
@@ -129,6 +129,54 @@ function ViewportToggles() {
         Redundância
       </Toggle>
     </>
+  )
+}
+
+/** Resumo do último recálculo (DF-31) em uma linha — o que mudou, ou que nada precisou mudar. */
+function describeRecalc(r: RecalcReport): string {
+  const parts: string[] = []
+  if (r.renamed.length) {
+    parts.push(
+      `${r.renamed.length} ponto(s) identificado(s): ${r.renamed.map(([a, b]) => `${a}→${b}`).join(', ')}`,
+    )
+  }
+  if (r.skipped.length) {
+    parts.push(
+      `${r.skipped.length} não aplicado(s): ${r.skipped.map((k) => `${k.id}→${k.wanted} (${k.reason})`).join('; ')}`,
+    )
+  }
+  if (r.anchorsDelta)
+    parts.push(
+      `ancoragens ${r.anchorsDelta > 0 ? '+' : ''}${r.anchorsDelta} (reconciliadas com o tipo)`,
+    )
+  const orfas = r.prunedNamed + r.prunedLocked + r.prunedContinuity
+  if (orfas) parts.push(`${orfas} referência(s) órfã(s) removida(s)`)
+  if (r.suspensionDropped) parts.push('configuração de suspensão inválida descartada')
+  return parts.length
+    ? parts.join(' · ')
+    : 'nada a corrigir — pontos conferidos e regras reavaliadas'
+}
+
+/**
+ * "Recalcular" (DF-31): re-identifica os pontos denominados pela topologia, saneia o modelo
+ * como a importação faz e reavalia tudo. Vive no painel do checklist porque é o checklist que
+ * a pessoa está olhando quando desconfia de um resultado.
+ */
+function RecalcBar() {
+  const recalculate = useStore((s) => s.recalculate)
+  const report = useStore((s) => s.recalcReport)
+  return (
+    <div className="recalc-bar">
+      <button
+        type="button"
+        className="bj-btn bj-btn-sm"
+        title="Re-identifica os pontos denominados pela topologia (nó genérico no encontro dos membros que definem uma letra do regulamento recebe o id dela), saneia continuidade, travas, ancoragens e suspensão, e reavalia todas as regras"
+        onClick={recalculate}
+      >
+        Recalcular pontos e regras
+      </button>
+      {report && <span className="recalc-report">{describeRecalc(report)}</span>}
+    </div>
   )
 }
 
@@ -327,6 +375,7 @@ function Portal() {
                 {(mass.weldKg * 1000).toFixed(0)} g ({mass.jointCount} juntas)
               </span>
             </div>
+            <RecalcBar />
             {/* DF-21 §3.5 — atalho para a ficha SEM desmontar o <Viewport>: a ida e
                 volta preserva a câmera porque o editor só é escondido, nunca removido */}
             {currentProject && (

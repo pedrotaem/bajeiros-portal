@@ -14,11 +14,13 @@ import type {
 } from '@bajeiros/core/model/types'
 import { isLocked, mirrorId, sanitizeLocked, wheelLockId } from '@bajeiros/core/model/types'
 import {
+  AXLES,
   defaultSuspension,
   isTypeAllowed,
   reconcileAnchors,
   sanitizeSuspension,
 } from '@bajeiros/core/model/suspension'
+import { applyRenames, identifyNamedPoints } from '@bajeiros/core/model/identify'
 import {
   PLANE_TOL_MM,
   detectPlanes,
@@ -69,6 +71,19 @@ function withMirror(
 /** Vistas canônicas da câmera (DF-23). `seq` faz o mesmo botão reenquadrar. */
 export type CameraView = 'lateral' | 'frontal' | 'superior' | 'iso'
 
+/** Resumo do último "Recalcular" (DF-31) — o que mudou no modelo, para a tela dizer. */
+export interface RecalcReport {
+  renamed: [NodeId, NodeId][]
+  skipped: { id: string; wanted: string; reason: string }[]
+  prunedNamed: number
+  prunedLocked: number
+  prunedContinuity: number
+  /** ancoragens criadas (+) ou removidas (−) pela reconciliação com o tipo de suspensão */
+  anchorsDelta: number
+  suspensionDropped: boolean
+  at: number
+}
+
 interface State {
   cage: Cage
   selectedNode: NodeId | null
@@ -91,6 +106,8 @@ interface State {
   planeTolMm: number
   cameraView: { view: CameraView; seq: number } | null
   setCameraView: (view: CameraView) => void
+  recalcReport: RecalcReport | null
+  recalculate: () => void
   toggleLock: (id: string) => void
   setLocked: (ids: string[], locked: boolean) => void
   pending: Pending | null
@@ -171,6 +188,65 @@ export const useStore = create<State>((set, _get) => ({
   showAnchors: true,
   planeTolMm: PLANE_TOL_MM,
   cameraView: null,
+  recalcReport: null,
+  // DF-31 — re-identifica os pontos denominados pela topologia, saneia como a importação e
+  // reconcilia as ancoragens com o tipo de cada eixo. O modelo saneado é um objeto novo:
+  // tudo que deriva dele (regras, planos, remoção) recalcula por conta própria.
+  recalculate: () =>
+    set((s) => {
+      const ident = identifyNamedPoints(s.cage)
+      let cage: Cage = applyRenames(s.cage, ident.renames)
+      const namedBefore = cage.namedExtra?.length ?? 0
+      const namedExtra = (cage.namedExtra ?? []).filter((id) => id in cage.nodes)
+      const contBefore = cage.continuity?.length ?? 0
+      const continuity = sanitizeContinuity(cage)
+      const suspension = sanitizeSuspension(cage)
+      const anchorsBefore = cage.anchors?.length ?? 0
+      let anchors = cage.anchors ?? []
+      if (suspension) {
+        for (const axle of AXLES) {
+          anchors = reconcileAnchors(
+            anchors,
+            axle,
+            suspension[axle].type,
+            suspension[axle].wheelCenter,
+          )
+        }
+      }
+      cage = {
+        ...cage,
+        namedExtra,
+        continuity,
+        suspension,
+        anchors,
+        primarySection: migrateSection(cage.primarySection),
+        secondarySection: migrateSection(cage.secondarySection),
+      }
+      const lockedBefore = cage.locked?.length ?? 0
+      const locked = sanitizeLocked(cage)
+      cage = { ...cage, locked }
+      const map = (id: NodeId) => ident.renames[id] ?? id
+      return {
+        cage,
+        // a seleção segue o rename; "adicionar membro" pendente cai (o 1º nó pode ter mudado de id)
+        selectedNode: s.selectedNode ? map(s.selectedNode) : null,
+        selectedAnchor:
+          s.selectedAnchor && anchors.some((a) => a.id === s.selectedAnchor)
+            ? s.selectedAnchor
+            : null,
+        pending: null,
+        recalcReport: {
+          renamed: Object.entries(ident.renames),
+          skipped: ident.skipped,
+          prunedNamed: namedBefore - namedExtra.length,
+          prunedLocked: lockedBefore - locked.length,
+          prunedContinuity: contBefore - continuity.length,
+          anchorsDelta: anchors.length - anchorsBefore,
+          suspensionDropped: !!s.cage.suspension && !suspension,
+          at: Date.now(),
+        },
+      }
+    }),
   setCameraView: (view) =>
     set((s) => ({ cameraView: { view, seq: (s.cameraView?.seq ?? 0) + 1 } })),
   toggleLock: (id) =>

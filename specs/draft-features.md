@@ -32,6 +32,7 @@
 | DF-28       | Assistente sem conta: demonstração no lugar da degustação                     | 🚧     | draft; substitui a FR-DF27.12                                                   |
 | DF-29       | Rótulos dos pontos na cena: mostrar e ocultar                                 | ✅     | FR-1.7 em `spec.md`                                                             |
 | DF-30       | Módulo de suspensão: tipo por eixo, centros de roda, entre-eixos, corpos      | ✅ v1  | `spec.md` US-17; SUSP.2/SUSP.3 em `rules.md`; pendências em §10 do draft        |
+| DF-31       | Recalcular: re-identificar pontos denominados e reavaliar o checklist         | ✅     | `spec.md` US-18                                                                 |
 
 **Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
 nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
@@ -43,19 +44,20 @@ A ordem deriva das dependências (materiais fundamentam massa; continuidade fund
 juntas; manequim fundamenta volante) e prioriza entregas de valor imediato e baixo risco
 antes das features maiores:
 
-| Ordem  | Spec                                      | Feature                                                  | Depende de         | Racional da posição                                                                        |
-| ------ | ----------------------------------------- | -------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
-| 1 ✅   | [DF-1](drafts/df1-materiais.md)           | Material dos tubos (aços) por classe — **implementada**  | —                  | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2  |
-| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)     | Estimativa de peso (v1) — **v1 implementada**            | DF-1               | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                 |
-| 3 ✅   | [DF-3](drafts/df3-geraldao.md)            | Geraldão no cockpit (toggle) — **implementada**          | —                  | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4       |
-| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)  | Continuidade de tubos — **implementada**                 | —                  | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                     |
-| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md) | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1         | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)            |
-| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md) | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)      | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar       |
-| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)   | Ancoragem do volante — **implementada**                  | DF-4 (opcional)    | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                      |
-| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)      | Planos e cotas — **implementada**                        | —                  | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                     |
-| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)    | Trava e vistas de câmera — **implementada**              | DF-22              | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique      |
-| 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)   | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                    |
-| 11 ✅  | [DF-30](drafts/df30-suspensao.md)         | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
+| Ordem  | Spec                                               | Feature                                                  | Depende de         | Racional da posição                                                                        |
+| ------ | -------------------------------------------------- | -------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| 1 ✅   | [DF-1](drafts/df1-materiais.md)                    | Material dos tubos (aços) por classe — **implementada**  | —                  | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2  |
+| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)              | Estimativa de peso (v1) — **v1 implementada**            | DF-1               | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                 |
+| 3 ✅   | [DF-3](drafts/df3-geraldao.md)                     | Geraldão no cockpit (toggle) — **implementada**          | —                  | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4       |
+| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)           | Continuidade de tubos — **implementada**                 | —                  | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                     |
+| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md)          | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1         | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)            |
+| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md)          | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)      | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar       |
+| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)            | Ancoragem do volante — **implementada**                  | DF-4 (opcional)    | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                      |
+| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)               | Planos e cotas — **implementada**                        | —                  | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                     |
+| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)             | Trava e vistas de câmera — **implementada**              | DF-22              | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique      |
+| 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)            | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                    |
+| 11 ✅  | [DF-30](drafts/df30-suspensao.md)                  | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
+| 12 ✅  | [DF-31](drafts/df31-recalcular-e-reidentificar.md) | Recalcular pontos e regras — **implementada**            | DF-30              | O motor lê ponto por id; o nó genérico no encontro certo ganha a letra num clique          |
 
 ## Grafo de dependências
 
@@ -167,6 +169,11 @@ graph LR
   bitola e entre-eixos; entre-eixos declarado é conferido por SUSP.2; corpos genéricos (pneu, aro,
   manga, bandejas, amortecedor) com alternadores "Suspensão" e "Ancoragens"; ficha recebe
   entre-eixos, bitolas e tipos como sugestão.
+
+- **DF-31 — Recalcular:** botão no Checklist B6 que re-identifica os pontos denominados pela
+  topologia (nó genérico no encontro dos membros que definem a letra vira `SL`, `DL`…), saneia o
+  modelo como a importação, reconcilia ancoragens com o tipo de suspensão e reavalia tudo, com
+  resumo do que mudou. Nunca toca em nó que já tem letra.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16) — ✅ implementado em 2026-08-30 (PR #33)
 
@@ -330,6 +337,17 @@ tipo** e reconciliado ao trocar; **centro de roda** por eixo (um ponto, espelhad
 e entre-eixos medidos; **entre-eixos declarado** conferido por `SUSP.2` (± 5 mm) e conjunto de
 ancoragens conferido por `SUSP.3`; **corpos genéricos** (pneu, aro, manga, bandejas, amortecedor)
 como cilindros derivados, sem clique e sem massa, com dois alternadores no viewport; e a ficha
-recebendo entre-eixos, bitolas e tipos como sugestão. O template nasce configurado (duplo A,
-22×7-10, entre-eixos 1102 mm). Fora da v1, nomeado no §10 do draft: solo derivado do pneu,
+recebendo entre-eixos, bitolas e tipos como sugestão. O template nasce configurado (duplo A na
+dianteira, braço arrastado na traseira, 22×7-10, entre-eixos 1121 mm). Fora da v1, nomeado no §10 do draft: solo derivado do pneu,
 largura total × regulamento (após conferência da Emenda 7), bitola declarada, cinemática.
+
+## DF-31 — Recalcular: re-identificação dos pontos denominados (proposto e ✅ implementado em 2026-09-06)
+
+O motor B6 lê os pontos pelo **id do nó** (`p('CL')`, `has('DL')`): quem modela livre cria `N7`
+e as regras que dependem daquele ponto não o enxergam — no próprio template, a cadeia do SIM em
+B6.2.4.5 só era conferida com `DL` presente. O [botão "Recalcular pontos e
+regras"](drafts/df31-recalcular-e-reidentificar.md) no Checklist B6 identifica a letra pelo
+**encontro de tipos de membro** (A = RRH + ALC/LFS, C = RHO + FBM_UP, D = FBM_UP + FBM_LOW/DLC…),
+renomeia só o que é inequívoco e nunca um nó que já tem letra, saneia o modelo como a importação,
+reconcilia as ancoragens com o tipo de cada eixo (DF-30) e reavalia tudo, mostrando o resumo. No
+template, `NL/NR → DL/DR`. Importar JSON continua sem renomear: é ação explícita.
