@@ -201,6 +201,33 @@ resource "aws_cloudfront_function" "spa_router" {
   EOT
 }
 
+# DF-33 — cache da API pública: só a query `season` entra na chave; nenhum header nem
+# cookie (a rota não autentica). TTL máximo = 1 h, igual ao max-age que a API manda.
+resource "aws_cloudfront_cache_policy" "public_api" {
+  name        = "${var.name}-public-api"
+  comment     = "Bajeiros: /api/v1/public/* (DF-33) — chave = season, TTL <= 1h"
+  default_ttl = 3600
+  max_ttl     = 3600
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+    cookies_config {
+      cookie_behavior = "none"
+    }
+    headers_config {
+      header_behavior = "none"
+    }
+    query_strings_config {
+      query_string_behavior = "whitelist"
+      query_strings {
+        items = ["season"]
+      }
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -241,6 +268,21 @@ resource "aws_cloudfront_distribution" "site" {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.spa_router.arn
     }
+  }
+
+  # DF-33 §6 — /api/v1/public/* é a ÚNICA fatia da API cacheável na borda: leitura pública
+  # sem auth, chave = query `season`, TTL limitado pelo Cache-Control da origem (1 h). Vem
+  # ANTES de /api/* porque o CloudFront casa o primeiro path_pattern que bate.
+  ordered_cache_behavior {
+    path_pattern               = "/api/v1/public/*"
+    target_origin_id           = "api-gw"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    cache_policy_id            = aws_cloudfront_cache_policy.public_api.id
+    origin_request_policy_id   = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
   }
 
   # /api/* passa direto pra API (sem cache; sem Host — API GW roteia pelo próprio host)
