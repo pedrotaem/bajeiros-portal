@@ -1586,6 +1586,31 @@ limite), `--bj-row-h`, `--bj-pad-y`, `--bj-pad-x`, `--bj-radius`.
 }
 ```
 
+**Emenda (DF-33, 2026-09-06) — variante `fonte`.** Faixa informativa FIXA: ícone `info`
+(`IconInfoCircle`, 16px) + o texto integral do aviso da fonte, em `--bj-text-sm` sobre
+`--bj-info-bg` com borda `--bj-info-border` e texto `--bj-fg-secondary`. `position: sticky`
+logo abaixo das abas, sem botão de fechar, sem colapso, sem sumir ao rolar — é o aviso que
+torna o calendário e o leitor do regulamento honestos (DF-33 §4.6, DF-34). `role="note"`.
+Não é status: não carrega chip, não anuncia mudança (`aria-live` ausente). Nasce aqui antes
+de nascer na tela (`.bj-fonte-aviso` em `shell.css`).
+
+```css
+.bj-fonte-aviso {
+  position: sticky;
+  top: 0;
+  z-index: var(--bj-z-sticky);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  background: var(--bj-info-bg);
+  border: 1px solid var(--bj-info-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+}
+```
+
 ---
 
 ### C-10 — Painel colapsável
@@ -2500,6 +2525,79 @@ densidade alta demais: os rótulos entram em _decluttering_ por distância).
 }
 .bj-3d-label--measure {
   font-family: var(--bj-font-mono);
+}
+```
+
+---
+
+### C-26 — Linha do tempo (DF-33, 2026-09-06)
+
+**Anatomia.** `.bj-cal-linha` → cabeçalho de meses (`.bj-cal-meses`, `--bj-text-xs` maiúsculas
+com `--bj-tracking-wide`, uma coluna por mês com peso = dias do mês) · N × **raia**
+(`.bj-cal-raia`: cabeçalho fixo de 240px + `.bj-cal-trilho`) · raia da equipe
+(`.bj-cal-raia--equipe`, fundo `--bj-selected`) no topo · legenda de formas.
+
+Dentro do trilho: **faixa de evento** (`.bj-cal-evento`, datas da competição) · **janela**
+(`.bj-cal-janela`, inscrições, mais clara) · **marcos** (`.bj-cal-marco`, botões absolutos) ·
+linha **"hoje"** (`.bj-cal-hoje`, `--bj-warn`) · região passada (`.bj-cal-passado`, tom rebaixado).
+
+**Variantes de marco — cinco formas, uma por tipo (FR-DF33.5).** Redundância não-cromática
+obrigatória (§9.3 vale para 2D): prazo = **losango** cheio · janela = **barra** · evento =
+**faixa** · comunicado = **círculo vazado** · marco da equipe = **quadrado vazado**. Cada
+forma tem rótulo textual ao lado; a cor só reforça o estado.
+
+**Estados do marco.** `futuro` (`--bj-fg-primary`) · `em-breve` (≤ 7 dias, `--bj-warn` + chip
+"EM N DIAS") · `hoje` (`--bj-warn` + "HOJE") · `passado` (`--bj-fg-muted`) · `sel` (rótulo
+sublinhado; o painel de detalhe está aberto).
+
+**Tokens.** `--bj-bg-base` (raia), `--bj-bg-sunken` (meses e região passada), `--bj-selected`
+(raia da equipe), `--bj-brand-bg`/`--bj-brand-border` (faixa de evento), `--bj-accent-bg`/
+`--bj-accent-border` (janela), `--bj-accent` (marco da equipe), `--bj-fg-primary`/`--bj-warn`/
+`--bj-fg-muted` (estados), `--bj-target-min`. Altura da raia **56px**; alvo mínimo do marco
+32px mesmo que o desenho seja menor (§10.8).
+
+**Acessibilidade.**
+
+- Marco e janela são `<button>` com `aria-label` completo ("Inscrição de integrantes, até 25
+  de janeiro de 2027, Nacional 2027, fonte Informativo 09") e `aria-pressed` quando aberto.
+- Tab entra na raia; **←/→** percorrem os marcos da raia (irmãos, na ordem do DOM); Enter
+  abre o painel (C-10 `right`).
+- Abaixo de **1024px a linha do tempo não é desenhada** (FR-DF33.8): a aba abre na Lista.
+  Rolagem horizontal em celular esconde o que importa.
+- Tudo que a linha diz existe também na Lista (DOM linear, por mês).
+- Nenhum glifo novo: o inventário do §8.5 não muda.
+
+```css
+.bj-cal-raia {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  border-top: 1px solid var(--bj-border);
+}
+.bj-cal-trilho {
+  position: relative;
+  min-height: 56px;
+}
+.bj-cal-marco {
+  position: absolute;
+  top: 50%;
+  min-width: var(--bj-target-min);
+  min-height: var(--bj-target-min);
+  background: none;
+  border: 0;
+  color: var(--bj-fg-primary);
+  font-size: var(--bj-text-xs);
+}
+.bj-cal-forma {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+}
+.bj-cal-forma--losango {
+  transform: rotate(45deg);
+  background: currentColor;
+}
+.bj-cal-forma--circulo {
+  border-radius: 50%;
 }
 ```
 
@@ -4608,3 +4706,11 @@ Marcar tudo. Item não aplicável é marcado como não aplicável, não deixado 
 - [ ] `npm run format` rodado.
 - [ ] Screenshot dos 5 produtos (editor, assistente, equipes, admin, landing) anexado ao PR.
 - [ ] Se mudou token, contrato ou proibição: ADR aberto e citado aqui.
+
+## Nota (2026-09-06)
+
+DF-33 (calendário de competições) acrescenta ao catálogo, sem mudar token, contrato nem
+proibição: **C-09 ganha a variante `fonte`** (faixa fixa do aviso da fonte, sem fechar) e
+**C-26 — Linha do tempo** (raia, faixa, janela, cinco formas de marco, linha "hoje"). Chips
+novos no vocabulário de tela: `INSCRITA` (brand), `INTERESSE` (tracejado), `EQUIPE`
+(accent), `VERIFICAR` (o `warn` de sempre). Zero glifo novo.

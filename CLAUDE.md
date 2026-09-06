@@ -73,6 +73,17 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
 - three.js não interpreta `var()`: material 3D lê o token de `tokens.ts`, não do CSS.
 - `drei/Html` = **root React separado**. Input controlado dentro dele precisa do estado **dentro do
   portal**; estado fora perde teclas (o root restaura o valor antigo antes do estado chegar).
+- Teste que **crava número do template** (posição de nó/âncora, contagem, entre-eixos) quebra a
+  cada template novo. Comparar com `templateCage`, não cravar.
+- JSON exportado de staging **vira template só depois de `evaluate`**: já veio com SUSP.1 e SUSP.2
+  falhando (âncora fora do tubo, declarado ≠ medido). Normalizar e registrar no cabeçalho do
+  `template.ts`.
+- Site da organização (`saebrasil.org.br`) devolve **403 a cliente não-browser** (`WebFetch`) e
+  troca URL de sub-página sem redirect. Coletar pelo Chrome; guardar URL + data da conferência.
+- Rota **sem auth** só nasce em `/api/v1/public/*` (montado antes do `requireAuth`), lê via
+  `withPublic` (sem `app.user_id` — só policy `USING (true)` responde) e sai com
+  `Cache-Control` público. Coluna `date` sai do banco como `to_char(..., 'YYYY-MM-DD')`: o pg
+  devolve `Date` local e a Data API devolve string — um prazo é um dia, não um instante.
 
 ## Trabalhar aqui
 

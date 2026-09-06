@@ -312,6 +312,7 @@ function Portal() {
   const sessionUser = useSession((s) => s.user)
   const page = useSession((s) => s.page)
   const setPage = useSession((s) => s.setPage)
+  const communityTab = useSession((s) => s.communityTab)
   const activeTeamId = useSession((s) => s.activeTeamId)
   const currentProject = useSession((s) => s.currentProject)
   const goToProject = useSession((s) => s.goToProject)
@@ -385,9 +386,11 @@ function Portal() {
       {page === 'equipe' &&
         (sessionUser ? <TeamPage /> : <PrecisaDeConta destino="O espaço da equipe" />)}
       {page === 'ferramentas' && <ToolsHub teamId={activeTeamId} />}
+      {/* DF-33 FR-DF33.2: a aba Calendário abre sem sessão; as outras da Comunidade
+          continuam exigindo conta — a página decide aba a aba */}
       {page === 'comunidade' &&
-        (sessionUser ? (
-          <CommunityPage teamId={activeTeamId} />
+        (sessionUser || communityTab === 'calendario' ? (
+          <CommunityPage teamId={sessionUser ? activeTeamId : null} />
         ) : (
           <PrecisaDeConta destino="A Comunidade" />
         ))}

@@ -3,6 +3,8 @@ import { useSession } from '../session'
 import { mensagem, useFetch } from '../lib/useFetch'
 import { IconArrow } from '../icons/glyphs'
 import { StatusChip } from '../icons/statusIcon'
+import { CalendarTab } from './CalendarTab'
+import { PrecisaDeConta } from './PublicHome'
 
 /**
  * Comunidade (DF-15) — o acervo de resultados públicos e o registro das equipes.
@@ -58,6 +60,7 @@ interface CommunityTeam {
 export function CommunityPage({ teamId }: { teamId: string | null }) {
   const aba = useSession((s) => s.communityTab)
   const setAba = useSession((s) => s.setCommunityTab)
+  const user = useSession((s) => s.user)
 
   return (
     <div className="bj-page">
@@ -66,6 +69,8 @@ export function CommunityPage({ teamId }: { teamId: string | null }) {
           [
             ['resultados', 'Resultados'],
             ['equipes', 'Equipes do Brasil'],
+            // DF-33 FR-DF33.1 — terceira, depois de Resultados e Equipes do Brasil
+            ['calendario', 'Calendário'],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -86,7 +91,21 @@ export function CommunityPage({ teamId }: { teamId: string | null }) {
         </button>
       </div>
 
-      {aba === 'resultados' ? <Resultados teamId={teamId} /> : <EquipesDoBrasil teamId={teamId} />}
+      {/* DF-33 FR-DF33.2 — o Calendário abre sem conta; Resultados e Equipes continuam
+          exigindo (é o acervo, DF-15). Sem sessão a página só chega aqui pela aba pública. */}
+      {aba === 'calendario' && <CalendarTab teamId={teamId} />}
+      {aba === 'resultados' &&
+        (user ? (
+          <Resultados teamId={teamId} />
+        ) : (
+          <PrecisaDeConta destino="O acervo de resultados" inline />
+        ))}
+      {aba === 'equipes' &&
+        (user ? (
+          <EquipesDoBrasil teamId={teamId} />
+        ) : (
+          <PrecisaDeConta destino="O registro das equipes" inline />
+        ))}
     </div>
   )
 }

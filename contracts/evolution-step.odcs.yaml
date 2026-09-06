@@ -2,14 +2,15 @@ apiVersion: v3.0.2
 kind: DataContract
 id: urn:bajeiros:contract:evolution-step
 name: evolution_step
-version: 1.0.0
+version: 1.1.0
 status: draft
 domain: engineering
 dataProduct: bajeiros-portal
 description:
   purpose: Fila de próximos passos da equipe (DF-13 E4) — derivada dos critérios pendentes.
   usage: 7 primeiros na tela Evolução, 3 no Início (DF-16). Passo de critério é derivado e
-    idempotente (UNIQUE team_id+criterion_id); manual e meta são digitados.
+    idempotente (UNIQUE team_id+criterion_id); manual e meta são digitados; calendario nasce de
+    um marco oficial (DF-33 FR-DF33.14) com `due_on` e link de volta.
 schema:
   - name: evolution_step
     logicalType: object
@@ -35,7 +36,11 @@ schema:
       - name: origin
         logicalType: string
         required: true
-        description: criterion (derivado) | manual (membro) | meta (benchmark do DF-15)
+        description: criterion (derivado) | manual (membro) | meta (benchmark do DF-15) | calendario (marco do DF-33)
+      - name: due_on
+        logicalType: date
+        required: false
+        description: Data do marco de origem (origin=calendario); os demais passos não têm prazo.
       - name: criterion_id
         logicalType: string
         required: false

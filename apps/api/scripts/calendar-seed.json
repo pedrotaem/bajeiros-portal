@@ -1,0 +1,195 @@
+{
+  "_nota": "Carga inicial do calendário (DF-33 §11.8). Levantamento manual no browser em 2026-09-06 (§12 da spec). NÃO é dado do portal até ser reconferido na fonte no dia da carga: atualize `conferidoEm` para a data em que você olhou cada página. Nenhum nome de programa entra em tela — a fonte é citada por URL.",
+  "conferidoEm": "2026-09-06",
+  "ciclo": 2027,
+  "competicoes": [
+    {
+      "chave": "nacional-2027",
+      "season": 2027,
+      "kind": "nacional",
+      "region": null,
+      "name": "Nacional 2027",
+      "startsOn": "2027-03-31",
+      "endsOn": "2027-04-04",
+      "location": "FATEC São José dos Campos – SP",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-nacional/",
+      "registrationOpensOn": "2026-07-15",
+      "registrationClosesOn": "2026-09-15"
+    },
+    {
+      "chave": "nordeste-2026",
+      "season": 2026,
+      "kind": "regional",
+      "region": "Nordeste",
+      "name": "Regional Nordeste 2026",
+      "startsOn": "2026-09-25",
+      "endsOn": "2026-09-27",
+      "location": "Senai Cimatec Park, Camaçari – BA",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-nordeste/"
+    },
+    {
+      "chave": "sudeste-2026",
+      "season": 2026,
+      "kind": "regional",
+      "region": "Sudeste",
+      "name": "Regional Sudeste 2026",
+      "startsOn": "2026-10-14",
+      "endsOn": "2026-10-18",
+      "location": "EEP – Escola de Engenharia de Piracicaba – SP",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-sudeste/"
+    },
+    {
+      "chave": "sul-2026",
+      "season": 2026,
+      "kind": "regional",
+      "region": "Sul",
+      "name": "Regional Sul 2026",
+      "startsOn": "2026-11-20",
+      "endsOn": "2026-11-22",
+      "location": "UniSATC, Criciúma – SC",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-sul/"
+    }
+  ],
+  "documentos": [
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Informações e local",
+      "url": "https://saebrasil.org.br/baja-nacional-informacoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Inscrições",
+      "url": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Regras e templates",
+      "url": "https://saebrasil.org.br/baja-nacional-regras-e-templates/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Mensagens e informativos",
+      "url": "https://saebrasil.org.br/baja-nacional-mensagens-e-informativos/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Requisitos para participação",
+      "url": "https://saebrasil.org.br/requisitos-para-participacao/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Equipes inscritas",
+      "url": "https://saebrasil.org.br/baja-nacional-equipes-inscritas/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagina",
+      "title": "Resultados",
+      "url": "https://saebrasil.org.br/baja-nacional-resultados/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "informativo",
+      "number": 1,
+      "title": "Adoção do RATBSB Emenda 7",
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo01-AdocaoRATBSBEmenda7.pdf",
+      "publishedOn": null,
+      "_conferir": "URL montada pelo padrão do §12.4 — confirmar o nome exato do arquivo e a data de publicação na página de informativos"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "informativo",
+      "number": 2,
+      "title": "Prova de Relatório de Desafio Técnico (Parte 1)",
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo02-ProvadeRelatoriodeDesafioTecnicoParte1.pdf",
+      "publishedOn": null,
+      "_conferir": "idem"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "informativo",
+      "number": 3,
+      "title": "Treinamento complementar – Desafio Técnico TV",
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo03-TreinamentoComplementarDesafioTecnicoTV.pdf",
+      "publishedOn": null,
+      "_conferir": "idem"
+    },
+    {
+      "competicao": null,
+      "kind": "regulamento",
+      "title": "RATBSB",
+      "edition": "emenda-07",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNacional/RATBSB_emenda_07.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": null,
+      "kind": "forum",
+      "title": "Fórum de dúvidas do regulamento",
+      "url": "https://forum.bajasaebrasil.net/"
+    },
+    {
+      "competicao": null,
+      "kind": "pagina",
+      "title": "Agenda dos programas estudantis",
+      "url": "https://saebrasil.org.br/programas-estudantis/"
+    }
+  ],
+  "marcos": [
+    {
+      "competicao": "nacional-2027",
+      "kind": "inscricao",
+      "title": "Inscrição de equipe",
+      "summary": "Prazo final da inscrição da equipe no sistema da organização (janela aberta desde 15 jul). Até 20 estudantes e 2 orientadores por equipe; 2 equipes por instituição ou campus.",
+      "dueOn": "2026-09-15",
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagamento",
+      "title": "1º lote integral e promocional",
+      "summary": "Vencimento do primeiro lote da taxa de inscrição para as categorias integral e promocional.",
+      "dueOn": "2026-09-28",
+      "appliesTo": ["integral", "promocional"],
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagamento",
+      "title": "2º lote integral e promocional",
+      "summary": "Vencimento do segundo lote da taxa de inscrição para as categorias integral e promocional.",
+      "dueOn": "2026-10-28",
+      "appliesTo": ["integral", "promocional"],
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagamento",
+      "title": "Lote único novata e light",
+      "summary": "Vencimento da taxa de inscrição (lote único) para as categorias novata e light.",
+      "dueOn": "2026-10-28",
+      "appliesTo": ["novata", "light"],
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nacional-2027",
+      "kind": "pagamento",
+      "title": "3º lote integral e promocional",
+      "summary": "Vencimento do terceiro e último lote da taxa de inscrição para integral e promocional.",
+      "dueOn": "2026-11-26",
+      "appliesTo": ["integral", "promocional"],
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    }
+  ]
+}

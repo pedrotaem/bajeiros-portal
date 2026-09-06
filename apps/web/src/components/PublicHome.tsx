@@ -250,10 +250,13 @@ export function PublicHome() {
  * redirecionamento silencioso: mandar a pessoa de volta para Ferramentas sem dizer
  * nada lê como bug — foi exatamente assim que este defeito foi relatado.
  */
-export function PrecisaDeConta({ destino }: { destino: string }) {
+export function PrecisaDeConta({ destino, inline }: { destino: string; inline?: boolean }) {
   const setPanel = useSession((s) => s.setPanel)
+  // `inline`: dentro de uma página que já tem `.bj-page` (a Comunidade, quando só a aba
+  // pública abre sem conta — DF-33 FR-DF33.2); não redesenha o recuo da página
+  const Wrap = inline ? 'div' : 'div'
   return (
-    <div className="bj-page">
+    <Wrap className={inline ? undefined : 'bj-page'}>
       <section className="bj-vazio">
         <h3>{destino} precisa de conta</h3>
         <p>
@@ -266,6 +269,6 @@ export function PrecisaDeConta({ destino }: { destino: string }) {
           </button>
         </div>
       </section>
-    </div>
+    </Wrap>
   )
 }

@@ -92,6 +92,8 @@ interface EvolutionView {
     seasonProjectId: string | null
     milestones: { title: string; date: string }[]
     next: { title: string; date: string; daysLeft: number } | null
+    /** DF-33 AC-DF33.11 — a próxima competição marcada, vinda do calendário. */
+    nextCompetition?: { id: string; name: string; startsOn: string; daysLeft: number } | null
   } | null
   bootstrap: boolean
 }
@@ -699,6 +701,18 @@ function FaixaTemporada({ season }: { season: NonNullable<EvolutionView['season'
         {season.next && (
           <span>
             faltam <b>{season.next.daysLeft}</b> dias para {season.next.title}
+          </span>
+        )}
+        {season.nextCompetition && (
+          <span>
+            · <b>{season.nextCompetition.name}</b> em {season.nextCompetition.daysLeft} dias{' '}
+            <button
+              type="button"
+              className="bj-link"
+              onClick={() => useSession.getState().goToCalendar()}
+            >
+              calendário
+            </button>
           </span>
         )}
       </div>

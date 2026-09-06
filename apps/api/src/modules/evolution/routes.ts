@@ -12,6 +12,14 @@ import { can } from '../../policy'
 import { lockTeam, myRole } from '../teams/shared'
 import type { AuthEnv } from '../../auth/middleware'
 import {
+  asJson,
+  loadSeason,
+  MAX_MILESTONES,
+  nextMilestone,
+  type SeasonMilestone,
+  type SeasonView,
+} from './season'
+import {
   catalogMode,
   recomputeTeam,
   recomputeTeamFull,
@@ -46,7 +54,9 @@ export const evolutionRoot = new Hono<AuthEnv>()
 export const COHORT_FLOOR = 8
 
 const MAX_MANUAL_STEPS = 100
-const MAX_MILESTONES = 12
+
+// consumidores antigos (Início) importam daqui; a implementação mora em season.ts
+export { loadSeason, nextMilestone, type SeasonView }
 
 // ---------- leitura ----------
 
@@ -642,8 +652,13 @@ evolution.get('/:id/evolution/steps', async (c) => {
 const createStepBody = z.object({
   title: z.string().trim().min(1).max(140),
   area: z.enum(AREA_IDS as unknown as [string, ...string[]]).optional(),
-  origin: z.enum(['manual', 'meta']).optional(),
+  origin: z.enum(['manual', 'meta', 'calendario']).optional(),
   linkRef: z.string().trim().max(500).optional(),
+  /** DF-33 FR-DF33.14 — data do marco de origem; só faz sentido em `calendario`. */
+  dueOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'data no formato AAAA-MM-DD')
+    .optional(),
 })
 
 evolution.post('/:id/evolution/steps', async (c) => {
@@ -656,8 +671,9 @@ evolution.post('/:id/evolution/steps', async (c) => {
   const result = await withUser(sub, async (db) => {
     const role = await myRole(db, teamId, sub)
     if (!role) return 'notfound' as const
-    // meta vem do benchmark (DF-15 RF-3.3) e é ato de capitania, não de qualquer membro
-    if (origin === 'meta' && !can(role, 'step.manage')) return 'forbidden' as const
+    // meta vem do benchmark (DF-15 RF-3.3) e calendario de um marco oficial (DF-33
+    // FR-DF33.14): os dois são ato de capitania, não de qualquer membro
+    if (origin !== 'manual' && !can(role, 'step.manage')) return 'forbidden' as const
     const n = await db.query(
       `SELECT count(*)::int AS n FROM evolution_steps
        WHERE team_id = $1 AND origin <> 'criterion' AND status = 'open'`,
@@ -665,8 +681,10 @@ evolution.post('/:id/evolution/steps', async (c) => {
     )
     if (Number(n.rows[0].n) >= MAX_MANUAL_STEPS) return 'limit' as const
     const r = await db.query(
-      `INSERT INTO evolution_steps (team_id, title, area, origin, link_ref, created_by, position)
-       VALUES ($1, $2, $3, $4, $5, $6, 0) RETURNING *`,
+      `INSERT INTO evolution_steps
+         (team_id, title, area, origin, link_ref, created_by, position, due_on)
+       VALUES ($1, $2, $3, $4, $5, $6, 0, $7::date)
+       RETURNING *, to_char(due_on, 'YYYY-MM-DD') AS due_on_iso`,
       [
         teamId,
         parsed.data.title,
@@ -674,6 +692,7 @@ evolution.post('/:id/evolution/steps', async (c) => {
         origin,
         parsed.data.linkRef ?? null,
         sub,
+        origin === 'calendario' ? (parsed.data.dueOn ?? null) : null,
       ],
     )
     await audit(db, {
@@ -682,14 +701,19 @@ evolution.post('/:id/evolution/steps', async (c) => {
       resourceType: 'team',
       resourceId: teamId,
       ip: clientIp(c.req.raw.headers),
-      metadata: { origin },
+      metadata: { origin, linkRef: parsed.data.linkRef ?? null },
     })
     return r.rows[0]
   })
 
   if (result === 'notfound') return problem(c, 404, 'Equipe não encontrada')
   if (result === 'forbidden')
-    return problem(c, 403, 'Sem permissão', 'Metas da temporada são definidas pela capitania.')
+    return problem(
+      c,
+      403,
+      'Sem permissão',
+      'Metas e prazos da temporada são definidos pela capitania.',
+    )
   if (result === 'limit')
     return problem(c, 409, 'Fila cheia', `Máximo de ${MAX_MANUAL_STEPS} passos abertos.`)
   return c.json(toStep(result), 201)
@@ -789,7 +813,23 @@ function toStep(row: Record<string, unknown>) {
     destination: criterionId ? destinationFor(criterionId) : null,
     createdAt: row.created_at,
     doneAt: row.done_at ?? null,
+    // DF-33: prazo do marco de origem (só em origin=calendario)
+    dueOn: dueOnIso(row),
   }
+}
+
+/** O pg devolve `date` como Date LOCAL; a Data API, string. Um prazo é um dia. */
+function dueOnIso(row: Record<string, unknown>): string | null {
+  if (typeof row.due_on_iso === 'string') return row.due_on_iso
+  const v = row.due_on
+  if (v == null) return null
+  if (v instanceof Date) {
+    const y = v.getFullYear()
+    const m = String(v.getMonth() + 1).padStart(2, '0')
+    const d = String(v.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+  return String(v).slice(0, 10)
 }
 
 // ---------- temporada (RF-5.x) ----------
@@ -797,68 +837,24 @@ function toStep(row: Record<string, unknown>) {
 const milestone = z.object({
   title: z.string().trim().min(1).max(120),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data no formato AAAA-MM-DD'),
+  // DF-33 FR-DF33.27/29 — rótulo na raia e origem quando copiado de um marco oficial
+  kind: z.enum(['marco', 'entrega']).optional(),
+  sourceMilestoneId: z.string().uuid().optional(),
 })
 
+/**
+ * Campo ausente PRESERVA o valor salvo; campo presente substitui. A aba Projetos manda o
+ * formulário inteiro; o cabeçalho da raia do calendário (DF-33 §10.9) manda só o vínculo —
+ * os dois fazem o MESMO PUT e nenhum apaga o que o outro gravou.
+ */
 const seasonBody = z.object({
   label: z.string().trim().min(1).max(20),
   seasonProjectId: z.string().uuid().nullable().optional(),
   milestones: z.array(milestone).max(MAX_MILESTONES).optional(),
   competitionIds: z.array(z.string().uuid()).max(MAX_MILESTONES).optional(),
+  interestCompetitionIds: z.array(z.string().uuid()).max(MAX_MILESTONES).optional(),
+  registrationKind: z.enum(['novata', 'light', 'integral', 'promocional']).nullable().optional(),
 })
-
-export interface SeasonView {
-  label: string
-  seasonProjectId: string | null
-  milestones: { title: string; date: string }[]
-  competitionIds: string[]
-  next: { title: string; date: string; daysLeft: number } | null
-  updatedAt: string | null
-}
-
-export async function loadSeason(db: DbClient, teamId: string): Promise<SeasonView | null> {
-  const r = await db.query('SELECT * FROM team_season WHERE team_id = $1', [teamId])
-  if (!r.rowCount) return null
-  return toSeason(r.rows[0])
-}
-
-function toSeason(row: Record<string, unknown>): SeasonView {
-  const milestones = asJson<{ title: string; date: string }[]>(row.milestones, [])
-  return {
-    label: row.label as string,
-    seasonProjectId: (row.season_project_id as string | null) ?? null,
-    milestones,
-    competitionIds: asJson<string[]>(row.competition_ids, []),
-    next: nextMilestone(milestones, new Date()),
-    updatedAt: (row.updated_at as string | null) ?? null,
-  }
-}
-
-function asJson<T>(value: unknown, fallback: T): T {
-  if (value == null) return fallback
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value) as T
-    } catch {
-      return fallback
-    }
-  }
-  return value as T
-}
-
-/** "faltam N dias para X" — próximo marco futuro (RF-5.3, consumido pelo Início). */
-export function nextMilestone(
-  milestones: { title: string; date: string }[],
-  now: Date,
-): { title: string; date: string; daysLeft: number } | null {
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  const future = milestones
-    .filter((m) => Date.parse(`${m.date}T00:00:00Z`) >= today)
-    .sort((a, b) => a.date.localeCompare(b.date))
-  const next = future[0]
-  if (!next) return null
-  const daysLeft = Math.round((Date.parse(`${next.date}T00:00:00Z`) - today) / 86_400_000)
-  return { title: next.title, date: next.date, daysLeft }
-}
 
 evolution.get('/:id/season', async (c) => {
   const { sub } = c.get('auth')
@@ -876,7 +872,7 @@ evolution.put('/:id/season', async (c) => {
   if (!parsed.success) return problem(c, 400, 'Body inválido', parsed.error.message)
   const { sub } = c.get('auth')
   const teamId = c.req.param('id')
-  const milestones = parsed.data.milestones ?? []
+  const body = parsed.data
 
   const result = await withUser(sub, async (db) => {
     if (!(await lockTeam(db, teamId))) return 'notfound' as const
@@ -885,51 +881,87 @@ evolution.put('/:id/season', async (c) => {
     if (!can(role, 'evolution.season')) return 'forbidden' as const
 
     // validação ANTES de qualquer escrita: retorno normal faz COMMIT (lição do DF-10)
-    if (parsed.data.seasonProjectId) {
+    if (body.seasonProjectId) {
       const p = await db.query('SELECT 1 FROM projects WHERE id = $1 AND owner_team_id = $2', [
-        parsed.data.seasonProjectId,
+        body.seasonProjectId,
         teamId,
       ])
       if (!p.rowCount) return 'bad-project' as const
     }
+    // DF-33: as competições marcadas precisam existir no calendário (o contrato do
+    // team_season prometia validar "quando o módulo existir" — ele existe)
+    const ids = [
+      ...new Set([...(body.competitionIds ?? []), ...(body.interestCompetitionIds ?? [])]),
+    ]
+    if (ids.length) {
+      const n = await db.query(
+        `SELECT count(*)::int AS n FROM competitions
+         WHERE id::text IN (SELECT jsonb_array_elements_text($1::jsonb))`,
+        [JSON.stringify(ids)],
+      )
+      if (Number(n.rows[0].n) !== ids.length) return 'bad-competition' as const
+    }
+    const current = await loadSeason(db, teamId)
+    const milestones: SeasonMilestone[] = body.milestones ?? current?.milestones ?? []
+    const competitionIds = body.competitionIds ?? current?.competitionIds ?? []
+    // inscrita vence interesse: a mesma competição não fica nos dois lados
+    const interestIds = (
+      body.interestCompetitionIds ??
+      current?.interestCompetitionIds ??
+      []
+    ).filter((id) => !competitionIds.includes(id))
+    const registrationKind =
+      body.registrationKind !== undefined
+        ? body.registrationKind
+        : (current?.registrationKind ?? null)
+    const seasonProjectId =
+      body.seasonProjectId !== undefined ? body.seasonProjectId : (current?.seasonProjectId ?? null)
 
     await db.query(
-      `INSERT INTO team_season (team_id, label, season_project_id, milestones, competition_ids)
-       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+      `INSERT INTO team_season
+         (team_id, label, season_project_id, milestones, competition_ids,
+          interest_competition_ids, registration_kind)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7)
        ON CONFLICT (team_id) DO UPDATE
          SET label = EXCLUDED.label,
              season_project_id = EXCLUDED.season_project_id,
              milestones = EXCLUDED.milestones,
              competition_ids = EXCLUDED.competition_ids,
+             interest_competition_ids = EXCLUDED.interest_competition_ids,
+             registration_kind = EXCLUDED.registration_kind,
              updated_at = now()`,
       [
         teamId,
-        parsed.data.label,
-        parsed.data.seasonProjectId ?? null,
+        body.label,
+        seasonProjectId,
         JSON.stringify(milestones),
-        JSON.stringify(parsed.data.competitionIds ?? []),
+        JSON.stringify(competitionIds),
+        JSON.stringify(interestIds),
+        registrationKind,
       ],
     )
     await recordEvidence(db, {
       teamId,
       source: 'evolution',
       kind: 'season.configured',
-      payload: {
-        label: parsed.data.label,
-        milestones: milestones.length,
-        seasonProjectId: parsed.data.seasonProjectId ?? null,
-      },
-      projectId: parsed.data.seasonProjectId ?? null,
+      payload: { label: body.label, milestones: milestones.length, seasonProjectId },
+      projectId: seasonProjectId,
       actorUserId: sub,
     })
-    await syncSeasonProjectStep(db, teamId, !!parsed.data.seasonProjectId)
+    await syncSeasonProjectStep(db, teamId, !!seasonProjectId)
     await audit(db, {
       actorUserId: sub,
       action: 'evolution.season.update',
       resourceType: 'team',
       resourceId: teamId,
       ip: clientIp(c.req.raw.headers),
-      metadata: { label: parsed.data.label, milestones: milestones.length },
+      metadata: {
+        label: body.label,
+        milestones: milestones.length,
+        competitions: competitionIds.length,
+        interest: interestIds.length,
+        registrationKind,
+      },
     })
     await recomputeTeam(db, teamId, { actorUserId: sub })
     return await loadSeason(db, teamId)
@@ -940,6 +972,8 @@ evolution.put('/:id/season', async (c) => {
     return problem(c, 403, 'Sem permissão', 'Apenas a capitania configura a temporada.')
   if (result === 'bad-project')
     return problem(c, 400, 'Projeto inválido', 'O projeto da temporada precisa ser da equipe.')
+  if (result === 'bad-competition')
+    return problem(c, 400, 'Competição inválida', 'A competição marcada não está no calendário.')
   return c.json(result)
 })
 

@@ -173,6 +173,26 @@ A cortina é de produto, não de acesso: o bundle continua público e quem forç
 no devtools vê a interface — que é o que já era público. Dado de equipe, projeto e ficha segue
 protegido por JWT + RLS, com ou sem cortina (DF-27 §9).
 
+## Calendário de competições (DF-33) — carga e curadoria
+
+- **Leitura pública.** `/api/v1/public/calendar` e `.ics` respondem sem sessão, com
+  `Cache-Control: public, max-age=3600`; o CloudFront cacheia `/api/v1/public/*` por até 1 h
+  (cache policy `public-api` do módulo `static-site`, chave = `season`). Mudança da curadoria
+  pode levar até 1 h para aparecer ao visitante; para forçar, invalide `/api/v1/public/*`.
+- **Carga inicial de uma temporada** (§11.8 da spec): `node apps/api/scripts/seed-calendar.mjs`
+  lê `apps/api/scripts/calendar-seed.json` e imprime o plano (dry-run). Com
+  `--apply --admin <user_uuid>` grava pela RLS como esse admin. **Antes de aplicar, reconfira
+  cada data na fonte** — o JSON registra a data da última conferência e é ela que entra em
+  `checked_at`.
+- **Conferência local** (§3.4): cole a tabela oficial num arquivo de texto e rode
+  `node apps/api/scripts/check-calendar.mjs --file prazos.txt --season 2027 --kind nacional`.
+  Só lê e imprime divergências; nunca escreve. A fonte bloqueia cliente não-browser — copiar
+  pelo Chrome é o caminho.
+- **Curadoria no dia a dia** mora em Administração › Calendário (competições, marcos,
+  documentos-fonte, colar tabela). Todo salvar carimba `checked_at` e deixa
+  `calendar.*` em `audit_events`. Competição com `checked_at` > 30 dias e marco futuro exibe
+  VERIFICAR na tela — conferir a fonte e salvar qualquer campo renova o carimbo.
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.

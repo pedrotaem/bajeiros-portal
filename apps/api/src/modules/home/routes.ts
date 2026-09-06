@@ -6,7 +6,10 @@ import { withUser, type DbClient } from '../../db'
 import { problem } from '../../problem'
 import { recomputeTeamFull, syncSeasonProjectStep } from '../evolution/engine'
 import { bestRank, loadOptIn, serializeRank, unseenPromotion } from '../evolution/rank'
-import { loadActivity, loadSeason } from '../evolution/routes'
+import { loadActivity } from '../evolution/routes'
+import { loadSeason } from '../evolution/season'
+import { nextDeadlineFor } from '../calendar/routes'
+import { isTeamRole } from '../../policy'
 import type { AuthEnv } from '../../auth/middleware'
 
 // DF-16 — Início: a página do dia da equipe.
@@ -135,8 +138,16 @@ home.get('/home', async (c) => {
       teams: teams.map((t) => ({ id: t.id, name: t.name })),
       state: bootstrap ? ('bootstrap' as const) : ('normal' as const),
       season: season
-        ? { label: season.label, next: season.next, seasonProjectId: season.seasonProjectId }
+        ? {
+            label: season.label,
+            next: season.next,
+            seasonProjectId: season.seasonProjectId,
+            nextCompetition: season.nextCompetition,
+          }
         : null,
+      // DF-33 AC-DF33.11 — "próximo prazo" vem do calendário: marco oficial das
+      // competições marcadas ou marco da própria temporada, o que vier antes
+      deadline: isTeamRole(active.role) ? await nextDeadlineFor(db, teamId, active.role) : null,
       optIn: optIn.enabled,
       evolution: optIn.enabled
         ? {

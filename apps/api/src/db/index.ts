@@ -19,3 +19,13 @@ export function withUser<T>(userId: string, fn: (client: DbClient) => Promise<T>
 export async function closeDb() {
   await driver().closeDb()
 }
+
+/**
+ * DF-33 — leitura PÚBLICA: transação sem `app.user_id` (a string vazia vira NULL em
+ * `app_user_id()`). Só as tabelas com policy `USING (true)` respondem; qualquer outra
+ * devolve zero linhas, o que é exatamente a garantia que se quer numa rota sem auth.
+ * Não existe `withPublic` de escrita, e não deve existir.
+ */
+export function withPublic<T>(fn: (client: DbClient) => Promise<T>): Promise<T> {
+  return driver().withUser('', fn)
+}

@@ -14,6 +14,7 @@ import { knowledge } from './modules/knowledge/routes'
 import { community } from './modules/community/routes'
 import { home } from './modules/home/routes'
 import { feedback } from './modules/feedback/routes'
+import { calendar, calendarPublic } from './modules/calendar/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -21,6 +22,11 @@ export const app = new Hono()
 // rotas públicas ANTES do middleware de auth
 app.get('/api/v1/health', (c) => c.json({ ok: true, service: 'bajeiros-api' }))
 if (env('AUTH_MODE') === 'dev') app.route('/api/v1/dev', devIssuer)
+// DF-33 §3.3/§6: o calendário é informação pública sobre fonte pública. Diferente da
+// exceção que o DF-28 fechou (assistente anônimo gastava LLM), esta rota só LÊ tabelas
+// com policy pública, não tem quota e sai com Cache-Control de 1 h — o visitante não
+// acorda a Aurora. Nenhuma outra rota pública deve nascer fora deste prefixo.
+app.route('/api/v1/public', calendarPublic)
 
 app.use('/api/v1/*', requireAuth)
 app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)
@@ -37,6 +43,7 @@ app.route('/api/v1/teams', evolution)
 app.route('/api/v1/teams', knowledge) // DF-14
 app.route('/api/v1/evolution', evolutionRoot)
 app.route('/api/v1/community', community) // DF-15
+app.route('/api/v1/community', calendar) // DF-33: /community/calendar[.ics] com recorte da equipe
 // DF-28: o assistente era a única exceção na ordem (montado antes do requireAuth
 // para aceitar anônimo). A degustação sem conta acabou, e com ela a exceção.
 app.route('/api/v1/assistant', assistant)

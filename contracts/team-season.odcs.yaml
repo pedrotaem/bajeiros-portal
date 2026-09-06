@@ -2,14 +2,16 @@ apiVersion: v3.0.2
 kind: DataContract
 id: urn:bajeiros:contract:team-season
 name: team_season
-version: 1.0.0
+version: 1.1.0
 status: draft
 domain: engineering
 dataProduct: bajeiros-portal
 description:
-  purpose: Temporada da equipe (DF-13 E5) — rótulo, projeto designado e marcos datados.
-  usage: Faixa de temporada na tela Evolução, contagem regressiva no Início (DF-16) e recorte
-    do que o validador avalia (§3.4 — só o projeto da temporada gera evidência).
+  purpose: Temporada da equipe (DF-13 E5) — rótulo, projeto designado, marcos datados e, desde a
+    1.1.0 (DF-33), o vínculo da equipe com as competições do calendário.
+  usage: Faixa de temporada na tela Evolução, contagem regressiva no Início (DF-16), recorte
+    do que o validador avalia (§3.4 — só o projeto da temporada gera evidência) e o recorte
+    pessoal do Calendário (DF-33 §4.4) — raia "Sua temporada" e filtro por competição/categoria.
 schema:
   - name: team_season
     logicalType: object
@@ -34,12 +36,24 @@ schema:
         logicalType: array
         physicalType: jsonb
         required: true
-        description: '[{title, date}] — máximo 12; a contagem regressiva usa o próximo futuro.'
+        description: >-
+          [{title, date, kind?, sourceMilestoneId?}] — máximo 24 (era 12; DF-33 §10.8). `kind` é
+          'marco' | 'entrega'; `sourceMilestoneId` aponta o marco oficial copiado (FR-DF33.29) — a
+          cópia NÃO muda sozinha quando a fonte muda. A contagem regressiva usa o próximo futuro.
       - name: competition_ids
         logicalType: array
         physicalType: jsonb
         required: true
-        description: Referências ao calendário do DF-15 (validadas quando o módulo existir).
+        description: Competições em que a equipe está INSCRITA (DF-15/DF-33), validadas contra `competitions`.
+      - name: interest_competition_ids
+        logicalType: array
+        physicalType: jsonb
+        required: true
+        description: Competições que a equipe acompanha por INTERESSE (DF-33 FR-DF33.12).
+      - name: registration_kind
+        logicalType: string
+        required: false
+        description: novata | light | integral | promocional — categoria de inscrição declarada pela capitania; NULL mostra todos os lotes.
       - name: updated_at
         logicalType: date
         physicalType: timestamptz

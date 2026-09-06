@@ -23,3 +23,4 @@ Contratos no formato **ODCS — Open Data Contract Standard v3** (Bitol / Linux 
 | `cage-snapshot.odcs.yaml` | versões imutáveis da gaiola                        | não     |
 | `subscription.odcs.yaml`  | assinatura/plano (referência Stripe, nunca cartão) | parcial |
 | `audit-event.odcs.yaml`   | trilha de auditoria                                | sim     |
+| `calendar.odcs.yaml`      | calendário: marcos e documentos-fonte (DF-33)      | parcial |

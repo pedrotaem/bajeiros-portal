@@ -72,7 +72,32 @@ export const TITULO_PAGINA: Record<PageId, string> = {
 
 /** Abas do espaço da equipe (DF-12 O2). Sub-estado no store, nunca `useState` local. */
 export type TeamTab = 'evolucao' | 'pessoas' | 'conhecimento' | 'projetos'
-export type CommunityTab = 'resultados' | 'equipes'
+export type CommunityTab = 'resultados' | 'equipes' | 'calendario'
+
+/**
+ * Filtros da aba Calendário (DF-33 FR-DF33.3). Vivem AQUI, não em `useState` da tela
+ * (DF-12 P-1.4): sobrevivem à troca de página. `season: null` = ciclo corrente;
+ * `mine: null` = ainda não escolhido (a tela liga quando a equipe tem competição marcada).
+ */
+export interface CalendarFilters {
+  season: number | null
+  /** Chips de competição ligados ("Nacional", "Sul"…); vazio = todas. */
+  chips: string[]
+  view: 'linha' | 'lista'
+  mine: boolean | null
+  quick: 'tudo' | 'prazos' | 'equipe'
+  /** Marco aberto no painel de detalhe. */
+  selected: string | null
+}
+
+export const CALENDAR_DEFAULT: CalendarFilters = {
+  season: null,
+  chips: [],
+  view: 'linha',
+  mine: null,
+  quick: 'tudo',
+  selected: null,
+}
 
 /**
  * Abas da página de projeto (DF-21 §3.5). A Ficha é a primeira porque ela vale sem o
@@ -131,6 +156,7 @@ const TITULO_ABA: Record<string, string> = {
   projetos: 'Projetos',
   resultados: 'Resultados',
   equipes: 'Equipes do Brasil',
+  calendario: 'Calendário',
   ficha: 'Ficha',
   versoes: 'Versões',
   validacao: 'Validação',
@@ -195,6 +221,11 @@ interface SessionState {
   teamTab: TeamTab
   communityTab: CommunityTab
   projectTab: ProjectTab
+  /** DF-33 — filtros do calendário; ver `CalendarFilters`. */
+  calendar: CalendarFilters
+  setCalendar: (patch: Partial<CalendarFilters>) => void
+  /** Abre Comunidade › Calendário (Início e faixa de temporada apontam para cá). */
+  goToCalendar: (patch?: Partial<CalendarFilters>) => void
   activeTeamId: string | null
   /** Rail recolhido a só-ícone (DF-24 / design-system C-02 `rail-compact`). */
   railCompact: boolean
@@ -426,6 +457,16 @@ export const useSession = create<SessionState>((set, get) => ({
   teamTab: 'evolucao',
   communityTab: 'resultados',
   projectTab: 'ficha',
+  calendar: CALENDAR_DEFAULT,
+  setCalendar: (patch) => set((s) => ({ calendar: { ...s.calendar, ...patch } })),
+  goToCalendar: (patch) => {
+    track('tab:comunidade:calendario')
+    set((s) => ({
+      page: 'comunidade',
+      communityTab: 'calendario',
+      calendar: patch ? { ...s.calendar, ...patch } : s.calendar,
+    }))
+  },
   activeTeamId: readActiveTeam(),
   railCompact: readRailCompact(),
   setRailCompact: (railCompact) => {
