@@ -13,31 +13,34 @@
 
 ## Placar (conferido contra a `main` em 2026-09-02)
 
-| Spec        | Feature                                                                       | Status | Onde fechou                                                                     |
-| ----------- | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------- |
-| DF-1…DF-7   | Validador: materiais, peso, Geraldão, manequim, volante, continuidade, juntas | ✅     | `spec.md` US-6…US-12                                                            |
-| DF-8        | Assistente de Regras (IA)                                                     | ✅     | PR #12; gateway SigV4 no #27                                                    |
-| DF-9        | Administração                                                                 | ✅     | PR #12; triagem de sugestões no #43                                             |
-| DF-10       | Gestão de equipe                                                              | ✅     | PR #28                                                                          |
-| DF-11       | Redesign de interface                                                         | —      | número **reservado** ([plano de design](../docs/plano-implementacao-design.md)) |
-| DF-12…DF-16 | Lote da evolução: shell, maturidade, conhecimento, comunidade, início         | ✅     | PR #33                                                                          |
-| DF-17       | Entrar com Google                                                             | ✅     | PR #36                                                                          |
-| DF-18…DF-20 | Lote das patentes: patentes, catálogo v2.0.0, aferição                        | ✅     | PR #38 (aferição em **onda V1**, 19 dos 51 critérios)                           |
-| DF-21       | Ficha do protótipo                                                            | ✅     | PR #37                                                                          |
-| DF-22…DF-23 | Planos, cotas, trava e vistas                                                 | ✅     | `spec.md` US-13…US-16 (PR #39)                                                  |
-| DF-24       | Menu recolhível e marcas de produto                                           | ✅     | PR #39                                                                          |
-| DF-25       | Vitrine pública                                                               | ✅     | PR #40                                                                          |
-| DF-26       | Sugestões de dentro da página                                                 | ✅     | PR #43 (sem mural e sem voto na v1)                                             |
-| DF-27       | Cortina "Em breve" em produção                                                | ✅ N1  | PR #45 (N2 §5.5 opcional, não entrou; **ligar é operação**)                     |
-| DF-28       | Assistente sem conta: demonstração no lugar da degustação                     | 🚧     | draft; substitui a FR-DF27.12                                                   |
-| DF-29       | Rótulos dos pontos na cena: mostrar e ocultar                                 | ✅     | FR-1.7 em `spec.md`                                                             |
-| DF-30       | Módulo de suspensão: tipo por eixo, centros de roda, entre-eixos, corpos      | ✅ v1  | `spec.md` US-17; SUSP.2/SUSP.3 em `rules.md`; pendências em §10 do draft        |
-| DF-31       | Recalcular: re-identificar pontos denominados e reavaliar o checklist         | ✅     | `spec.md` US-18                                                                 |
-| DF-32       | Desfazer e refazer no editor                                                  | ✅     | `spec.md` US-19                                                                 |
+| Spec        | Feature                                                                          | Status | Onde fechou                                                                          |
+| ----------- | -------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| DF-1…DF-7   | Validador: materiais, peso, Geraldão, manequim, volante, continuidade, juntas    | ✅     | `spec.md` US-6…US-12                                                                 |
+| DF-8        | Assistente de Regras (IA)                                                        | ✅     | PR #12; gateway SigV4 no #27                                                         |
+| DF-9        | Administração                                                                    | ✅     | PR #12; triagem de sugestões no #43                                                  |
+| DF-10       | Gestão de equipe                                                                 | ✅     | PR #28                                                                               |
+| DF-11       | Redesign de interface                                                            | —      | número **reservado** ([plano de design](../docs/plano-implementacao-design.md))      |
+| DF-12…DF-16 | Lote da evolução: shell, maturidade, conhecimento, comunidade, início            | ✅     | PR #33                                                                               |
+| DF-17       | Entrar com Google                                                                | ✅     | PR #36                                                                               |
+| DF-18…DF-20 | Lote das patentes: patentes, catálogo v2.0.0, aferição                           | ✅     | PR #38 (aferição em **onda V1**, 19 dos 51 critérios)                                |
+| DF-21       | Ficha do protótipo                                                               | ✅     | PR #37                                                                               |
+| DF-22…DF-23 | Planos, cotas, trava e vistas                                                    | ✅     | `spec.md` US-13…US-16 (PR #39)                                                       |
+| DF-24       | Menu recolhível e marcas de produto                                              | ✅     | PR #39                                                                               |
+| DF-25       | Vitrine pública                                                                  | ✅     | PR #40                                                                               |
+| DF-26       | Sugestões de dentro da página                                                    | ✅     | PR #43 (sem mural e sem voto na v1)                                                  |
+| DF-27       | Cortina "Em breve" em produção                                                   | ✅ N1  | PR #45 (N2 §5.5 opcional, não entrou; **ligar é operação**)                          |
+| DF-28       | Assistente sem conta: demonstração no lugar da degustação                        | 🚧     | draft; substitui a FR-DF27.12                                                        |
+| DF-29       | Rótulos dos pontos na cena: mostrar e ocultar                                    | ✅     | FR-1.7 em `spec.md`                                                                  |
+| DF-30       | Módulo de suspensão: tipo por eixo, centros de roda, entre-eixos, corpos         | ✅ v1  | `spec.md` US-17; SUSP.2/SUSP.3 em `rules.md`; pendências em §10 do draft             |
+| DF-31       | Recalcular: re-identificar pontos denominados e reavaliar o checklist            | ✅     | `spec.md` US-18                                                                      |
+| DF-32       | Desfazer e refazer no editor                                                     | ✅     | `spec.md` US-19                                                                      |
+| DF-33       | Calendário de competições: marcos, prazos, informativos e links oficiais         | ✅     | branch `feat/df33-calendario` (2026-09-06); vista Mês e revisões ficam para v2 (§10) |
+| DF-34       | Regulamento e referências: leitura, navegação por seção e ponte com o assistente | 📝     | draft proposto em 2026-09-06 — **spec apenas**; depende do DF-33                     |
 
-**Nada em aberto no backlog de specs.** As pendências que sobraram são residuais e estão
-nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física), ondas 2+ da aferição
-do DF-20, N2 do DF-27.
+**Em aberto no backlog:** DF-34, proposto em 2026-09-06 e ainda **sem aprovação para
+implementar** (o DF-33, de que ele depende, está implementado). As demais pendências são
+residuais e estão nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física),
+ondas 2+ da aferição do DF-20, N2 do DF-27, vista Mês do DF-33.
 
 ## Ordem de desenvolvimento
 
@@ -60,6 +63,7 @@ antes das features maiores:
 | 11 ✅  | [DF-30](drafts/df30-suspensao.md)                  | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
 | 12 ✅  | [DF-31](drafts/df31-recalcular-e-reidentificar.md) | Recalcular pontos e regras — **implementada**            | DF-30              | O motor lê ponto por id; o nó genérico no encontro certo ganha a letra num clique          |
 | 13 ✅  | [DF-32](drafts/df32-desfazer-refazer.md)           | Desfazer e refazer — **implementada**                    | DF-31              | Toda ação de ida ganha volta; o recálculo deixa de ser o único caminho sem retorno         |
+| 14 ✅  | [DF-33](drafts/df33-calendario-competicoes.md)     | Calendário de competições — **implementada**             | DF-13, DF-15, DF-9 | O problema nº 1 da pesquisa (rotatividade) é não saber o prazo; agora ele tem fonte e data |
 
 ## Grafo de dependências
 
@@ -180,6 +184,16 @@ graph LR
 - **DF-32 — Desfazer/refazer:** histórico só da gaiola (`past`/`future`), gesto de arrasto = um
   passo, digitação funde por assinatura em 800 ms, seleção ajustada ao restaurar; botões no painel
   de edição e Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y fora de campo de texto.
+
+- **DF-33 — Calendário de competições:** aba Calendário na Comunidade, pública, com linha do tempo
+  do ciclo (Nacional + três regionais), marcos com fonte oficial e `checked_at`, lista com painel,
+  recorte pessoal (competições inscritas ou de interesse, categoria de inscrição), marcos da própria temporada (Equipe › Projetos) na mesma linha do tempo e lista, `.ics`, curadoria por colagem na administração.
+  Disclaimer fixo obrigatório.
+- **DF-34 — Regulamento e referências:** página Regulamento sob Ferramentas com índice completo
+  (metadado do manifest do gateway, sem texto), navegação por seção e página, versões por
+  competição, referências do acervo do DF-33 e o chip de citação do assistente abrindo a seção.
+  Modo `ponteiro` (v1, abre o PDF oficial na página) e modo `embutido` (v2, só com autorização).
+  Disclaimer fixo obrigatório.
 
 ## Lote "Evolução das equipes" (DF-12…DF-16) — ✅ implementado em 2026-08-30 (PR #33)
 
@@ -367,3 +381,24 @@ mecanismos dão granularidade humana — o **gesto** do arrasto (um passo do `po
 `pointerup`) e a **assinatura** da mudança (chaves e nós tocados) que funde digitação em 800 ms.
 Restaurar ajusta a seleção ao que existe. Botões Desfazer/Refazer no cabeçalho do painel de edição
 e os atalhos clássicos fora de campo de texto. Importar, template e recálculo são desfazíveis.
+
+## DF-33 e DF-34 — Calendário de competições e Regulamento (propostos em 2026-09-06, spec apenas)
+
+Pedido do dono do produto: **especificar, não implementar.** Duas seções novas, desenhadas juntas
+no canvas ["Calendário e Regulamento"](https://claude.ai/code/artifact/03837ff6-b954-4cf4-a13b-2a6325a4ac3b)
+e com um mesmo disclaimer fixo em toda página ("O Portal é um facilitador de acesso à informação
+e não substitui a leitura integral do material direto da fonte…").
+
+- **[DF-33](drafts/df33-calendario-competicoes.md)** — o que a organização publica em quatro
+  páginas, ~30 informativos por competição e um grupo de Telegram vira **um calendário do ciclo**
+  (Nacional 2027 + Regionais 2026): linha do tempo e lista, cada marco com a fonte e a data em que
+  foi conferido. Entra por curadoria na administração (colagem da tabela oficial), não por raspagem:
+  o site bloqueou cliente não-browser e mudou URLs sem redirecionar. Dá ao DF-13/DF-16 o "próximo
+  prazo" que eles prometem e ainda não têm. Rota pública cacheada na borda (decisão em §10.2).
+- **[DF-34](drafts/df34-regulamento-leitor.md)** — o índice do regulamento (1 360 blocos, só
+  metadado: id, título nos níveis 0–2, página) vira uma página navegável, e a citação do assistente
+  vira link para a seção na **versão citada**. Ler na íntegra dentro do portal é o modo `embutido`,
+  que só liga com autorização escrita da organização — o `ponteiro` (abre o PDF oficial na página)
+  entrega todo o resto sem reproduzir uma linha do texto.
+
+Ordem: DF-33 antes do DF-34 (o acervo de documentos-fonte é compartilhado).
