@@ -64,7 +64,9 @@ export function parseInformativo(text: string): number | null {
 function splitCells(line: string): string[] {
   const byTab = line.split('\t')
   if (byTab.length > 1) return byTab.map((c) => c.trim())
-  const byPipe = line.split(/\s*\|\s*/)
+  // split literal + trim, e não /\s*\|\s*/: o \s* dos dois lados era quadrático numa
+  // linha cheia de espaços sem barra (CodeQL js/polynomial-redos)
+  const byPipe = line.split('|')
   if (byPipe.length > 1) return byPipe.map((c) => c.trim()).filter(Boolean)
   return line
     .split(/\s{2,}/)

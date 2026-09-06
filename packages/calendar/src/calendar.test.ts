@@ -355,6 +355,15 @@ describe('colar tabela (FR-DF33.23 / AC-DF33.9)', () => {
     })
   })
 
+  it('linha só de espaços não custa tempo quadrático (CodeQL js/polynomial-redos)', () => {
+    const t0 = performance.now()
+    const { rows } = parseMilestoneTable(' '.repeat(100_000) + '\n' + 'a  | b'.padEnd(50_000, ' '))
+    expect(performance.now() - t0).toBeLessThan(500)
+    // a linha de espaços cai fora; a com barra vira marco normal
+    expect(rows).toHaveLength(1)
+    expect(rows[0].title).toBe('a')
+  })
+
   it('prosa solta e cabeçalho são ignorados, nunca viram marco', () => {
     const { rows, ignored } = parseMilestoneTable(
       'Dúvidas administrativas por e-mail.\n\nPRAZO\tINFORMATIVO\n',
