@@ -80,6 +80,9 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   `template.ts`.
 - Site da organização (`saebrasil.org.br`) devolve **403 a cliente não-browser** (`WebFetch`) e
   troca URL de sub-página sem redirect. Coletar pelo Chrome; guardar URL + data da conferência.
+- Conferir UI no Chrome tem dois atritos: `public/config.json` local aponta para o Cognito de
+  staging (login dev exige Vite paralelo sem `publicDir`), e `captureScreenshot` trava com
+  `<select>` ou `position: sticky` na tela — esconder por JS antes de capturar.
 - Rota **sem auth** só nasce em `/api/v1/public/*` (montado antes do `requireAuth`), lê via
   `withPublic` (sem `app.user_id` — só policy `USING (true)` responde) e sai com
   `Cache-Control` público. Coluna `date` sai do banco como `to_char(..., 'YYYY-MM-DD')`: o pg

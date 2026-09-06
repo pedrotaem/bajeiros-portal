@@ -86,7 +86,11 @@ export function CalendarTimeline({
   const largura = (from: string, to: string) =>
     `${(Math.min(Math.max(daysBetween(from, to) + 1, 1), total) / total) * 100}%`
   const hojeDentro = today >= range.from && today <= range.to
-  const daEquipe = milestones.filter((m) => m.kind === 'equipe')
+  // Marco fora da faixa do ciclo NÃO é desenhado: clampado, ele apareceria colado na borda
+  // esquerda como se fosse de julho (a inscrição das regionais fecha em junho, antes do ciclo
+  // começar). A Lista continua mostrando, sob "Já passou" — é lá que o histórico cabe.
+  const noCiclo = (m: CalendarMilestone) => m.dueOn >= range.from && m.dueOn <= range.to
+  const daEquipe = milestones.filter((m) => m.kind === 'equipe' && noCiclo(m))
 
   return (
     <div className="bj-cal-linha" role="group" aria-label="Linha do tempo da temporada">
@@ -145,7 +149,7 @@ export function CalendarTimeline({
       )}
 
       {competitions.map((c) => {
-        const marcos = milestones.filter((m) => m.competitionId === c.id)
+        const marcos = milestones.filter((m) => m.competitionId === c.id && noCiclo(m))
         const andar = andares(
           marcos.map((m) => pctNum(range, m.startsOn ?? m.dueOn)),
           larguraRotulo,
@@ -178,22 +182,24 @@ export function CalendarTimeline({
               </span>
             </div>
             <Trilho pct={pct} today={today} hojeDentro={hojeDentro} range={range}>
-              {c.registrationOpensOn && c.registrationClosesOn && (
-                <button
-                  type="button"
-                  className={`bj-cal-janela bj-cal-janela--${stateOf(c.registrationClosesOn, today)}`}
-                  style={{
-                    left: pct(c.registrationOpensOn),
-                    width: largura(c.registrationOpensOn, c.registrationClosesOn),
-                  }}
-                  aria-label={`Inscrições, de ${dataCurta(c.registrationOpensOn)} a ${dataCurta(c.registrationClosesOn)}, ${c.name}`}
-                  onClick={() =>
-                    c.officialUrl && window.open(c.officialUrl, '_blank', 'noreferrer')
-                  }
-                >
-                  <span className="bj-cal-rotulo">inscrições</span>
-                </button>
-              )}
+              {c.registrationOpensOn &&
+                c.registrationClosesOn &&
+                c.registrationClosesOn >= range.from && (
+                  <button
+                    type="button"
+                    className={`bj-cal-janela bj-cal-janela--${stateOf(c.registrationClosesOn, today)}`}
+                    style={{
+                      left: pct(c.registrationOpensOn),
+                      width: largura(c.registrationOpensOn, c.registrationClosesOn),
+                    }}
+                    aria-label={`Inscrições, de ${dataCurta(c.registrationOpensOn)} a ${dataCurta(c.registrationClosesOn)}, ${c.name}`}
+                    onClick={() =>
+                      c.officialUrl && window.open(c.officialUrl, '_blank', 'noreferrer')
+                    }
+                  >
+                    <span className="bj-cal-rotulo">inscrições</span>
+                  </button>
+                )}
               {c.startsOn && (
                 <span
                   className={`bj-cal-evento bj-cal-evento--${stateOf(c.endsOn ?? c.startsOn, today)}`}

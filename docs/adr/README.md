@@ -15,3 +15,4 @@ Formato: contexto → decisão → consequências. Status: `aceito` | `proposto`
 | [009](009-design-system.md)          | Design system tokenizado (escuro primeiro)        | aceito |
 | [010](010-evolucao-maturidade.md)    | Evolução da equipe: maturidade por área           | aceito |
 | [011](011-patentes-gamificacao.md)   | Patentes do protótipo (emenda dec. 1 e 2 do 010)  | aceito |
+| [012](012-rota-publica-api.md)       | Rota pública `/api/v1/public/*` cacheada na borda | aceito |

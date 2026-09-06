@@ -1,5 +1,6 @@
 {
-  "_nota": "Carga inicial do calendário (DF-33 §11.8). Levantamento manual no browser em 2026-09-06 (§12 da spec). NÃO é dado do portal até ser reconferido na fonte no dia da carga: atualize `conferidoEm` para a data em que você olhou cada página. Nenhum nome de programa entra em tela — a fonte é citada por URL.",
+  "_nota": "Carga do calendário (DF-33 §11.8). Levantamento manual no browser em 2026-09-06, página a página: agenda dos programas estudantis, as quatro páginas de evento, suas sub-páginas de Informações e Inscrições, e as listas de informativos (URLs copiadas dos próprios links). `conferidoEm` é a data dessa leitura e vira `checked_at` em toda linha. Reconfira antes de aplicar de novo.",
+  "_naoEntrou": "A tabela de prazos da página de Informações do Nacional ainda é a do ciclo ANTERIOR (inscrição de equipe até 15/09/2025, integrantes até 25/01/2026, atestado até 08/03/2026), embora o cabeçalho da página anuncie 31/03–04/04/2027. Esses prazos NÃO entram como marcos do ciclo 2027 — publicá-los seria dar data velha como vigente. Entram quando a organização atualizar a página. As linhas \"em breve\" das regionais (imprensa, atestado, associação) também ficam de fora até terem data.",
   "conferidoEm": "2026-09-06",
   "ciclo": 2027,
   "competicoes": [
@@ -11,7 +12,7 @@
       "name": "Nacional 2027",
       "startsOn": "2027-03-31",
       "endsOn": "2027-04-04",
-      "location": "FATEC São José dos Campos – SP",
+      "location": "FATEC São José dos Campos — Av. Cesare Monsueto Giulio Lattes, 1350, Eugênio de Melo, São José dos Campos – SP",
       "officialUrl": "https://saebrasil.org.br/eventos/baja-nacional/",
       "registrationOpensOn": "2026-07-15",
       "registrationClosesOn": "2026-09-15"
@@ -24,8 +25,10 @@
       "name": "Regional Nordeste 2026",
       "startsOn": "2026-09-25",
       "endsOn": "2026-09-27",
-      "location": "Senai Cimatec Park, Camaçari – BA",
-      "officialUrl": "https://saebrasil.org.br/eventos/baja-nordeste/"
+      "location": "Senai Cimatec Park — Via Atlântica, BA 530, km 2,5, Camaçari – BA",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-nordeste/",
+      "registrationOpensOn": "2026-05-21",
+      "registrationClosesOn": "2026-06-04"
     },
     {
       "chave": "sudeste-2026",
@@ -35,8 +38,10 @@
       "name": "Regional Sudeste 2026",
       "startsOn": "2026-10-14",
       "endsOn": "2026-10-18",
-      "location": "EEP – Escola de Engenharia de Piracicaba – SP",
-      "officialUrl": "https://saebrasil.org.br/eventos/baja-sudeste/"
+      "location": "EEP — Escola de Engenharia de Piracicaba – SP",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-sudeste/",
+      "registrationOpensOn": "2026-05-21",
+      "registrationClosesOn": "2026-06-04"
     },
     {
       "chave": "sul-2026",
@@ -46,8 +51,10 @@
       "name": "Regional Sul 2026",
       "startsOn": "2026-11-20",
       "endsOn": "2026-11-22",
-      "location": "UniSATC, Criciúma – SC",
-      "officialUrl": "https://saebrasil.org.br/eventos/baja-sul/"
+      "location": "UniSATC — Criciúma – SC",
+      "officialUrl": "https://saebrasil.org.br/eventos/baja-sul/",
+      "registrationOpensOn": "2026-05-21",
+      "registrationClosesOn": "2026-06-04"
     }
   ],
   "documentos": [
@@ -94,45 +101,339 @@
       "url": "https://saebrasil.org.br/baja-nacional-resultados/"
     },
     {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Informações e local",
+      "url": "https://saebrasil.org.br/baja-nordeste-informacoes/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Inscrições",
+      "url": "https://saebrasil.org.br/baja-nordeste-inscricoes/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Regras e relatórios",
+      "url": "https://saebrasil.org.br/baja-nordeste-regras-e-relatorios/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Mensagens e informativos",
+      "url": "https://saebrasil.org.br/baja-nordeste-mensagens-e-informativos/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Equipes inscritas",
+      "url": "https://saebrasil.org.br/baja-nordeste-equipes-inscritas/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pagina",
+      "title": "Resultados",
+      "url": "https://saebrasil.org.br/baja-nordeste-resultados/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Informações e local",
+      "url": "https://saebrasil.org.br/baja-sudeste-informacoes/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Inscrições",
+      "url": "https://saebrasil.org.br/baja-sudeste-inscricoes/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Regras e relatórios",
+      "url": "https://saebrasil.org.br/baja-sudeste-regras-e-relatorios/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Mensagens e informativos",
+      "url": "https://saebrasil.org.br/baja-sudeste-mensagens-e-informativos/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Equipes inscritas",
+      "url": "https://saebrasil.org.br/baja-sudeste-equipes-inscritas/"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "pagina",
+      "title": "Resultados",
+      "url": "https://saebrasil.org.br/baja-sudeste-resultados/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Informações e local",
+      "url": "https://saebrasil.org.br/baja-sul-informacoes/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Inscrições",
+      "url": "https://saebrasil.org.br/baja-sul-inscricoes/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Regras e relatórios",
+      "url": "https://saebrasil.org.br/baja-sul-regras-e-relatorios/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Mensagens e informativos",
+      "url": "https://saebrasil.org.br/baja-sul-mensagens-e-informativos/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Equipes inscritas",
+      "url": "https://saebrasil.org.br/baja-sul-equipes-inscritas/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pagina",
+      "title": "Resultados",
+      "url": "https://saebrasil.org.br/baja-sul-resultados/"
+    },
+    {
       "competicao": "nacional-2027",
       "kind": "informativo",
       "number": 1,
       "title": "Adoção do RATBSB Emenda 7",
-      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo01-AdocaoRATBSBEmenda7.pdf",
-      "publishedOn": null,
-      "_conferir": "URL montada pelo padrão do §12.4 — confirmar o nome exato do arquivo e a data de publicação na página de informativos"
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo01-AdocaodoRATBSBEmenda7.pdf",
+      "publishedOn": null
     },
     {
       "competicao": "nacional-2027",
       "kind": "informativo",
       "number": 2,
-      "title": "Prova de Relatório de Desafio Técnico (Parte 1)",
-      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo02-ProvadeRelatoriodeDesafioTecnicoParte1.pdf",
-      "publishedOn": null,
-      "_conferir": "idem"
+      "title": "Informações sobre a prova de Relatório de Desafio Técnico (Parte 1)",
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo02-InformacoessobreaprovadeRelatoriodeDesafioTecnicoParte1.pdf",
+      "publishedOn": null
     },
     {
       "competicao": "nacional-2027",
       "kind": "informativo",
       "number": 3,
-      "title": "Treinamento complementar – Desafio Técnico TV",
-      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo03-TreinamentoComplementarDesafioTecnicoTV.pdf",
-      "publishedOn": null,
-      "_conferir": "idem"
+      "title": "Treinamento complementar — Desafio Técnico TV",
+      "url": "https://arquivos.saebrasil.org.br/2027/BajaNacional/Informativo03-Treinamentocomplementar-DesafioTecnicoTV.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 1,
+      "title": "Convite para o Baja NE 2026",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo01-ConviteparaoBajaNE2026.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 2,
+      "title": "Entregáveis de Projeto",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo02-Entregaveis.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 3,
+      "title": "Inscrições — Etapa Nordeste",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo03-Inscricoes19%C2%AACompeticaoBajaSAEBRASIL%E2%80%90EtapaNordeste.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 4,
+      "title": "Prova de Projetos — Rev 01",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo04-ProvadeProjetos-rev01.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 5,
+      "title": "Numeração dos carros",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo05-NumeracaoDosCarrosBajaNE2026.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 6,
+      "title": "Inscrição de integrantes e associação",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo06-InscricaodeIntegranteseAssociacao.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 7,
+      "title": "Convite Ford Day 2026",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo07-ConviteFordDay2026.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 8,
+      "title": "Cadastramento de comissários",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo08-CadastramentodeComissarios.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 9,
+      "title": "Planilha de ICTS",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo09-PlanilhadeICTS.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 10,
+      "title": "Formação dos pelotões",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo10-FormacaodosPelotoes.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 11,
+      "title": "Procedimento de acesso ao Cimatec Park",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo11-ProcedimentodeAcessoaoCimatecPark.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 12,
+      "title": "Doação de alimentos",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo12-DoacaodeAlimentos.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 13,
+      "title": "Termo explícito de participação",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo13-TermoExplicitodeParticipacao.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 14,
+      "title": "Credenciamento de equipes",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo14-CredenciamentodeEquipes.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 15,
+      "title": "Envio de atestado de matrícula",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo15-EnviodeAtestadodeMatricula.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "informativo",
+      "number": 16,
+      "title": "Inscrição de representante da imprensa",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo16-InscricaodeRepresentantedaImprensa.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "informativo",
+      "number": 1,
+      "title": "Inscrições — Etapa Sudeste",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSudeste/Informativo01-Inscricoes19%C2%AACompeticaoBajaSAEBRASIL%E2%80%90EtapaSudeste.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 1,
+      "title": "Inscrições — Etapa Sul",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo01-Inscricoes23%C2%AACompeticaoBajaSAEBRASIL%E2%80%90EtapaSul.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 2,
+      "title": "Convite aos voluntários",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo02-ConviteaosVoluntarios.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 3,
+      "title": "Numeração das equipes",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo03-NumeracaodasEquipes.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 4,
+      "title": "Desafio Técnico CAD",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo04-DesafioTecnicoCAD.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 5,
+      "title": "Prova de Projeto",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo05-ProvadeProjeto.pdf",
+      "publishedOn": null
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "informativo",
+      "number": 6,
+      "title": "Instruções para ICTS",
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaSul/Informativo06-InstrucoesparaICTS.pdf",
+      "publishedOn": null
     },
     {
       "competicao": null,
       "kind": "regulamento",
       "title": "RATBSB",
       "edition": "emenda-07",
-      "url": "https://arquivos.saebrasil.org.br/2026/BajaNacional/RATBSB_emenda_07.pdf",
-      "publishedOn": null
+      "url": "https://arquivos.saebrasil.org.br/2026/BajaNacional/RATBSB_emenda_07.pdf"
     },
     {
       "competicao": null,
       "kind": "forum",
       "title": "Fórum de dúvidas do regulamento",
       "url": "https://forum.bajasaebrasil.net/"
+    },
+    {
+      "competicao": null,
+      "kind": "canal",
+      "title": "Grupo do Telegram das equipes",
+      "url": "https://t.me/+cTl5qtmOEIRiYjYx"
     },
     {
       "competicao": null,
@@ -146,7 +447,8 @@
       "competicao": "nacional-2027",
       "kind": "inscricao",
       "title": "Inscrição de equipe",
-      "summary": "Prazo final da inscrição da equipe no sistema da organização (janela aberta desde 15 jul). Até 20 estudantes e 2 orientadores por equipe; 2 equipes por instituição ou campus.",
+      "summary": "Janela de inscrição da equipe. Até 20 estudantes (incluindo o capitão) e 2 orientadores; 2 equipes por instituição ou campus, e as excedentes entram em lista de espera.",
+      "startsOn": "2026-07-15",
       "dueOn": "2026-09-15",
       "status": "confirmado",
       "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
@@ -154,8 +456,8 @@
     {
       "competicao": "nacional-2027",
       "kind": "pagamento",
-      "title": "1º lote integral e promocional",
-      "summary": "Vencimento do primeiro lote da taxa de inscrição para as categorias integral e promocional.",
+      "title": "1º lote — integral e promocional",
+      "summary": "Vencimento do boleto do 1º lote para as categorias integral e promocional. Boleto não pago no prazo exige novo boleto, com o valor do lote vigente.",
       "dueOn": "2026-09-28",
       "appliesTo": ["integral", "promocional"],
       "status": "confirmado",
@@ -164,8 +466,8 @@
     {
       "competicao": "nacional-2027",
       "kind": "pagamento",
-      "title": "2º lote integral e promocional",
-      "summary": "Vencimento do segundo lote da taxa de inscrição para as categorias integral e promocional.",
+      "title": "2º lote — integral e promocional",
+      "summary": "Vencimento do boleto do 2º lote para as categorias integral e promocional.",
       "dueOn": "2026-10-28",
       "appliesTo": ["integral", "promocional"],
       "status": "confirmado",
@@ -174,8 +476,8 @@
     {
       "competicao": "nacional-2027",
       "kind": "pagamento",
-      "title": "Lote único novata e light",
-      "summary": "Vencimento da taxa de inscrição (lote único) para as categorias novata e light.",
+      "title": "Lote único — novata e light",
+      "summary": "Vencimento do boleto das categorias novata (só prova de Projetos, sem veículo) e light (Segurança e Enduro). Lote único: não há segunda data.",
       "dueOn": "2026-10-28",
       "appliesTo": ["novata", "light"],
       "status": "confirmado",
@@ -184,12 +486,62 @@
     {
       "competicao": "nacional-2027",
       "kind": "pagamento",
-      "title": "3º lote integral e promocional",
-      "summary": "Vencimento do terceiro e último lote da taxa de inscrição para integral e promocional.",
+      "title": "3º lote — integral e promocional",
+      "summary": "Vencimento do boleto do 3º e último lote para as categorias integral e promocional.",
       "dueOn": "2026-11-26",
       "appliesTo": ["integral", "promocional"],
       "status": "confirmado",
       "fonteUrl": "https://saebrasil.org.br/baja-nacional-inscricoes/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "inscricao",
+      "title": "Inscrição de equipe",
+      "summary": "Janela de inscrição da equipe. Limite de 30 carros na regional, 1 por instituição; o carro só pode ser inscrito na região da própria instituição.",
+      "startsOn": "2026-05-21",
+      "dueOn": "2026-06-04",
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-nordeste-informacoes/"
+    },
+    {
+      "competicao": "nordeste-2026",
+      "kind": "pessoas",
+      "title": "Inscrição de integrantes e orientadores",
+      "summary": "Janela para cadastrar integrantes e orientadores. Todos precisam de associação vigente na data da competição; depois do prazo não há acréscimo nem troca.",
+      "startsOn": "2026-08-04",
+      "dueOn": "2026-08-10",
+      "status": "confirmado",
+      "fonteUrl": "https://arquivos.saebrasil.org.br/2026/BajaNordeste/Informativo06-InscricaodeIntegranteseAssociacao.pdf"
+    },
+    {
+      "competicao": "sudeste-2026",
+      "kind": "inscricao",
+      "title": "Inscrição de equipe",
+      "summary": "Janela de inscrição da equipe na etapa Sudeste.",
+      "startsOn": "2026-05-21",
+      "dueOn": "2026-06-04",
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-sudeste-informacoes/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "inscricao",
+      "title": "Inscrição de equipe",
+      "summary": "Janela de inscrição da equipe na etapa Sul.",
+      "startsOn": "2026-05-21",
+      "dueOn": "2026-06-04",
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-sul-informacoes/"
+    },
+    {
+      "competicao": "sul-2026",
+      "kind": "pessoas",
+      "title": "Inscrição de integrantes e orientadores",
+      "summary": "Janela para cadastrar integrantes e orientadores. Todos precisam de associação vigente na data da competição; depois do prazo não há acréscimo nem troca.",
+      "startsOn": "2026-09-07",
+      "dueOn": "2026-09-13",
+      "status": "confirmado",
+      "fonteUrl": "https://saebrasil.org.br/baja-sul-informacoes/"
     }
   ]
 }
