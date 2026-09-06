@@ -1,8 +1,9 @@
 # DF-33 — Calendário de competições: marcos, prazos, informativos e links oficiais
 
-- **Status:** proposto em 2026-09-06; **implementada em 2026-09-06** (branch
-  `feat/df33-calendario`) com a decisão do §10.2 tomada pela rota pública cacheada na borda
-  (§6). Fecha no próprio draft — não vai para `spec.md`, que é do validador. Ficaram para v2:
+- **Status:** proposto em 2026-09-06; **implementada em 2026-09-06** (PR #55, `87f1dbd`). A
+  decisão do §10.2 saiu pela rota pública cacheada na borda (§6) e virou o
+  [ADR-012](../../docs/adr/012-rota-publica-api.md). Fecha no próprio draft — não vai para
+  `spec.md`, que é do validador. Ficaram para v2:
   vista Mês (§10.6) e lista de revisões (§10.5); `seasonLabel` do DF-13 continua texto livre
   (§10.4 — a raia da equipe usa o rótulo como está).
 - **Pedido do dono do produto (literal):** "uma seção do portal onde mostre o calendário de
