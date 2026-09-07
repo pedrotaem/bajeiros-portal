@@ -306,6 +306,18 @@ describe('celular: uma vista por vez (§13.3)', () => {
     expect(vizinhas(indice.blocks, 'NAO-EXISTE')).toEqual({ anterior: null, proxima: null })
   })
 
+  it('a vista escondida some da tela de verdade', () => {
+    // Defeito visto em staging: `[hidden]` é regra do navegador e PERDE para
+    // `.bj-reg-indice { display: flex }`. Sem a regra abaixo, trocar de aba não escondia
+    // nada — o índice ficava na tela e as outras duas abas pareciam quebradas.
+    const css = readFileSync(path.resolve(__dirname, '../shell.css'), 'utf8')
+    const bloco = css
+      .split('@media (max-width: 1023px)')
+      .slice(1)
+      .find((b) => b.includes('.bj-reg-corpo--vista'))!
+    expect(bloco).toMatch(/\.bj-reg-corpo--vista\s*>\s*\[hidden\]\s*\{\s*display:\s*none/)
+  })
+
   it('a citação abre o documento; sem seção, a vista é o índice', () => {
     useSession.getState().goToRegulation('B6.2.4.3', { fromAssistant: true })
     expect(useSession.getState().regulation.vista).toBe('documento')
