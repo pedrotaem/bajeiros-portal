@@ -1,9 +1,10 @@
 # DF-34 — Regulamento e referências: leitura íntegra, navegação por seção e ponte com o assistente
 
-- **Status:** **implementada em 2026-09-06** no modo `ponteiro` (§3.3), menos o modo `embutido`
-  — ele depende de autorização da organização e virou o [ADR-013](../../docs/adr/013-regulamento-embutido.md)
-  (proposto). O que entrou e o que ficou de fora está no §13. Fecha no próprio draft — não vai
-  para `spec.md`, que é do validador.
+- **Status:** **implementada em 2026-09-06**, nos dois modos. O `embutido` saiu como cópia do
+  PDF oficial servida pela origem do portal, com data e hora do download à vista e hash
+  conferido — decisão do dono do produto em [ADR-014](../../docs/adr/014-copia-do-regulamento.md),
+  que substitui o ADR-013 (autorização prévia). O que entrou e o que ficou de fora está no
+  §13. Fecha no próprio draft — não vai para `spec.md`, que é do validador.
 - **Pedido do dono do produto (literal):** "como no assistente já tem esse contato com o
   regulamento em si (perguntas e respostas baseadas nele), seria interessante ter uma seção onde
   o usuário consiga ler o regulamento na íntegra e consiga navegar de maneira fluida entre
@@ -406,9 +407,34 @@ e `calendar.odcs.yaml` 1.1.0 (as duas colunas novas de `source_documents`).
    diário da equipe com título e "por quê" **já escritos** (seção, páginas e link), visíveis antes
    de salvar. Sem coluna nova e sem gravar nada que ninguém leu.
 
-**Fora do escopo desta entrega,** por dependerem do item 1 do §10: espelho do PDF em `infra/`,
-`REGULATION_READER_MODE`, pdf.js e a verificação de integridade na tela (AC-DF34.9). O
-`pdf_sha256` já é obrigatório no cadastro — é o que faz a curadoria conferir o arquivo.
+### 13.1 Leitura dentro do portal (2026-09-06, mesma sessão)
+
+O §10.1 supunha autorização escrita antes de servir o PDF. O dono do produto decidiu com
+outro fato — **a organização distribui o arquivo em download aberto** — e pediu a cópia no
+portal com o rastro do download. Virou o
+[ADR-014](../../docs/adr/014-copia-do-regulamento.md), que substitui o ADR-013.
+
+Como ficou, com três desvios do §3.3/§5.3:
+
+1. **Visualizador do navegador, não pdf.js.** `<iframe>` de mesma origem em
+   `/regulamento/<edition>.pdf#page=N`: busca, zoom e paginação vêm do navegador, e o bundle
+   não cresce 1 MB (§10.5 deixa de ser risco). `key` por página, porque `#page=` num iframe
+   já montado não pula em navegador nenhum.
+2. **Sem `REGULATION_READER_MODE`.** Quem liga o modo é o ARQUIVO: existindo
+   `copia-<edition>.json` cujo `sha256` bate com `regulation_versions.pdf_sha256`, a leitura
+   aparece; faltando ou divergindo, a página volta ao `ponteiro` e diz por quê (FR-DF34.11).
+   Uma variável a menos para alguém esquecer ligada num ambiente sem o arquivo.
+3. **Sem bucket separado** (§5.3): o PDF é `apps/web/public/regulamento/<edition>.pdf`,
+   publicado pelo mesmo caminho do resto do site. ~5 MB por emenda, uma por ano.
+
+A procedência (`scripts/baixar-regulamento.mjs`) grava url de origem, `downloadedAt` com
+hora, `sha256`, tamanho e o `Last-Modified` da fonte; a faixa da fonte e o rodapé do leitor
+mostram isso em toda tela, junto do link para o documento oficial. Teste garante que o PDF
+commitado tem o hash que a procedência declara e que ele é o mesmo do índice e do corpus do
+assistente.
+
+**Fora do escopo:** espelho em bucket próprio com invalidação separada (§5.3) — se o
+repositório pesar, é para lá que vai.
 
 Carga: `apps/api/scripts/seed-regulation.mjs` (dry-run por padrão; exige que o
 `seed-calendar.mjs` já tenha criado o documento-fonte do PDF). A emenda 6 não foi cadastrada:

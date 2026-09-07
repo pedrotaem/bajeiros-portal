@@ -4788,3 +4788,10 @@ DF-34 (regulamento) acrescenta, também sem mudar token, contrato nem proibiçã
 a seção, com `data-version` da edição citada). Nenhum glifo novo — o chevron é o do rail — e
 nenhuma marca de produto nova: o Regulamento é acervo de referência, entra no rail com texto, e
 a quarta vaga de marca continua livre.
+
+Emenda do mesmo dia (ADR-014): a página passa a servir o PDF oficial pela própria origem, no
+visualizador do navegador (`.bj-reg-visor`, `<iframe>` de mesma origem, 70vh, borda e raio
+padrão). Não é componente novo do catálogo — é o documento dentro do C-19 da coluna central —,
+e vem sempre com a **procedência** (`.bj-reg-procedencia`, `--bj-text-sm`/`--bj-fg-muted`) na
+faixa C-09 `fonte` e no rodapé do leitor: de onde o arquivo veio, em que data e hora foi
+baixado e o começo do sha256. Cópia sem procedência à vista não entra em tela.

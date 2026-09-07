@@ -8,10 +8,14 @@ import { askAssistant } from './AssistantPanel'
 import { RegulationTree, abrirAte } from './RegulationTree'
 import {
   KIND_LABEL,
+  copiaConfere,
+  dataHora,
   referenciasDaSecao,
   rotuloVigencia,
+  urlDaCopia,
   versaoEscolhida,
   versaoVigente,
+  type CopiaLocal,
   type PayloadRegulamento,
   type Referencia,
   type VersaoRegulamento,
@@ -29,12 +33,17 @@ import {
 } from '../regulamento/indice'
 
 /**
- * Ferramentas › Regulamento (DF-34) — o índice inteiro do regulamento vigente, a
- * navegação entre seções e a ponte com o assistente. Abre SEM conta (FR-DF34.2).
+ * Ferramentas › Regulamento (DF-34) — o índice inteiro do regulamento vigente, o
+ * documento aberto na seção e a ponte com o assistente. Abre SEM conta (FR-DF34.2).
  *
- * O portal NÃO reproduz o regulamento: o modo desta versão é o `ponteiro` (§3.3) — cada
- * seção mostra número, título (onde há), páginas e um botão que abre o PDF oficial da
- * organização na página certa. Ler embutido depende de autorização escrita (ADR-013).
+ * Dois modos, uma tela (§3.3), e quem decide é o ARQUIVO, não uma variável de ambiente:
+ * havendo cópia local cujo hash bate com o da emenda cadastrada (`copia-<edition>.json`,
+ * gerado por `scripts/baixar-regulamento.mjs`), a leitura acontece aqui, com a data e a
+ * hora do download à vista (ADR-014). Sem ela — ou com hash diferente — a página vira
+ * `ponteiro` e manda para o PDF da organização (FR-DF34.11).
+ *
+ * O portal continua sem re-tipografar coisa alguma: o que ele serve é o PDF oficial byte
+ * a byte, com a fonte declarada e o link para o original em toda tela.
  */
 
 /** Texto fixo, pedido do dono do produto (§4.6). Não é parafraseável. */
@@ -65,6 +74,9 @@ export function RegulationPage() {
     [versoes.data?.season],
   )
   const indice = useIndice(versao?.edition ?? null)
+  const copia = useCopia(versao?.edition ?? null)
+  // A cópia só vale se o hash bater com o da emenda cadastrada (FR-DF34.11)
+  const copiaValida = copiaConfere(copia, versao)
   const largo = useMinWidth(1200)
   const [painelAberto, setPainelAberto] = useState(true)
   const [abertos, setAbertos] = useState<Set<string>>(new Set(['PARTE B']))
@@ -89,7 +101,26 @@ export function RegulationPage() {
       {/* FR-DF34.16 — faixa da fonte (C-09 `fonte`), visível sem rolar, não fecha */}
       <div className="bj-fonte-aviso" role="note">
         <IconInfoCircle size={16} />
-        <p>{AVISO_REGULAMENTO}</p>
+        <div>
+          <p>{AVISO_REGULAMENTO}</p>
+          {copiaValida && (
+            // 2ª linha da faixa: a procedência anda junto com a cópia, sempre visível
+            <p className="bj-reg-procedencia">
+              Cópia do PDF oficial baixada em <b>{dataHora(copia!.downloadedAt)}</b> de{' '}
+              <a href={copia!.url} target="_blank" rel="noreferrer">
+                {copia!.url}
+              </a>
+              , conferida por hash (sha256 {copia!.sha256.slice(0, 12)}…). Arquivo inalterado; o
+              documento oficial é o da organização.
+            </p>
+          )}
+          {copia && !copiaValida && (
+            <p className="bj-reg-procedencia">
+              A cópia guardada no portal <b>não confere</b> com o hash da emenda cadastrada: a
+              leitura aqui fica desligada e os botões levam ao documento oficial.
+            </p>
+          )}
+        </div>
       </div>
 
       <Cabecalho
@@ -181,18 +212,39 @@ export function RegulationPage() {
 
           <div className="bj-reg-documento">
             {selecionado ? (
-              <CartaoDaSecao bloco={selecionado} blocos={blocos} versao={versao} />
+              <CartaoDaSecao
+                bloco={selecionado}
+                blocos={blocos}
+                versao={versao}
+                copia={copiaValida ? copia : null}
+              />
             ) : (
               <div className="bj-vazio">
                 <h3>{versao.label}</h3>
                 <p>
-                  {versao.pageCount} páginas · {blocos.length || '—'} itens numerados. Escolha uma
-                  seção no índice para ver as páginas e abrir o PDF oficial nela.
+                  {versao.pageCount} páginas · {blocos.length || '—'} itens numerados.{' '}
+                  {copiaValida
+                    ? 'O documento está aberto abaixo; escolha uma seção no índice para ir direto à página dela.'
+                    : 'Escolha uma seção no índice para ver as páginas e abrir o PDF oficial nela.'}
                 </p>
-                <a className="bj-btn" href={versao.source.url} target="_blank" rel="noreferrer">
-                  Abrir no PDF oficial <IconArrow size={16} />
+                <a
+                  className="bj-btn"
+                  href={copiaValida ? urlDaCopia(versao.edition) : versao.source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {copiaValida ? 'Abrir em nova aba' : 'Abrir no PDF oficial'}{' '}
+                  <IconArrow size={16} />
                 </a>
               </div>
+            )}
+            {copiaValida && (
+              <LeitorEmbutido
+                edition={versao.edition}
+                pagina={selecionado?.pageStart ?? 1}
+                copia={copia}
+                sectionId={selecionado?.id ?? null}
+              />
             )}
           </div>
 
@@ -246,6 +298,81 @@ function useIndice(edition: string | null) {
   }, [edition])
 
   return { dados, erro, carregando }
+}
+
+/**
+ * Procedência da cópia local (`/regulamento/copia-<edition>.json`). Ausente = a emenda
+ * não tem cópia no portal, e a página segue no modo `ponteiro` sem reclamar de nada: é
+ * estado normal, não erro.
+ */
+function useCopia(edition: string | null): CopiaLocal | null {
+  const [dados, setDados] = useState<CopiaLocal | null>(null)
+
+  useEffect(() => {
+    if (!edition) return
+    let vivo = true
+    fetch(`/regulamento/copia-${edition}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<CopiaLocal>) : Promise.reject(r.status)))
+      .then((j) => vivo && setDados(j))
+      .catch(() => vivo && setDados(null))
+    return () => {
+      vivo = false
+    }
+  }, [edition])
+
+  return dados
+}
+
+/**
+ * O documento, dentro da página, aberto na seção (§3.3 modo `embutido`).
+ *
+ * É o visualizador de PDF do próprio navegador num `<iframe>` de MESMA ORIGEM — não uma
+ * biblioteca embarcada: dá busca, zoom e contagem de páginas de graça, sem 1 MB de
+ * dependência nova, e o arquivo continua sendo o PDF oficial inalterado. O `key` por
+ * página é o que faz o visualizador PULAR para a seção nova: `#page=` sozinho, num iframe
+ * já montado, não remonta em navegador nenhum.
+ *
+ * Em celular, o iframe de PDF é irregular (o iOS mostra só a primeira página) — daí o
+ * link "abrir em nova aba" ao lado, que lá funciona.
+ */
+function LeitorEmbutido({
+  edition,
+  pagina,
+  copia,
+  sectionId,
+}: {
+  edition: string
+  pagina: number
+  copia: CopiaLocal
+  sectionId: string | null
+}) {
+  return (
+    <section className="bj-reg-leitor" aria-labelledby="reg-leitor">
+      <div className="bj-reg-leitor-topo">
+        <h3 className="bj-secao" id="reg-leitor">
+          Documento{sectionId ? ` · ${sectionId}` : ''}
+        </h3>
+        <span className="bj-legenda">
+          aberto na página {pagina} ·{' '}
+          <a href={urlDaCopia(edition, pagina)} target="_blank" rel="noreferrer">
+            abrir em nova aba
+          </a>
+        </span>
+      </div>
+      <iframe
+        key={`${edition}-${pagina}`}
+        className="bj-reg-visor"
+        src={urlDaCopia(edition, pagina)}
+        title={`Regulamento ${edition}, página ${pagina}`}
+      />
+      <p className="bj-legenda">
+        Cópia baixada em {dataHora(copia.downloadedAt)} · sha256 {copia.sha256.slice(0, 12)}… ·{' '}
+        <a href={copia.url} target="_blank" rel="noreferrer">
+          documento oficial na fonte <IconArrow size={16} />
+        </a>
+      </p>
+    </section>
+  )
 }
 
 function Cabecalho({
@@ -347,15 +474,18 @@ function Achados({
   )
 }
 
-/** FR-DF34.9 — o cartão da seção no modo `ponteiro`: para onde ir, não o que a regra diz. */
+/** FR-DF34.9 — o cartão da seção: onde ela está, e por onde abrir o documento. */
 function CartaoDaSecao({
   bloco,
   blocos,
   versao,
+  copia,
 }: {
   bloco: Bloco
   blocos: Bloco[]
   versao: VersaoRegulamento
+  /** Cópia local já conferida por hash; nula = modo `ponteiro` (só o link oficial). */
+  copia: CopiaLocal | null
 }) {
   const setReg = useSession((s) => s.setRegulation)
   const [copiado, setCopiado] = useState(false)
@@ -383,8 +513,20 @@ function CartaoDaSecao({
         {rotuloDePaginas(bloco)} do PDF oficial · {versao.label}
       </p>
       <div className="bj-reg-acoes">
+        {copia && (
+          // Com cópia no portal, a leitura acontece logo abaixo; este botão é para quem
+          // quer o documento inteiro numa aba só dele (e é o caminho do celular).
+          <a
+            className="bj-btn bj-btn-primary"
+            href={urlDaCopia(versao.edition, bloco.pageStart)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir a cópia em nova aba <IconArrow size={16} />
+          </a>
+        )}
         <a
-          className="bj-btn bj-btn-primary"
+          className={copia ? 'bj-btn' : 'bj-btn bj-btn-primary'}
           href={urlDaPagina(versao.source.url, bloco.pageStart)}
           target="_blank"
           rel="noopener noreferrer"
@@ -396,7 +538,9 @@ function CartaoDaSecao({
         </button>
       </div>
       <p className="bj-legenda">
-        No celular o PDF abre na primeira página — a seção está na p. {bloco.pageStart}.
+        {copia
+          ? `No celular o visualizador embutido pode abrir na primeira página — a seção está na p. ${bloco.pageStart}.`
+          : `No celular o PDF abre na primeira página — a seção está na p. ${bloco.pageStart}.`}
       </p>
 
       {vizinhos.length > 0 && (

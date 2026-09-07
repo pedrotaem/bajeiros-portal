@@ -1,15 +1,20 @@
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { useSession } from '../session'
 import { achatar, abrirAte } from '../components/RegulationTree'
 import { arvore, type IndiceRegulamento } from './indice'
 import {
+  copiaConfere,
+  dataHora,
   edicaoDoCorpus,
   referenciasDaSecao,
   rotuloVigencia,
   versaoEscolhida,
+  urlDaCopia,
   versaoVigente,
+  type CopiaLocal,
   type PayloadRegulamento,
   type Referencia,
 } from './api'
@@ -171,5 +176,40 @@ describe('ida e volta com o assistente (AC-DF34.5)', () => {
     useSession.getState().setRegulation({ edition: 'emenda-06', sectionId: null })
     expect(useSession.getState().regulation.sectionId).toBeNull()
     expect(useSession.getState().regulation.edition).toBe('emenda-06')
+  })
+})
+
+describe('cópia do PDF servida pelo portal (ADR-014)', () => {
+  const copia: CopiaLocal = JSON.parse(
+    readFileSync(path.resolve(__dirname, '../../public/regulamento/copia-emenda-07.json'), 'utf8'),
+  )
+  const pdf = readFileSync(path.resolve(__dirname, '../../public/regulamento/emenda-07.pdf'))
+
+  it('o arquivo commitado é exatamente o que a procedência declara', () => {
+    expect(createHash('sha256').update(pdf).digest('hex')).toBe(copia.sha256)
+    expect(pdf.length).toBe(copia.bytes)
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-')
+    expect(copia.url).toMatch(/^https:\/\/arquivos\.saebrasil\.org\.br\//)
+    expect(new Date(copia.downloadedAt).getTime()).toBeGreaterThan(0)
+  })
+
+  it('é o MESMO arquivo de que o índice e o assistente falam', () => {
+    expect(copia.sha256).toBe(indice.pdfSha256)
+    expect(copia.edition).toBe(indice.edition)
+  })
+
+  it('hash diferente do cadastrado desliga a leitura embutida (FR-DF34.11)', () => {
+    const v = { ...payload.versions[0], pdfSha256: copia.sha256 }
+    expect(copiaConfere(copia, v)).toBe(true)
+    expect(copiaConfere(copia, { ...v, pdfSha256: 'b'.repeat(64) })).toBe(false)
+    expect(copiaConfere(copia, { ...v, edition: 'emenda-06' })).toBe(false)
+    expect(copiaConfere(null, v)).toBe(false)
+  })
+
+  it('a cópia é servida pela origem do portal, na página da seção', () => {
+    expect(urlDaCopia('emenda-07', 37)).toBe('/regulamento/emenda-07.pdf#page=37')
+    expect(urlDaCopia('emenda-07')).toBe('/regulamento/emenda-07.pdf')
+    expect(dataHora('2026-09-07T00:40:33.877Z')).toMatch(/\d{2}\/\d{2}\/\d{4}/)
+    expect(dataHora('nada')).toBe('—')
   })
 })

@@ -1,10 +1,12 @@
 # ADR-013: Regulamento embutido — modo de leitura dentro do portal
 
-**Status:** proposto (2026-09-06, DF-34 §10.1)
+**Status:** substituído por [ADR-014](014-copia-do-regulamento.md) (2026-09-06)
 
-**Vira aceito** quando a organização autorizar por escrito o espelhamento do PDF e a
-autorização estiver arquivada em `docs/legal/`. Sem isso, esta decisão fica proposta e o
-portal segue no modo `ponteiro` — que já é o que está em produção.
+A condição de promoção escrita abaixo ("autorização escrita arquivada em `docs/legal/`")
+**não foi cumprida nem esperada**: o dono do produto decidiu com outro fato — a organização
+distribui o PDF em download aberto — e o ADR-014 troca a autorização prévia por procedência
+verificável (URL de origem, data e hora do download, sha256 conferido). O que segue é o
+registro do raciocínio anterior.
 
 ## Contexto
 
