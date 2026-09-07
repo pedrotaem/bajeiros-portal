@@ -107,6 +107,10 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   acrescenta um bloco vizinho. Procurar o bloco pelo seletor que ele deve conter é a mesma
   guarda sem o falso positivo.
 
+- `[hidden]` é regra do **navegador** e perde para qualquer classe que declare `display`
+  (`.bj-reg-indice` é `display: flex`). Esconder por atributo exige seletor com classe
+  (`.pai > [hidden] { display: none }`) — senão a troca de aba não esconde nada.
+
 ## Trabalhar aqui
 
 - Branch a partir de `main`; PR com base `main`. Não commitar direto na `main`.
