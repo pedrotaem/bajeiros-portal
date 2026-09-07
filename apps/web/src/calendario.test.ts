@@ -127,8 +127,10 @@ describe('DF-33 — linha do tempo e lista (FR-DF33.5/6/8/10)', () => {
 
   it('abaixo de 1024px a linha do tempo não é desenhada', () => {
     expect(tab).toContain('useMinWidth(1024)')
-    const media = css.slice(css.lastIndexOf('@media (max-width: 1023px)'))
-    expect(media).toContain('.bj-cal-linha')
+    // procura o BLOCO que trata do calendário, não "o último de 1023px": desde o DF-34
+    // existe mais de um, e cravar a posição fazia esta guarda quebrar por vizinhança
+    const blocos = css.split('@media (max-width: 1023px)').slice(1)
+    expect(blocos.some((b) => b.includes('.bj-cal-linha'))).toBe(true)
   })
 })
 

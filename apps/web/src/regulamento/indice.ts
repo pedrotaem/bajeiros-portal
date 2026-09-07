@@ -91,6 +91,24 @@ export function irmaos(blocks: Bloco[], id: string): Bloco[] {
   return blocks.filter((b) => b.depth === alvo.depth && paiDe(b.id) === pai)
 }
 
+/**
+ * Item anterior e próximo na ORDEM DO DOCUMENTO (DF-34 §13.3) — é o que faz a barra
+ * `‹ B6.2.4.3 ›` do celular andar sem voltar ao índice, a "navegação fluida" do pedido
+ * num aparelho onde índice e documento não cabem lado a lado.
+ *
+ * Ordem do documento, não a dos irmãos: de `B6.2.4.1` para trás vem `B6.2.4`, o
+ * cabeçalho logo acima — que é o que a pessoa acabou de passar lendo. Andar só entre
+ * irmãos pularia do primeiro filho para a seção anterior inteira.
+ */
+export function vizinhas(
+  blocks: Bloco[],
+  id: string,
+): { anterior: Bloco | null; proxima: Bloco | null } {
+  const i = blocks.findIndex((b) => b.id === id)
+  if (i < 0) return { anterior: null, proxima: null }
+  return { anterior: blocks[i - 1] ?? null, proxima: blocks[i + 1] ?? null }
+}
+
 /** Regras do motor B6 ligadas à seção ou a qualquer item abaixo dela (FR-DF34.8). */
 export function regrasDaSecao(id: string): string[] {
   const out: string[] = []

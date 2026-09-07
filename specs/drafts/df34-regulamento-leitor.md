@@ -454,3 +454,32 @@ falta de uma linha em tabela. `scripts/build-regulamento-indice.mjs` passou a es
 pela curadoria"**, porque o arquivo sabe qual emenda é, não para quais competições ela vale.
 Cadastro no banco continua tendo precedência e é o que traz "vigente para", substituição e
 o vínculo com o calendário.
+
+### 13.3 Celular: uma vista por vez (2026-09-06)
+
+Relato depois do deploy: no celular só aparecia o índice. Não era o visor — era a ordem.
+Abaixo de 1200px as três colunas viravam uma pilha na ordem do DOM (painel `order: -1`,
+índice, documento), e o documento ficava ~1 500px abaixo, com a árvore (`max-height: 60vh`,
+rolagem própria) roubando a rolagem do dedo no caminho.
+
+Desenho conferido no canvas
+["Regulamento no celular"](https://claude.ai/code/artifact/cce28eb6-7154-49e8-af8a-7d8bc9f75ffa)
+(390×844: estado atual + as três vistas). O que entrou, abaixo de **1024px**:
+
+- **Três vistas, uma por vez** — Documento · Índice · Nesta seção — numa barra `tablist`
+  com alvos de **44px**. `regulation.vista` mora no store (DF-12 P-1.4), então ir ao
+  assistente e voltar devolve a mesma vista. Sem seção escolhida, a vista é o índice e as
+  outras duas ficam desabilitadas: abrir vista vazia seria mentir sobre o que há ali.
+- **Quem chega por citação, link ou checklist cai no Documento** (`goToRegulation`), na
+  página da seção — ler era o pedido; procurar no índice, não.
+- **Barra `‹ B6.2.4.3 ›`** anda na ORDEM DO DOCUMENTO (não entre irmãos: de `B6.2.4.1`
+  para trás vem `B6.2.4`, o cabeçalho logo acima), sem voltar ao índice.
+- **Um scroller só**: a árvore perde `max-height`/`overflow` e quem rola é a página; as
+  linhas do índice sobem para 44px de alvo.
+- **Índice leva à leitura**: com seção escolhida, um botão "Ler B6.2.4.3 no documento"
+  fecha o ciclo em vez de devolver a pessoa ao topo.
+- O aviso da fonte continua **inteiro** (é obrigação de tela), em `--bj-text-xs`/1,45.
+
+Entre 1024px e 1199px nada muda em relação ao que já estava no ar: uma coluna, painel
+antes do índice. É a largura de tablet, onde a rolagem até o documento é curta — se
+alguém reclamar dali, o mesmo corte serve.

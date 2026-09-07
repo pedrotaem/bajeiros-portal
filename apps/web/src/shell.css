@@ -3849,3 +3849,122 @@
   border-radius: var(--bj-radius);
   background: var(--bj-bg-sunken);
 }
+
+/* DF-34 §13.3 — celular: uma vista por vez (Documento · Índice · Nesta seção).
+   O defeito que isto corrige: em 390px as três colunas viravam uma pilha na ordem do
+   DOM (painel, índice, documento), e o documento ficava ~1 500px abaixo — com a árvore
+   roubando a rolagem do dedo no caminho. */
+.bj-reg-abas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bj-space-1);
+  padding: var(--bj-space-1);
+  background: var(--bj-bg-sunken);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+}
+.bj-reg-aba {
+  /* 44px: o mínimo de 32px do design system é medida de mouse; aqui aponta o dedo */
+  min-height: 44px;
+  padding: 0 var(--bj-space-2);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-base);
+  cursor: pointer;
+}
+.bj-reg-aba--on {
+  background: var(--bj-bg-raised);
+  border-bottom-color: var(--bj-accent);
+  color: var(--bj-fg-primary);
+  font-weight: var(--bj-weight-medium);
+}
+.bj-reg-aba:disabled {
+  color: var(--bj-disabled-fg);
+  cursor: default;
+}
+
+.bj-reg-barra {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  margin-bottom: var(--bj-space-2);
+}
+.bj-reg-barra-txt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--bj-space-2);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+}
+.bj-reg-passo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  cursor: pointer;
+}
+.bj-reg-passo:disabled {
+  color: var(--bj-disabled-fg);
+  cursor: default;
+}
+.bj-reg-passo--voltar svg {
+  transform: rotate(180deg);
+}
+.bj-reg-ler {
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (max-width: 1023px) {
+  /* uma vista por vez: a coluna escondida sai do fluxo pelo atributo `hidden` */
+  .bj-reg-corpo--vista {
+    grid-template-columns: minmax(0, 1fr);
+    /* a página inteira é o único scroller: nada de rolagem aninhada aqui dentro */
+    min-height: 0;
+  }
+  .bj-reg-corpo--documento {
+    /* o visor ocupa o que sobra da tela, em vez de 70vh dentro de uma página que rola */
+    flex: 1;
+  }
+  .bj-reg-arvore {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    background: none;
+  }
+  .bj-reg-item-linha {
+    /* alvo de dedo, e o número não se espreme contra o título */
+    min-height: 44px;
+  }
+  .bj-reg-painel--vista {
+    position: static;
+    max-height: none;
+    order: 0;
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+  .bj-reg-leitor--estreito .bj-reg-visor {
+    height: 62vh;
+    min-height: 320px;
+  }
+  /* o aviso da fonte é obrigação de tela: continua inteiro, em corpo menor */
+  .bj-fonte-aviso p {
+    font-size: var(--bj-text-xs);
+    line-height: 1.45;
+  }
+}
