@@ -208,22 +208,32 @@ Ordem obrigatória; cada passo produz a entrada do seguinte.
    Ele escreve `apps/web/public/regulamento/indice-<edition>.json` e **falha** se algum item de
    nível ≥ 3 vier com título (isso seria texto do regulamento) ou se um título raso for prosa.
    Commitar o JSON: é metadado, muda uma vez por emenda, e é servido estático.
-4. **Cadastrar a emenda:** o documento-fonte (o PDF) entra por Administração › Calendário
+4. **Baixar a cópia que o portal serve** (ADR-014):
+   `node scripts/baixar-regulamento.mjs --url <url-oficial> --edition <edition> --expect-sha <hash do passo 1>`.
+   Escreve `apps/web/public/regulamento/<edition>.pdf` e `copia-<edition>.json` (url, data e
+   hora do download, sha256, tamanho, `Last-Modified` da fonte). Commitar os dois. Hash
+   diferente do esperado **para o script**: a organização trocou o arquivo sob a mesma URL,
+   e isso é emenda ou errata — conferir antes de publicar.
+5. **Cadastrar a emenda:** o documento-fonte (o PDF) entra por Administração › Calendário
    (ou pelo `seed-calendar.mjs`); a emenda em si entra por
    `node apps/api/scripts/seed-regulation.mjs` — dry-run por padrão, `--apply --admin <uuid>`
    para gravar — ou por `POST /api/v1/admin/regulation/versions`. `edition` é a chave natural:
    rodar de novo atualiza, não duplica. `appliesTo` é a lista **inteira** de competições da
    emenda; mandar `[]` desvincula todas.
-5. **Conferir na tela:** Ferramentas › Regulamento deve abrir na emenda nova, com o rótulo
-   "vigente para" e o link do PDF oficial. Se o cabeçalho mostrar "índice de outra ingestão",
-   o JSON commitado e o `corpus_version` cadastrado saíram de ingestões diferentes — refazer o
-   passo 3 com o manifest certo.
+6. **Conferir na tela:** Ferramentas › Regulamento deve abrir na emenda nova, com o rótulo
+   "vigente para", a faixa "Cópia do PDF oficial baixada em <data e hora>" e o documento
+   aberto na página da seção. Se o cabeçalho mostrar "índice de outra ingestão", o JSON
+   commitado e o `corpus_version` cadastrado saíram de ingestões diferentes — refazer o
+   passo 3. Se a leitura embutida não aparecer, o `sha256` da cópia não bate com o
+   `pdf_sha256` cadastrado: a página avisa e volta ao link oficial (FR-DF34.11).
 
 A emenda anterior **continua cadastrada**: a resposta antiga do assistente aponta para ela, e a
 numeração muda entre emendas. Não apague; ligue `supersedesId` da nova para a antiga.
 
-Ler o PDF dentro do portal (modo `embutido`) não existe e não se liga por variável: depende de
-autorização da organização — [ADR-013](adr/013-regulamento-embutido.md).
+A cópia servida pelo portal é **inalterada** e sempre acompanhada da procedência
+([ADR-014](adr/014-copia-do-regulamento.md)). Para desligar a leitura embutida, apague
+`apps/web/public/regulamento/<edition>.pdf` e o `copia-<edition>.json`: a página volta
+sozinha ao modo `ponteiro`, sem mexer em código nem em variável de ambiente.
 
 ## Rollback
 

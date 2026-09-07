@@ -3819,3 +3819,33 @@
     margin-left: 0;
   }
 }
+
+/* DF-34 / ADR-014 — leitura do documento dentro da página: o PDF oficial servido pela
+   própria origem, no visualizador do navegador. A procedência (data, hora e hash do
+   download) fica na faixa da fonte e no rodapé do leitor. */
+.bj-reg-procedencia {
+  margin: var(--bj-space-1) 0 0;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+}
+.bj-reg-leitor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  margin-top: var(--bj-space-3);
+}
+.bj-reg-leitor-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bj-space-2);
+}
+.bj-reg-visor {
+  width: 100%;
+  height: 70vh;
+  min-height: 420px;
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  background: var(--bj-bg-sunken);
+}

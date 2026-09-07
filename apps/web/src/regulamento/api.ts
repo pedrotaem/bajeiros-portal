@@ -80,6 +80,50 @@ export function referenciasDaSecao(refs: Referencia[], sectionId: string | null)
 }
 
 /**
+ * Procedência da cópia servida pela origem do portal (ADR-014), gerada por
+ * `scripts/baixar-regulamento.mjs` junto com o PDF. Não é opinião da tela: é o que o
+ * download registrou — de onde veio, quando, e o hash do que ficou aqui.
+ */
+export interface CopiaLocal {
+  edition: string
+  url: string
+  /** ISO com hora: é a "data e hora do download" que a página exibe. */
+  downloadedAt: string
+  sha256: string
+  bytes: number
+  lastModified: string | null
+  etag: string | null
+}
+
+/**
+ * A cópia só é servida se o hash bater com o da emenda cadastrada (FR-DF34.11) — o mesmo
+ * hash que o manifest do gateway registrou, ou seja, o arquivo de que o assistente fala.
+ * Divergiu, a tela cai para o link oficial e diz por quê: melhor mandar para a fonte do
+ * que mostrar um documento que ninguém conferiu.
+ */
+export function copiaConfere(
+  copia: CopiaLocal | null,
+  versao: VersaoRegulamento | null,
+): copia is CopiaLocal {
+  return (
+    !!copia && !!versao && copia.sha256 === versao.pdfSha256 && copia.edition === versao.edition
+  )
+}
+
+/** Caminho da cópia na origem do portal, na página da seção. */
+export function urlDaCopia(edition: string, pagina?: number): string {
+  return `/regulamento/${edition}.pdf${pagina ? `#page=${pagina}` : ''}`
+}
+
+/** "06/09/2026 21:40" — data E hora, porque é a hora que dá rastro ao download. */
+export function dataHora(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+/**
  * `ratbsb@emenda-07#sha256:e4a0…` → `emenda-07`. A resposta do assistente carrega o
  * corpusVersion, e é ele que diz QUAL emenda o chip deve abrir (§3.2) — nunca "a mais
  * nova": uma resposta de março sobre a emenda 6 continua apontando para a emenda 6.
