@@ -511,3 +511,27 @@ elementos, quem rola), não por dedução:
 
 Depois: em 390×844 o visor começa em `y = 477` (523px de altura) e a página tem um scroller
 só; em 1440×900, `y = 536`. Sem rolagem horizontal em nenhum dos dois.
+
+### 13.5 O visor em branco, e o visor parado (2026-09-07)
+
+Relato de staging: a aba Documento mostrava "A conexão com staging.bajeiros.com.br foi
+recusada" e, depois disso, o PDF não acompanhava a seção escolhida no índice. Dois defeitos
+independentes, os dois do `<iframe>` — e nenhum aparece em `npm run dev`, que não tem os
+headers do CloudFront.
+
+1. **`X-Frame-Options: DENY` barra até a mesma origem.** A política de headers valia para
+   todas as respostas da distribuição, inclusive a do PDF, e `DENY` — ao contrário de
+   `SAMEORIGIN` — proíbe o enquadramento também quando quem enquadra é o próprio domínio. O
+   navegador trocava o visor pela tela de "conexão recusada". Agora a policy manda
+   `SAMEORIGIN` e a CSP (ainda Report-Only) diz `frame-ancestors 'self'`. Enquadrar o portal
+   de fora continua proibido.
+2. **Iframe montado escondido descarta o `#page=N`.** Medido em Chrome por CDP, com o PDF
+   servido pela mesma origem: montar o `<iframe src="…#page=120">` dentro de um container
+   `display: none` carrega o documento e ignora o fragmento — ao revelar, o visualizador
+   mostra a página 1 com o `src` ainda dizendo `#page=120`. É exatamente o caminho do
+   estreito: escolher no índice remonta o visor com a aba Documento escondida. O visor
+   passa a ser montado só na vista em que ele aparece (`visorNaVista`); no desktop, onde as
+   três colunas convivem, nada muda.
+
+A lição que vale além desta página: **remontar por `key` só resolve quando o elemento nasce
+visível.** Se a vista está escondida, o certo é não montar.

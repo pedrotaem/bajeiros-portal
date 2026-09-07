@@ -4,7 +4,7 @@ import path from 'node:path'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { useSession } from '../session'
 import { achatar, abrirAte } from '../components/RegulationTree'
-import { classeDoCorpo } from '../components/RegulationPage'
+import { classeDoCorpo, visorNaVista } from '../components/RegulationPage'
 import { arvore, paiDe, vizinhas, type IndiceRegulamento } from './indice'
 import {
   copiaConfere,
@@ -284,6 +284,17 @@ describe('celular: uma vista por vez (§13.3)', () => {
     expect(classeDoCorpo(true, 'indice', false)).toBe(
       'bj-reg-corpo bj-reg-corpo--vista bj-reg-corpo--indice',
     )
+  })
+
+  it('o visor não nasce escondido — senão a aba abre parada na página 1', () => {
+    // Medido no Chrome: iframe montado sob `display: none` carrega o PDF e descarta o
+    // `#page=N`. No estreito, escolher no índice remonta o visor com a aba "Documento"
+    // escondida; montar só na vista do documento é o que faz o pulo acontecer.
+    expect(visorNaVista(true, 'indice')).toBe(false)
+    expect(visorNaVista(true, 'secao')).toBe(false)
+    expect(visorNaVista(true, 'documento')).toBe(true)
+    // no desktop as três colunas convivem: o visor está sempre visível
+    expect(visorNaVista(false, 'indice')).toBe(true)
   })
 
   it('a barra ‹ › anda entre as seções vizinhas', () => {

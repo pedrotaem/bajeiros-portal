@@ -74,6 +74,20 @@ export function classeDoCorpo(
   return comPainel ? 'bj-reg-corpo bj-reg-corpo--painel' : 'bj-reg-corpo'
 }
 
+/**
+ * O visor só existe no DOM quando a vista dele está VISÍVEL.
+ *
+ * Medido no Chrome (CDP, PDF servido pela mesma origem): iframe montado dentro de um
+ * container `display: none` carrega o PDF e DESCARTA o `#page=N` — ao revelar, o
+ * visualizador mostra a página 1, com o `src` ainda dizendo `#page=120`. No estreito é o
+ * caminho normal: escolher no índice remonta o visor enquanto a aba "Documento" está
+ * escondida, e a aba abre parada na primeira página. Montar só ao revelar faz o
+ * visualizador aplicar o fragmento no carregamento.
+ */
+export function visorNaVista(estreito: boolean, vista: RegulationView): boolean {
+  return !estreito || vista === 'documento'
+}
+
 /** As três vistas do estreito, na ordem em que a barra as mostra. */
 const ABAS: { id: RegulationView; label: string }[] = [
   { id: 'documento', label: 'Documento' },
@@ -388,7 +402,7 @@ export function RegulationPage() {
                 </a>
               </div>
             )}
-            {copiaValida && (
+            {copiaValida && visorNaVista(estreito, vista) && (
               <LeitorEmbutido
                 edition={versao.edition}
                 pagina={selecionado?.pageStart ?? 1}
