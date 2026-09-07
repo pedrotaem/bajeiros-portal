@@ -41,6 +41,7 @@ export function MilestonePanel({ marco, payload, teamId, onClose, onSelect, onCh
   const user = useSession((s) => s.user)
   const setPanel = useSession((s) => s.setPanel)
   const goToTeam = useSession((s) => s.goToTeam)
+  const goToRegulation = useSession((s) => s.goToRegulation) // DF-34 FR-DF34.20
   const [estado, setEstado] = useState<{ passo?: 'feito'; copia?: 'feita'; erro?: string }>({})
   const titulo = useRef<HTMLHeadingElement>(null)
   const { today, team } = payload
@@ -295,6 +296,11 @@ export function MilestonePanel({ marco, payload, teamId, onClose, onSelect, onCh
               Adicionar à minha temporada
             </button>
           ))}
+        {!daEquipe && marco.sectionId && (
+          <button type="button" className="bj-btn" onClick={() => goToRegulation(marco.sectionId!)}>
+            Ler a regra
+          </button>
+        )}
         {!daEquipe && marco.sectionId && (
           <button
             type="button"

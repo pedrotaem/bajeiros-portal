@@ -1,0 +1,17 @@
+{
+  "conferidoEm": "2026-09-06",
+  "ciclo": 2027,
+  "versoes": [
+    {
+      "edition": "emenda-07",
+      "label": "RATBSB Emenda 7 · Baja 2026",
+      "corpusVersion": "ratbsb@emenda-07#sha256:e4a0b50bb2eb",
+      "pdfSha256": "bd03020a576822b4c8a5f2795d40e63eb01f06b18373fc2e3a2e2c65132eca09",
+      "pageCount": 148,
+      "publishedOn": null,
+      "sourceUrl": "https://arquivos.saebrasil.org.br/2026/BajaNacional/RATBSB_emenda_07.pdf",
+      "supersedesEdition": null,
+      "aplicaAoCiclo": true
+    }
+  ]
+}

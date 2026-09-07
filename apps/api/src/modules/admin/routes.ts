@@ -9,6 +9,7 @@ import { recomputeTeam } from '../evolution/engine'
 import { communityAdmin } from '../community/routes'
 import { feedbackAdmin } from '../feedback/routes'
 import { calendarAdmin } from '../calendar/routes'
+import { regulationAdmin } from '../regulation/routes'
 
 // DF-9 — área administrativa. Autorização: users.is_admin (promoção só manual no
 // banco; nenhuma rota concede). RLS: policies *_admin_read (0003) fazem o SELECT
@@ -301,3 +302,4 @@ admin.route('/community', communityAdmin)
 admin.route('/feedback', feedbackAdmin)
 // DF-33: curadoria do calendário (competições, marcos, documentos-fonte, colar tabela)
 admin.route('/calendar', calendarAdmin)
+admin.route('/regulation', regulationAdmin) // DF-34: cadastro de emenda (uma vez por ano)

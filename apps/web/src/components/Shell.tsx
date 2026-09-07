@@ -76,6 +76,9 @@ export const DESTINOS: Destino[] = [
     subs: [
       { kind: 'page', id: 'editor', label: 'Validador de gaiola', Mark: MarkCage },
       { kind: 'page', id: 'assistant', label: 'Assistente do regulamento', Mark: MarkAssistant },
+      // DF-34 FR-DF34.1: acervo de referência, não ferramenta que produz coisa — sem
+      // marca de produto (a quarta vaga continua livre) e sem glifo de sub-item (§8.4).
+      { kind: 'page', id: 'regulamento', label: 'Regulamento' },
     ],
   },
   {

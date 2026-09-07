@@ -1,6 +1,7 @@
 import { createAuthClient, type AuthClient } from '@bajeiros/auth/client'
 import { create } from 'zustand'
 import type { AppConfig } from './config'
+import { lerHashRegulamento } from './regulamento/indice'
 
 // Sessão do portal. Token SÓ em memória (plano v2, 12.4) — recarregar a página
 // exige novo login (no modo cognito o cookie do Managed Login torna a volta
@@ -53,6 +54,7 @@ export type PageId =
   | 'comunidade'
   | 'editor'
   | 'assistant'
+  | 'regulamento'
   | 'admin'
   | 'sobre'
   | 'projeto'
@@ -65,6 +67,7 @@ export const TITULO_PAGINA: Record<PageId, string> = {
   comunidade: 'Comunidade',
   editor: 'Validador de gaiola',
   assistant: 'Assistente do regulamento',
+  regulamento: 'Regulamento',
   admin: 'Administração',
   sobre: 'Sobre o portal',
   projeto: 'Projeto',
@@ -100,13 +103,35 @@ export const CALENDAR_DEFAULT: CalendarFilters = {
 }
 
 /**
+ * Estado da página Regulamento (DF-34 FR-DF34.4). Vive AQUI e não em `useState` da tela
+ * (DF-12 P-1.4): a ida ao assistente e a volta têm que devolver a mesma seção aberta.
+ *
+ * `edition` nulo = a emenda vigente para o ciclo corrente, decidida quando a lista de
+ * versões chega — a citação do assistente é que fixa uma emenda (§3.2).
+ * `fromAssistant` é o "Citado na sua conversa · voltar ao assistente" do painel.
+ */
+export interface RegulationState {
+  edition: string | null
+  sectionId: string | null
+  query: string
+  fromAssistant: boolean
+}
+
+export const REGULATION_DEFAULT: RegulationState = {
+  edition: null,
+  sectionId: null,
+  query: '',
+  fromAssistant: false,
+}
+
+/**
  * Abas da página de projeto (DF-21 §3.5). A Ficha é a primeira porque ela vale sem o
  * validador; a Validação pode ficar vazia a vida inteira sem afetar a Ficha em nada.
  */
 export type ProjectTab = 'ficha' | 'versoes' | 'validacao'
 
 /** Ferramentas acesas quando o item Ferramentas está ativo (DF-12 RF-1.2/AC-DF12.4). */
-export const TOOL_PAGES: PageId[] = ['ferramentas', 'editor', 'assistant']
+export const TOOL_PAGES: PageId[] = ['ferramentas', 'editor', 'assistant', 'regulamento']
 
 /** Equipe ativa entre sessões — dado não sensível (DF-12 RF-2.3). */
 const ACTIVE_TEAM_KEY = 'bajeiros:equipe-ativa'
@@ -224,6 +249,20 @@ interface SessionState {
   /** DF-33 — filtros do calendário; ver `CalendarFilters`. */
   calendar: CalendarFilters
   setCalendar: (patch: Partial<CalendarFilters>) => void
+  /** DF-34 — página do regulamento; ver `RegulationState`. */
+  regulation: RegulationState
+  setRegulation: (patch: Partial<RegulationState>) => void
+  /**
+   * Abre a página Regulamento numa seção (chip de citação, checklist, calendário,
+   * link `#regulamento=`). Não desmonta o editor nem o assistente (ADR-009 dec. 4).
+   */
+  goToRegulation: (sectionId: string, opts?: { edition?: string; fromAssistant?: boolean }) => void
+  /**
+   * DF-34 FR-DF34.12 — o que "Registrar decisão sobre esta seção" leva para o diário da
+   * equipe (DF-14). Some quando o formulário consome; nunca é enviado sem a pessoa ver.
+   */
+  decisionPrefill: { title: string; why: string } | null
+  setDecisionPrefill: (p: { title: string; why: string } | null) => void
   /** Abre Comunidade › Calendário (Início e faixa de temporada apontam para cá). */
   goToCalendar: (patch?: Partial<CalendarFilters>) => void
   activeTeamId: string | null
@@ -271,6 +310,20 @@ function readInviteFromUrl(): string | null {
 }
 const initialInvite = readInviteFromUrl()
 
+/**
+ * DF-34 FR-DF34.5 — `#regulamento=B6.2.4.3` (opcional `@emenda-07`) abre a página do
+ * regulamento na seção. Mesmo mecanismo do `#convite=`: lido uma vez, e o hash sai da
+ * URL (não existe router — ADR-009 dec. 4 — então o link é a única entrada por URL).
+ */
+function readRegulationFromUrl(): { sectionId: string; edition?: string } | null {
+  if (typeof window === 'undefined') return null
+  const alvo = lerHashRegulamento(window.location.hash)
+  if (!alvo) return null
+  history.replaceState(null, '', window.location.pathname + window.location.search)
+  return alvo
+}
+const initialRegulation = readRegulationFromUrl()
+
 // Link aberto numa aba já carregada (só o hash muda, sem reload): captura também.
 // Aceita um convite estando autenticado; usado pós-login (dev e cognito) e
 // pelo listener de hashchange. DF-10: aceitar não entra na equipe — o pedido vai
@@ -303,6 +356,12 @@ async function acceptPendingInvite(invite: string): Promise<void> {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
+    // link do regulamento colado numa aba já carregada: não exige conta nem login
+    const secao = readRegulationFromUrl()
+    if (secao) {
+      useSession.getState().goToRegulation(secao.sectionId, { edition: secao.edition })
+      return
+    }
     const token = readInviteFromUrl()
     if (!token) return
     if (!useSession.getState().user) {
@@ -453,7 +512,7 @@ export const useSession = create<SessionState>((set, get) => ({
   token: null,
   user: null,
   currentProject: null,
-  page: 'inicio',
+  page: initialRegulation ? 'regulamento' : 'inicio',
   teamTab: 'evolucao',
   communityTab: 'resultados',
   projectTab: 'ficha',
@@ -467,6 +526,29 @@ export const useSession = create<SessionState>((set, get) => ({
       calendar: patch ? { ...s.calendar, ...patch } : s.calendar,
     }))
   },
+  regulation: initialRegulation
+    ? {
+        ...REGULATION_DEFAULT,
+        sectionId: initialRegulation.sectionId,
+        edition: initialRegulation.edition ?? null,
+      }
+    : REGULATION_DEFAULT,
+  setRegulation: (patch) => set((s) => ({ regulation: { ...s.regulation, ...patch } })),
+  goToRegulation: (sectionId, opts) => {
+    track('page:regulamento')
+    set((s) => ({
+      page: 'regulamento',
+      regulation: {
+        ...s.regulation,
+        sectionId,
+        edition: opts?.edition ?? s.regulation.edition,
+        fromAssistant: opts?.fromAssistant ?? false,
+        query: '',
+      },
+    }))
+  },
+  decisionPrefill: null,
+  setDecisionPrefill: (decisionPrefill) => set({ decisionPrefill }),
   activeTeamId: readActiveTeam(),
   railCompact: readRailCompact(),
   setRailCompact: (railCompact) => {

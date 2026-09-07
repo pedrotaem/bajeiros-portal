@@ -1,7 +1,9 @@
 # DF-34 — Regulamento e referências: leitura íntegra, navegação por seção e ponte com o assistente
 
-- **Status:** proposto em 2026-09-06. **Spec apenas — não implementar sem aprovação.** Fecha no
-  próprio draft — não vai para `spec.md`, que é do validador.
+- **Status:** **implementada em 2026-09-06** no modo `ponteiro` (§3.3), menos o modo `embutido`
+  — ele depende de autorização da organização e virou o [ADR-013](../../docs/adr/013-regulamento-embutido.md)
+  (proposto). O que entrou e o que ficou de fora está no §13. Fecha no próprio draft — não vai
+  para `spec.md`, que é do validador.
 - **Pedido do dono do produto (literal):** "como no assistente já tem esse contato com o
   regulamento em si (perguntas e respostas baseadas nele), seria interessante ter uma seção onde
   o usuário consiga ler o regulamento na íntegra e consiga navegar de maneira fluida entre
@@ -377,3 +379,37 @@ Versões pelo nome da organização ("Emenda 7"), com o ciclo ao lado ("Baja 202
 - **Assistente hoje:** evento SSE `citation = {sectionId, pageStart, pageEnd, quote?}`;
   `corpusVersion` em toda resposta; chip C-20 com ação "destacar no checklist";
   `AssistantPanel.tsx` trata `event === 'citation' && d.sectionId`.
+
+## 13. O que foi implementado (2026-09-06)
+
+Modo `ponteiro` inteiro, mais as duas pontes e o cadastro. Migração `0013_regulation.sql` (a
+`0012` ficou com o DF-33), contrato [`regulation.odcs.yaml`](../../contracts/regulation.odcs.yaml)
+e `calendar.odcs.yaml` 1.1.0 (as duas colunas novas de `source_documents`).
+
+| FR               | Situação                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| FR-DF34.1 a .9   | ✅ página, rail, hash de entrada, índice, cartão da seção, irmãos, "Ir para", contador de regras |
+| FR-DF34.10 e .11 | ❌ modo `embutido` (pdf.js e verificação de hash na tela) — ADR-013, não construído              |
+| FR-DF34.12 a .20 | ✅ painel "Nesta seção", referências, disclaimer, faixa de emenda substituída, pontes            |
+
+**Três desvios do que a spec supunha, todos com o motivo escrito no código:**
+
+1. **Título raso nem sempre é título.** §3.1 dizia que os 210 itens de nível 0–2 têm título real.
+   No manifest da emenda 7, **30 deles são prosa** (A1.1, B15.x, C4.x…): a seção não tem cabeçalho
+   no PDF e o `splitSections` do gateway pega o começo do parágrafo. O gerador do índice só aceita
+   título que PAREÇA título (`ehTitulo`: sem vírgula, sem ponto final, sem corte no meio da frase,
+   ≤ 8 palavras) — 180 sobrevivem, e o resto entra só com número e página. Prosa é texto do
+   regulamento em qualquer profundidade, e a guarda vale para o artefato commitado, não só para a
+   geração (é o que o teste percorre).
+2. **`0012` já era do DF-33** — a migração desta spec é a `0013`.
+3. **Decisão com link à seção (FR-DF34.12)** não criou modelo de links no DF-14: o botão leva o
+   diário da equipe com título e "por quê" **já escritos** (seção, páginas e link), visíveis antes
+   de salvar. Sem coluna nova e sem gravar nada que ninguém leu.
+
+**Fora do escopo desta entrega,** por dependerem do item 1 do §10: espelho do PDF em `infra/`,
+`REGULATION_READER_MODE`, pdf.js e a verificação de integridade na tela (AC-DF34.9). O
+`pdf_sha256` já é obrigatório no cadastro — é o que faz a curadoria conferir o arquivo.
+
+Carga: `apps/api/scripts/seed-regulation.mjs` (dry-run por padrão; exige que o
+`seed-calendar.mjs` já tenha criado o documento-fonte do PDF). A emenda 6 não foi cadastrada:
+não temos o arquivo em mãos para conferir o hash, e hash não se inventa.

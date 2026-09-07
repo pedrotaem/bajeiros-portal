@@ -5,3 +5,5 @@ package-lock.json
 infra/
 # gerado por scripts/build-tokens.mjs — formatar aqui quebra a paridade CSS x TS
 apps/web/src/tokens.css
+# gerado por scripts/build-regulamento-indice.mjs — um bloco por linha, formatar aqui quebra o --check
+apps/web/public/regulamento/

@@ -119,6 +119,13 @@ export function AssistantPanel() {
         return { messages: msgs }
       })
 
+    const patchLastMsg = (patch: Partial<ChatMsg>) =>
+      useAssistant.setState((s) => {
+        const msgs = s.messages.slice()
+        msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], ...patch }
+        return { messages: msgs }
+      })
+
     const addCitation = (cit: Citation) =>
       useAssistant.setState((s) => {
         const msgs = s.messages.slice()
@@ -176,8 +183,12 @@ export function AssistantPanel() {
                 pageEnd: d.pageEnd ?? d.pageStart ?? 0,
               })
             else if (event === 'error') setErr(d.detail ?? d.title ?? 'Falha na resposta.')
-            else if (event === 'done')
+            else if (event === 'done') {
               setStatus((s) => (s ? { ...s, usedToday: s.usedToday + 1 } : s))
+              // DF-34 §3.2: a emenda que respondeu viaja com a mensagem — é ela que o
+              // chip abre depois, mesmo que uma emenda nova entre no portal amanhã.
+              if (d.corpusVersion) patchLastMsg({ corpusVersion: d.corpusVersion })
+            }
           } catch {
             /* fragmento não-JSON — ignora */
           }

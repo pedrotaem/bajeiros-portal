@@ -39,10 +39,16 @@ describe('menu principal — recolher (DF-24)', () => {
 })
 
 describe('menu principal — recursos da página (DF-24)', () => {
-  it('AC-DF24.2: Ferramentas abre as duas ferramentas, e só elas têm marca', () => {
+  it('AC-DF24.2: Ferramentas abre as ferramentas, e só quem é produto tem marca', () => {
     const ferramentas = DESTINOS.find((d) => d.page === 'ferramentas')!
-    expect(ferramentas.subs?.map((s) => s.id)).toEqual(['editor', 'assistant'])
-    expect(ferramentas.subs?.every((s) => s.kind === 'page' && !!s.Mark)).toBe(true)
+    expect(ferramentas.subs?.map((s) => s.id)).toEqual(['editor', 'assistant', 'regulamento'])
+    expect(ferramentas.subs?.every((s) => s.kind === 'page')).toBe(true)
+    // DF-34 FR-DF34.1: o Regulamento é acervo de referência, não produto nomeado —
+    // entra sem marca, e a quarta vaga de marca continua livre.
+    expect(ferramentas.subs?.filter((s) => s.Mark).map((s) => s.id)).toEqual([
+      'editor',
+      'assistant',
+    ])
     // aba de página é recurso sem produto: não ganha marca (design-system §8.4)
     for (const d of DESTINOS) {
       for (const s of d.subs ?? []) {

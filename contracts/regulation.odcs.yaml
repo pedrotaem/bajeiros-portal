@@ -1,0 +1,110 @@
+apiVersion: v3.0.2
+kind: DataContract
+id: urn:bajeiros:contract:regulation
+name: regulation
+version: 1.0.0
+status: draft
+domain: engineering
+dataProduct: bajeiros-portal
+description:
+  purpose: Regulamento (DF-34) — qual emenda do RATBSB vale para qual competição, com o PDF
+    oficial de onde ela veio (documento-fonte do DF-33), o hash do arquivo conferido e a
+    versão do corpus do gateway que responde por ela no assistente.
+  usage: >-
+    Página Ferramentas › Regulamento (pública, sem conta): seletor de emenda, rótulo
+    "vigente para", link para o PDF oficial e a faixa de emenda substituída. Cadastro na
+    administração (DF-9), uma vez por ano. O ÍNDICE (número, página, título de seção) não
+    está aqui: é artefato estático gerado do manifest do gateway. O TEXTO do regulamento não
+    está em lugar nenhum do portal — é obra da organização e se lê na fonte (DF-34 §8).
+schema:
+  - name: regulation_version
+    logicalType: object
+    physicalType: table
+    physicalName: regulation_versions
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: edition
+        logicalType: string
+        required: true
+        description: Chave natural, minúscula ("emenda-07"). Uma linha por emenda.
+      - name: label
+        logicalType: string
+        required: true
+        description: Como a organização nomeia a emenda ("RATBSB Emenda 7 · Baja 2026").
+      - name: corpus_version
+        logicalType: string
+        required: true
+        description: >-
+          Versão do corpus do gateway ("ratbsb@emenda-07#sha256:…"). É o que casa a citação
+          do assistente com esta emenda; divergiu, a citação abre pela página e a tela avisa.
+      - name: pdf_sha256
+        logicalType: string
+        required: true
+        description: Hash do PDF oficial conferido, igual ao do manifest do gateway.
+      - name: page_count
+        logicalType: integer
+        required: true
+      - name: source_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        description: O PDF oficial em source_documents (DF-33) — a URL é a da organização.
+      - name: supersedes_id
+        logicalType: string
+        physicalType: uuid
+        required: false
+        description: Emenda que esta substitui; a substituída continua acessível (§3.2).
+      - name: published_on
+        logicalType: date
+        required: false
+      - name: checked_at
+        logicalType: date
+        physicalType: timestamptz
+        required: true
+        description: Quando alguém do portal conferiu a fonte e o hash pela última vez.
+      - name: updated_by
+        logicalType: string
+        physicalType: uuid
+        required: false
+        classification: pii
+        customProperties:
+          - property: legalBasis
+            value: contrato-art7-V
+          - property: retention
+            value: acervo histórico; anonimizado na exclusão da conta do titular
+  - name: regulation_applicability
+    logicalType: object
+    physicalType: table
+    physicalName: regulation_applicability
+    properties:
+      - name: version_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+      - name: competition_id
+        logicalType: string
+        physicalType: uuid
+        required: true
+        primaryKey: true
+        description: >-
+          Para quais competições a emenda vale. Sem esta tabela "vigente" seria opinião: o
+          Nacional adota a emenda por informativo, e a anterior segue valendo para o que passou.
+customProperties:
+  - property: visibility
+    value: leitura pública (RLS USING true) — a página do regulamento abre sem conta
+  - property: retention
+    value: indefinida — acervo histórico, como competitions e source_documents
+  - property: copyright
+    value: >-
+      o portal guarda metadado (edição, hash, páginas, link) e nunca o texto do regulamento;
+      espelhar o PDF depende de autorização escrita da organização (ADR-013)
+  - property: brand
+    value: nenhum logotipo; o nome da organização só no rótulo do documento e no link
+team:
+  - username: pedrotaem@gmail.com
+    role: owner

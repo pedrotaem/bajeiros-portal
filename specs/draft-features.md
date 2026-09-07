@@ -35,12 +35,12 @@
 | DF-31       | Recalcular: re-identificar pontos denominados e reavaliar o checklist            | ✅     | `spec.md` US-18                                                                                   |
 | DF-32       | Desfazer e refazer no editor                                                     | ✅     | `spec.md` US-19                                                                                   |
 | DF-33       | Calendário de competições: marcos, prazos, informativos e links oficiais         | ✅     | PR #55 + [ADR-012](../docs/adr/012-rota-publica-api.md); vista Mês e revisões ficam para v2 (§10) |
-| DF-34       | Regulamento e referências: leitura, navegação por seção e ponte com o assistente | 📝     | draft proposto em 2026-09-06 — **spec apenas**; depende do DF-33                                  |
+| DF-34       | Regulamento e referências: leitura, navegação por seção e ponte com o assistente | ✅     | modo `ponteiro`; o `embutido` virou [ADR-013](../docs/adr/013-regulamento-embutido.md) (proposto) |
 
-**Em aberto no backlog:** DF-34, proposto em 2026-09-06 e ainda **sem aprovação para
-implementar** (o DF-33, de que ele depende, está implementado). As demais pendências são
-residuais e estão nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2 (validação física),
-ondas 2+ da aferição do DF-20, N2 do DF-27, vista Mês do DF-33.
+**Em aberto no backlog:** o modo `embutido` do DF-34 (ler o PDF dentro do portal), travado em
+autorização da organização — [ADR-013](../docs/adr/013-regulamento-embutido.md). As demais
+pendências são residuais e estão nomeadas dentro de cada draft — DF-4 v2 (3D), AC-DF7.2
+(validação física), ondas 2+ da aferição do DF-20, N2 do DF-27, vista Mês do DF-33.
 
 ## Ordem de desenvolvimento
 
@@ -48,22 +48,23 @@ A ordem deriva das dependências (materiais fundamentam massa; continuidade fund
 juntas; manequim fundamenta volante) e prioriza entregas de valor imediato e baixo risco
 antes das features maiores:
 
-| Ordem  | Spec                                               | Feature                                                  | Depende de         | Racional da posição                                                                        |
-| ------ | -------------------------------------------------- | -------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
-| 1 ✅   | [DF-1](drafts/df1-materiais.md)                    | Material dos tubos (aços) por classe — **implementada**  | —                  | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2  |
-| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)              | Estimativa de peso (v1) — **v1 implementada**            | DF-1               | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                 |
-| 3 ✅   | [DF-3](drafts/df3-geraldao.md)                     | Geraldão no cockpit (toggle) — **implementada**          | —                  | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4       |
-| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)           | Continuidade de tubos — **implementada**                 | —                  | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                     |
-| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md)          | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1         | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)            |
-| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md)          | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)      | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar       |
-| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)            | Ancoragem do volante — **implementada**                  | DF-4 (opcional)    | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                      |
-| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)               | Planos e cotas — **implementada**                        | —                  | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                     |
-| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)             | Trava e vistas de câmera — **implementada**              | DF-22              | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique      |
-| 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)            | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                    |
-| 11 ✅  | [DF-30](drafts/df30-suspensao.md)                  | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido |
-| 12 ✅  | [DF-31](drafts/df31-recalcular-e-reidentificar.md) | Recalcular pontos e regras — **implementada**            | DF-30              | O motor lê ponto por id; o nó genérico no encontro certo ganha a letra num clique          |
-| 13 ✅  | [DF-32](drafts/df32-desfazer-refazer.md)           | Desfazer e refazer — **implementada**                    | DF-31              | Toda ação de ida ganha volta; o recálculo deixa de ser o único caminho sem retorno         |
-| 14 ✅  | [DF-33](drafts/df33-calendario-competicoes.md)     | Calendário de competições — **implementada**             | DF-13, DF-15, DF-9 | O problema nº 1 da pesquisa (rotatividade) é não saber o prazo; agora ele tem fonte e data |
+| Ordem  | Spec                                               | Feature                                                  | Depende de         | Racional da posição                                                                         |
+| ------ | -------------------------------------------------- | -------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------- |
+| 1 ✅   | [DF-1](drafts/df1-materiais.md)                    | Material dos tubos (aços) por classe — **implementada**  | —                  | Fundação: propriedades (E, Sy, ρ) desbloqueiam DF-2 e automatizam a equivalência B6.3.3.2   |
+| 2 ✅v1 | [DF-2](drafts/df2-estimativa-peso.md)              | Estimativa de peso (v1) — **v1 implementada**            | DF-1               | Valor imediato com juntas contadas por nó; v2 refinada depois de DF-6/DF-7                  |
+| 3 ✅   | [DF-3](drafts/df3-geraldao.md)                     | Geraldão no cockpit (toggle) — **implementada**          | —                  | Independente, baixo risco; estabelece o padrão de objeto visual reutilizado por DF-4        |
+| 4 ✅   | [DF-6](drafts/df6-continuidade-tubos.md)           | Continuidade de tubos — **implementada**                 | —                  | Declaração física que DF-7 e DF-2 v2 consomem; precisa vir antes delas                      |
+| 5 ✅   | [DF-7](drafts/df7-juntas-boca-de-lobo.md)          | Juntas: linha de solda e boca de lobo — **implementada** | DF-6, DF-1         | Núcleo de fabricação; entrega gabaritos 1:1 e habilita DF-2 v2 (g/mm de cordão)             |
+| 6 ✅v1 | [DF-4](drafts/df4-manequim-ergonomico.md)          | Manequim ergonômico — **v1 implementada**                | DF-3 (padrão)      | Maior feature do lote; exige fechamento de fontes antropométricas antes de codificar        |
+| 7 ✅   | [DF-5](drafts/df5-ancoragem-volante.md)            | Ancoragem do volante — **implementada**                  | DF-4 (opcional)    | Reusa o padrão SUSP.1; a zona recomendada consome o punho do manequim                       |
+| 8 ✅   | [DF-22](drafts/df22-planos-cotas.md)               | Planos e cotas — **implementada**                        | —                  | Fecha a edição por número: cota e ângulo viram entrada, não só leitura                      |
+| 9 ✅   | [DF-23](drafts/df23-trava-e-vistas.md)             | Trava e vistas de câmera — **implementada**              | DF-22              | Protege o que já foi decidido das ações novas de mover; vistas canônicas em um clique       |
+| 10 ✅  | [DF-29](drafts/df29-rotulos-da-cena.md)            | Rótulos dos nós: mostrar/ocultar — **implementada**      | —                  | Um booleano; tira 40 placas de cima da forma quando o olho quer a forma                     |
+| 11 ✅  | [DF-30](drafts/df30-suspensao.md)                  | Módulo de suspensão — **v1 implementada**                | US-4, DF-21, DF-23 | A gaiola tem de fechar com o carro: tipo por eixo, centros de roda e entre-eixos conferido  |
+| 12 ✅  | [DF-31](drafts/df31-recalcular-e-reidentificar.md) | Recalcular pontos e regras — **implementada**            | DF-30              | O motor lê ponto por id; o nó genérico no encontro certo ganha a letra num clique           |
+| 13 ✅  | [DF-32](drafts/df32-desfazer-refazer.md)           | Desfazer e refazer — **implementada**                    | DF-31              | Toda ação de ida ganha volta; o recálculo deixa de ser o único caminho sem retorno          |
+| 14 ✅  | [DF-33](drafts/df33-calendario-competicoes.md)     | Calendário de competições — **implementada**             | DF-13, DF-15, DF-9 | O problema nº 1 da pesquisa (rotatividade) é não saber o prazo; agora ele tem fonte e data  |
+| 15 ✅  | [DF-34](drafts/df34-regulamento-leitor.md)         | Regulamento: índice e ponte — **modo `ponteiro`**        | DF-33, DF-8, DF-12 | A citação do assistente deixa de ser texto e vira porta: seção, página e o PDF oficial nela |
 
 ## Grafo de dependências
 
@@ -384,8 +385,8 @@ e os atalhos clássicos fora de campo de texto. Importar, template e recálculo 
 
 ## DF-33 e DF-34 — Calendário de competições e Regulamento (propostos em 2026-09-06)
 
-Pedido do dono do produto na proposta: **especificar, não implementar.** O DF-33 foi implementado
-depois, no PR #55; o DF-34 continua spec apenas. Duas seções novas, desenhadas juntas
+Pedido do dono do produto na proposta: **especificar, não implementar.** As duas foram
+implementadas depois — o DF-33 no PR #55, o DF-34 no modo `ponteiro` (§13 do draft). Duas seções novas, desenhadas juntas
 no canvas ["Calendário e Regulamento"](https://claude.ai/code/artifact/03837ff6-b954-4cf4-a13b-2a6325a4ac3b)
 e com um mesmo disclaimer fixo em toda página ("O Portal é um facilitador de acesso à informação
 e não substitui a leitura integral do material direto da fonte…").
@@ -401,6 +402,8 @@ e não substitui a leitura integral do material direto da fonte…").
   metadado: id, título nos níveis 0–2, página) vira uma página navegável, e a citação do assistente
   vira link para a seção na **versão citada**. Ler na íntegra dentro do portal é o modo `embutido`,
   que só liga com autorização escrita da organização — o `ponteiro` (abre o PDF oficial na página)
-  entrega todo o resto sem reproduzir uma linha do texto.
+  entrega todo o resto sem reproduzir uma linha do texto. **Implementado no modo `ponteiro`**; o
+  `embutido` virou o [ADR-013](../docs/adr/013-regulamento-embutido.md), proposto, com a condição
+  de promoção escrita.
 
 Ordem: DF-33 antes do DF-34 (o acervo de documentos-fonte é compartilhado).

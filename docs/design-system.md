@@ -2173,7 +2173,18 @@ minmax(240px, 1fr))`, que dá 4 colunas em `xl`, 3 em `lg` e 1 em `sm` sem media
 
 **Variantes.** `inline` (dentro do parágrafo da resposta) · `list` (rodapé da mensagem, agrupados).
 
-**Estados.** `default` · `hover` · `focus` · `active` (a regra citada fica destacada no checklist).
+**Estados.** `default` · `hover` · `focus` · `active` (a regra citada fica destacada no checklist)
+· `menu` (DF-34, 2026-09-06).
+
+**Estado `menu` (DF-34 §7.2).** O chip é `<button aria-haspopup="menu">` e abre duas ações:
+**"Abrir no regulamento · p. N"** (primária — leva à página Regulamento, na seção e na **edição
+citada**) e **"Destacar no checklist"** (só quando há projeto aberto; sem checklist, destacar não
+leva a lugar nenhum). O menu é `.assistant-cite-menu` (`--bj-bg-overlay`, `--bj-shadow-md`,
+`--bj-z-dropdown`), fecha com Escape e com clique fora.
+
+O chip carrega `data-version` com a edição da resposta (`ratbsb@emenda-07#…` → `emenda-07`), e o
+`aria-label` inclui a edição: "Abrir regra B6.2.4.3, página 42, emenda 07". Sem isso a mesma
+numeração de duas emendas soa idêntica no leitor de tela — e ela não é a mesma regra.
 
 **Tokens.** `--bj-accent`, `--bj-accent-bg`, `--bj-accent-border`, `--bj-font-mono`,
 `--bj-text-sm`, `--bj-radius-sm`, `--bj-space-1/-2`.
@@ -2598,6 +2609,63 @@ sublinhado; o painel de detalhe está aberto).
 }
 .bj-cal-forma--circulo {
   border-radius: 50%;
+}
+```
+
+---
+
+### C-27 — Índice em árvore (DF-34, 2026-09-06)
+
+**Anatomia.** `<ul class="bj-reg-arvore" role="tree">` → N × `<li role="treeitem">`
+(`.bj-reg-item`) com `.bj-reg-item-linha`: chevron (`.bj-reg-chevron`, gira 90° quando aberto) ·
+número em mono (`.bj-reg-num`) · título (`.bj-reg-titulo`) **ou** página (`.bj-reg-pagina`,
+quando o item não tem título) · contador de regras à direita (`.bj-reg-contador`).
+
+**Árvore ACHATADA.** Três níveis (parte › capítulo › seção) e mais os itens fundos da seção, todos
+numa lista só, com `aria-level` declarando a profundidade. A hierarquia mora no id (`B6.2.4.3`), a
+indentação é `padding-left` proporcional ao nível, e a navegação por seta vira aritmética de índice
+sobre o que está visível — é o que faz ←/→/Home/End se comportarem igual nos três níveis.
+
+**Estados.** `default` · `hover` (`--bj-hover`) · `focus-visible` (anel de foco por dentro,
+`outline-offset: -2px`, porque o item encosta na borda do painel) · `selecionado` (régua ocre de
+3px em `--bj-accent` + fundo `--bj-selected` + `aria-current="true"`) · `aberto`/`fechado`
+(`aria-expanded`, só em quem tem filhos).
+
+**Tokens.** `--bj-panel-w-sm` (coluna), `--bj-bg-base`, `--bj-border`, `--bj-hover`,
+`--bj-selected`, `--bj-accent`, `--bj-fg-primary/-secondary/-muted`, `--bj-font-mono`,
+`--bj-text-sm/-base/-xs`, `--bj-target-min` (altura mínima da linha), `--bj-dur-fast`.
+
+**Acessibilidade.**
+
+- `role="tree"` com `aria-label`; cada item é `treeitem` com `aria-level` e `aria-selected`.
+  Um item por vez fica no `tabIndex=0` (o selecionado, ou o primeiro) — Tab entra e sai da árvore
+  inteira, não item a item.
+- Teclado: ↑/↓ percorrem o visível · → abre o ramo (e, aberto, entra) · ← fecha (e, fechado, sobe
+  ao pai) · Home/End primeiro e último · Enter/Espaço selecionam.
+- A régua ocre é redundância não-cromática do `aria-current` (§9.3): cor sozinha não marca seleção.
+- Item sem título entra **só com número e página**. No índice do regulamento isso não é economia de
+  espaço: o "título" dos níveis profundos é o começo do parágrafo, ou seja, texto da obra (DF-34
+  §3.1) — e o gerador do índice falha se ele aparecer no artefato.
+- Nenhum glifo novo: o chevron é o `IconChevronRight` que o rail já usa.
+
+```css
+.bj-reg-item {
+  border-left: 3px solid transparent;
+  padding-block: var(--bj-space-1);
+}
+.bj-reg-item--sel {
+  border-left-color: var(--bj-accent);
+  background: var(--bj-selected);
+  color: var(--bj-fg-primary);
+}
+.bj-reg-item-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  min-height: var(--bj-target-min);
+}
+.bj-reg-chevron--aberto {
+  transform: rotate(90deg);
 }
 ```
 
@@ -4714,3 +4782,9 @@ proibição: **C-09 ganha a variante `fonte`** (faixa fixa do aviso da fonte, se
 **C-26 — Linha do tempo** (raia, faixa, janela, cinco formas de marco, linha "hoje"). Chips
 novos no vocabulário de tela: `INSCRITA` (brand), `INTERESSE` (tracejado), `EQUIPE`
 (accent), `VERIFICAR` (o `warn` de sempre). Zero glifo novo.
+
+DF-34 (regulamento) acrescenta, também sem mudar token, contrato nem proibição:
+**C-27 — Índice em árvore** e o estado **`menu` do C-20** (o chip de citação vira porta para
+a seção, com `data-version` da edição citada). Nenhum glifo novo — o chevron é o do rail — e
+nenhuma marca de produto nova: o Regulamento é acervo de referência, entra no rail com texto, e
+a quarta vaga de marca continua livre.
