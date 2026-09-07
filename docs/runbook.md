@@ -220,6 +220,17 @@ Ordem obrigatória; cada passo produz a entrada do seguinte.
    para gravar — ou por `POST /api/v1/admin/regulation/versions`. `edition` é a chave natural:
    rodar de novo atualiza, não duplica. `appliesTo` é a lista **inteira** de competições da
    emenda; mandar `[]` desvincula todas.
+   **Staging não tem usuários** (`users` vazia), então não existe admin para a RLS conferir
+   e o `--admin` do script não tem o que receber: lá a carga vai pela credencial de MASTER
+   do cluster (o segredo `rds!cluster-…`, o mesmo que roda as migrações), que é dona das
+   tabelas e passa pela RLS. É como o acervo do DF-33 entrou. Feito assim, `updated_by` fica
+   nulo e não há linha em `audit_events` — em produção, onde há admin, use o script.
+
+   ```bash
+   aws rds-data execute-statement --profile bajeiros-staging --region sa-east-1      --resource-arn <cluster de staging> --secret-arn <segredo master> --database bajeiros      --sql "INSERT INTO regulation_versions (edition, label, corpus_version, pdf_sha256,
+            page_count, source_id, checked_at) VALUES (…) ON CONFLICT (edition) DO UPDATE …"
+   ```
+
 6. **Conferir na tela:** Ferramentas › Regulamento deve abrir na emenda nova, com o rótulo
    "vigente para", a faixa "Cópia do PDF oficial baixada em <data e hora>" e o documento
    aberto na página da seção. Se o cabeçalho mostrar "índice de outra ingestão", o JSON
