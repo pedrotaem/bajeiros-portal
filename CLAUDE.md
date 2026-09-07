@@ -98,6 +98,11 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
 - Página nova no shell entra em **três** listas: `PageId`/`TITULO_PAGINA` (web), `PAGINAS` do
   módulo de feedback (API, recusa página desconhecida na borda) e os testes que comparam as duas.
 
+- Artefato estático já publicado (índice, PDF, imagem) **não pode depender de linha no banco
+  para aparecer**: o deploy leva o arquivo, a curadoria cadastra depois, e no meio a tela some.
+  O arquivo responde pelo que ele sabe; o banco responde pela curadoria (vigência, vínculo), e
+  a tela diz qual dos dois está falando.
+
 ## Trabalhar aqui
 
 - Branch a partir de `main`; PR com base `main`. Não commitar direto na `main`.

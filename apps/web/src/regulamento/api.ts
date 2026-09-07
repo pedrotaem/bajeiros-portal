@@ -32,11 +32,79 @@ export interface VersaoRegulamento {
   supersededById: string | null
   source: Referencia
   appliesTo: { competitionId: string; name: string; season: number; kind: string }[]
+  /**
+   * `true` = veio dos arquivos publicados, não do banco (`versaoDoArtefato`): o portal tem
+   * o documento, mas ninguém declarou para quais competições ele vale. A API nunca manda
+   * este campo.
+   */
+  semCadastro?: boolean
 }
 
 export interface PayloadRegulamento {
   season: number
   versions: VersaoRegulamento[]
+}
+
+/**
+ * Emenda montada a partir dos ARQUIVOS que o portal publicou (índice + cópia), para
+ * quando o banco ainda não tem a emenda cadastrada.
+ *
+ * Nasceu de um defeito real: o deploy levou o índice e o PDF, a curadoria ainda não tinha
+ * registrado a emenda, e a página escondia um documento que o portal já estava servindo.
+ * O banco continua sendo a fonte da VIGÊNCIA (para quais competições a emenda vale, qual
+ * substituiu qual); o arquivo responde pelo que ele sabe — que emenda é, quantas páginas
+ * tem, de onde veio e quando foi baixada. A tela diz qual dos dois está falando.
+ */
+export function versaoDoArtefato(
+  indice: { edition: string; corpusVersion: string; pdfSha256: string; pageCount: number } | null,
+  copia: CopiaLocal | null,
+): VersaoRegulamento | null {
+  if (!indice) return null
+  return {
+    id: `arquivo:${indice.edition}`,
+    edition: indice.edition,
+    label: rotuloDaEdicao(indice.edition),
+    corpusVersion: indice.corpusVersion,
+    pdfSha256: indice.pdfSha256,
+    pageCount: indice.pageCount,
+    publishedOn: null,
+    checkedAt: copia?.downloadedAt ?? '',
+    supersedesId: null,
+    supersededById: null,
+    semCadastro: true,
+    source: {
+      id: `arquivo:${indice.edition}`,
+      kind: 'regulamento',
+      title: rotuloDaEdicao(indice.edition),
+      url: copia?.url ?? '',
+      publishedOn: null,
+      edition: indice.edition,
+      sectionId: null,
+      altersRules: false,
+      supersedesId: null,
+      checkedAt: copia?.downloadedAt ?? '',
+    },
+    appliesTo: [],
+  }
+}
+
+/**
+ * Qual emenda a página abre: a cadastrada, a que a pessoa escolheu no seletor (ou veio na
+ * citação), ou — na falta das duas — a mais nova que o portal publicou em arquivo. É a
+ * regra que faz o documento aparecer com o banco vazio.
+ */
+export function edicaoAberta(
+  versaoApi: VersaoRegulamento | null,
+  escolhida: string | null,
+  edicoesPublicadas: string[],
+): string | null {
+  return versaoApi?.edition ?? escolhida ?? edicoesPublicadas[0] ?? null
+}
+
+/** `emenda-07` → "RATBSB Emenda 7". Sem curadoria, o nome sai do próprio identificador. */
+export function rotuloDaEdicao(edition: string): string {
+  const m = /^emenda-0*(\d+)$/.exec(edition)
+  return m ? `RATBSB Emenda ${m[1]}` : `RATBSB ${edition.replace(/-/g, ' ')}`
 }
 
 /**

@@ -6,3 +6,4 @@ export declare function editionOf(corpusVersion: string): string
 export declare function buildIndice(manifest: unknown, opts?: { generatedAt?: string }): unknown
 export declare function validarIndice(indice: unknown): void
 export declare function serializar(indice: unknown): string
+export declare function listarEdicoes(dir: string): string[]
