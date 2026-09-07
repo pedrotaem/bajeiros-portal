@@ -405,14 +405,11 @@ function Portal() {
           </div>
         </div>
       )}
-      {/* DF-34: acervo de referência, aberto sem conta como o calendário (FR-DF34.2) */}
-      {page === 'regulamento' && (
-        <div className="page-body">
-          <div className="page-inner">
-            <RegulationPage />
-          </div>
-        </div>
-      )}
+      {/* DF-34: acervo de referência, aberto sem conta como o calendário (FR-DF34.2).
+          Sem `page-body`: aquele invólucro é da era do editor (`overflow: hidden`, altura
+          travada) e CLIPA a página — nada rolava e o documento ficava fora da tela. Página
+          de conteúdo usa `bj-page` dentro do `.bj-content`, que é quem rola. */}
+      {page === 'regulamento' && <RegulationPage />}
       {page === 'admin' && (
         <div className="page-body">
           <div className="page-inner">

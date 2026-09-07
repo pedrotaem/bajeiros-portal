@@ -541,6 +541,9 @@ export const useSession = create<SessionState>((set, get) => ({
         ...REGULATION_DEFAULT,
         sectionId: initialRegulation.sectionId,
         edition: initialRegulation.edition ?? null,
+        // link de entrada é pedido de LEITURA: no celular abre no documento, como a
+        // citação do assistente (§13.3). O `goToRegulation` já fazia isso; o boot não.
+        vista: 'documento',
       }
     : REGULATION_DEFAULT,
   setRegulation: (patch) => set((s) => ({ regulation: { ...s.regulation, ...patch } })),

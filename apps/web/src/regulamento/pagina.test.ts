@@ -325,3 +325,38 @@ describe('celular: uma vista por vez (§13.3)', () => {
     expect(useSession.getState().regulation.vista).toBe('secao')
   })
 })
+
+describe('a página rola, e o documento cabe na tela (defeitos de staging)', () => {
+  const app = readFileSync(path.resolve(__dirname, '../App.tsx'), 'utf8')
+  const shell = readFileSync(path.resolve(__dirname, '../components/Shell.tsx'), 'utf8')
+  const css = readFileSync(path.resolve(__dirname, '../shell.css'), 'utf8')
+  const pagina = readFileSync(path.resolve(__dirname, '../components/RegulationPage.tsx'), 'utf8')
+
+  it('não usa o invólucro do editor, que tem overflow hidden e clipa a página', () => {
+    const trecho = app.slice(app.indexOf("page === 'regulamento'"), app.indexOf("page === 'admin'"))
+    expect(trecho).not.toContain('page-body')
+    expect(pagina).toContain('className="bj-page bj-reg"')
+  })
+
+  it('o rail estreito tem UM caminho: a classe, não uma media query paralela', () => {
+    expect(shell).toContain('railCompact || !largo')
+    // a media query duplicava metade das regras do compacto e esquecia o texto da marca
+    const antesDoCompacto = css.slice(0, css.indexOf('.bj-shell-compacto {'))
+    expect(antesDoCompacto).not.toMatch(/@media \(max-width: 1199px\) \{\s*\.bj-shell \{/)
+  })
+
+  it('o visor vem antes das seções vizinhas — senão o PDF nasce fora da tela', () => {
+    expect(pagina.indexOf('<LeitorEmbutido')).toBeLessThan(pagina.indexOf('<SecoesVizinhas'))
+  })
+
+  it('a URL da fonte quebra linha e as abas acompanham a rolagem', () => {
+    expect(css).toMatch(/\.bj-reg-procedencia \{[^}]*overflow-wrap: anywhere/)
+    // procura o BLOCO que gruda as abas — a definição base de `.bj-reg-abas` mora fora
+    // de media query e casaria com um `includes` ingênuo
+    const grudada = css
+      .split('@media (max-width: 1023px)')
+      .slice(1)
+      .some((b) => /\.bj-reg-abas \{\s*position: sticky/.test(b))
+    expect(grudada).toBe(true)
+  })
+})

@@ -23,28 +23,17 @@
   font-size: var(--bj-text-base);
 }
 
-/* Rail compacto abaixo de 1200px nas páginas de conteúdo (DF-12 RF-1.1). */
-@media (max-width: 1199px) {
-  .bj-shell {
-    grid-template-columns: var(--bj-rail-w-compact);
-  }
-  /* mesma razão do `.bj-shell-compacto`: 56 px de rail não cabem a arte, e o que
-     coubesse não desenharia nada. Os dois caminhos até o rail estreito — a classe
-     e esta media query — precisam da regra. */
-  .bj-logo-rail {
-    display: none;
-  }
-  .bj-nav-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
+/*
+ * Rail compacto abaixo de 1200px (DF-12 RF-1.1) — agora por UM caminho só: o `Shell`
+ * acrescenta `.bj-shell-compacto` quando a janela é estreita, e todas as regras do
+ * compacto valem de uma vez.
+ *
+ * Antes eram dois caminhos (a classe e uma media query), e a media query só copiava
+ * metade: escondia o rótulo dos destinos, mas não o texto da marca nem o chevron da
+ * conta, e não recentrava os itens. Em 390px o "Bajeiros / portal das equipes" vazava
+ * dos 56px por cima do conteúdo. Duplicação que envelheceu — o jeito de não repetir o
+ * erro é não ter o segundo caminho.
+ */
 
 .bj-skip {
   position: absolute;
@@ -3823,10 +3812,26 @@
 /* DF-34 / ADR-014 — leitura do documento dentro da página: o PDF oficial servido pela
    própria origem, no visualizador do navegador. A procedência (data, hora e hash do
    download) fica na faixa da fonte e no rodapé do leitor. */
+.bj-reg {
+  min-width: 0;
+}
+/* Procedência resumida: o chip diz data, hora e que o hash bate; o resto abre ao toque. */
+.bj-reg-proc > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bj-space-1);
+  min-height: var(--bj-target-min);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+  cursor: pointer;
+}
 .bj-reg-procedencia {
   margin: var(--bj-space-1) 0 0;
   font-size: var(--bj-text-sm);
   color: var(--bj-fg-muted);
+  /* a URL da fonte é uma palavra só de ~420px: sem isto ela estica a coluna e um celular
+     de 390 ganha rolagem horizontal na página inteira */
+  overflow-wrap: anywhere;
 }
 .bj-reg-leitor {
   display: flex;
@@ -3930,6 +3935,29 @@
 }
 
 @media (max-width: 1023px) {
+  /* No celular o DOCUMENTO vem antes do cartão: o cartão (título, páginas, ações,
+     vizinhas) somava ~600px acima do visor e mandava o PDF para fora da primeira tela. */
+  .bj-reg-corpo--documento .bj-reg-documento {
+    display: flex;
+    flex-direction: column;
+  }
+  .bj-reg-corpo--documento .bj-reg-barra {
+    order: -2;
+  }
+  .bj-reg-corpo--documento .bj-reg-leitor--estreito {
+    order: -1;
+    margin-top: 0;
+  }
+  .bj-reg-corpo--documento .bj-reg-irmaos {
+    order: 1;
+  }
+  /* a barra de vistas acompanha a rolagem: com o índice inteiro numa coluna só, rolar até
+     a seção selecionada levava as abas para fora da tela */
+  .bj-reg-abas {
+    position: sticky;
+    top: 0;
+    z-index: var(--bj-z-sticky);
+  }
   /*
    * `[hidden]` é regra do NAVEGADOR (`display: none` na folha do agente) e perde para
    * qualquer classe que declare `display` — e `.bj-reg-indice` é `display: flex`. Sem esta
