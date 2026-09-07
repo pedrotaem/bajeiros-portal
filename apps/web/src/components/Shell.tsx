@@ -10,6 +10,7 @@ import {
   IconWrench,
 } from '../icons/glyphs'
 import { MarkAssistant, MarkCage } from '../icons/marks'
+import { useMinWidth } from '../lib/calendario'
 import { TOOL_PAGES, useSession, type CommunityTab, type PageId, type TeamTab } from '../session'
 
 /**
@@ -130,8 +131,18 @@ export function Shell({ title, children }: { title: string; children: React.Reac
   const setCommunityTab = useSession((s) => s.setCommunityTab)
   const user = useSession((s) => s.user)
   const isAdmin = useSession((s) => s.user?.isAdmin === true)
-  const compacto = useSession((s) => s.railCompact)
+  const railCompact = useSession((s) => s.railCompact)
   const setRailCompact = useSession((s) => s.setRailCompact)
+  /**
+   * Abaixo de 1200px o rail é compacto SEMPRE (DF-12 RF-1.1) — e é a mesma classe que a
+   * preferência da pessoa liga, não uma media query paralela. Ter dois caminhos foi o que
+   * deixou o texto da marca vazando por cima do conteúdo em 390px: a media query copiava
+   * metade das regras do compacto.
+   *
+   * A preferência guardada não é tocada: ela volta a valer quando a janela cresce.
+   */
+  const largo = useMinWidth(1200)
+  const compacto = railCompact || !largo
 
   const ativo = (d: Destino) => destinoAtivo(d, page)
   const irParaSub = (s: SubItem) => {
@@ -165,17 +176,21 @@ export function Shell({ title, children }: { title: string; children: React.Reac
             <span className="bj-rail-brand-name">Bajeiros</span>
             <span className="bj-rail-brand-sub">portal das equipes</span>
           </span>
-          <button
-            type="button"
-            className="bj-rail-toggle"
-            aria-expanded={!compacto}
-            aria-controls="bj-rail-lista"
-            data-dica={compacto ? 'Expandir menu' : 'Recolher menu'}
-            onClick={() => setRailCompact(!compacto)}
-          >
-            <IconChevronsRight size={16} />
-            <span className="bj-sr-only">{compacto ? 'Expandir menu' : 'Recolher menu'}</span>
-          </button>
+          {/* estreito demais para expandir: o botão sumiria de utilidade, e prometer o
+              que não acontece é pior do que não oferecer */}
+          {largo && (
+            <button
+              type="button"
+              className="bj-rail-toggle"
+              aria-expanded={!compacto}
+              aria-controls="bj-rail-lista"
+              data-dica={compacto ? 'Expandir menu' : 'Recolher menu'}
+              onClick={() => setRailCompact(!compacto)}
+            >
+              <IconChevronsRight size={16} />
+              <span className="bj-sr-only">{compacto ? 'Expandir menu' : 'Recolher menu'}</span>
+            </button>
+          )}
         </div>
         <ul className="bj-rail-list" id="bj-rail-lista">
           {DESTINOS.map((d) => (

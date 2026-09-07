@@ -218,22 +218,28 @@ export function RegulationPage() {
   const vista: RegulationView = selecionado ? reg.vista : 'indice'
 
   return (
-    <div className="bj-reg">
+    <div className="bj-page bj-reg">
       {/* FR-DF34.16 — faixa da fonte (C-09 `fonte`), visível sem rolar, não fecha */}
       <div className="bj-fonte-aviso" role="note">
         <IconInfoCircle size={16} />
         <div>
           <p>{AVISO_REGULAMENTO}</p>
           {copiaValida && (
-            // 2ª linha da faixa: a procedência anda junto com a cópia, sempre visível
-            <p className="bj-reg-procedencia">
-              Cópia do PDF oficial baixada em <b>{dataHora(copia!.downloadedAt)}</b> de{' '}
-              <a href={copia!.url} target="_blank" rel="noreferrer">
-                {copia!.url}
-              </a>
-              , conferida por hash (sha256 {copia!.sha256.slice(0, 12)}…). Arquivo inalterado; o
-              documento oficial é o da organização.
-            </p>
+            // A procedência anda junto com a cópia, sempre visível — mas resumida: por
+            // extenso, com a URL inteira, ela ocupava metade de uma tela de 390px e
+            // empurrava o documento para fora dela. O detalhe fica a um toque.
+            <details className="bj-reg-proc">
+              <summary>cópia de {dataHora(copia!.downloadedAt)} · hash conferido</summary>
+              <p className="bj-reg-procedencia">
+                Cópia do PDF oficial baixada de{' '}
+                <a href={copia!.url} target="_blank" rel="noreferrer">
+                  {copia!.url}
+                </a>{' '}
+                em {dataHora(copia!.downloadedAt)}, conferida por hash (sha256{' '}
+                {copia!.sha256.slice(0, 12)}…). Arquivo inalterado; o documento oficial é o da
+                organização.
+              </p>
+            </details>
           )}
           {copia && !copiaValida && (
             <p className="bj-reg-procedencia">
@@ -244,14 +250,18 @@ export function RegulationPage() {
         </div>
       </div>
 
-      <Cabecalho
-        payload={versoes.data}
-        versao={versao}
-        indice={indice.dados}
-        query={reg.query}
-        onVersao={(edition) => setReg({ edition, sectionId: null, fromAssistant: false })}
-        onQuery={(query) => setReg({ query })}
-      />
+      {/* No celular o cabeçalho (emenda, fonte, "Ir para") é do ÍNDICE: repetido nas três
+          vistas, ele somava ~200px acima do documento e empurrava o PDF para fora da tela. */}
+      {(!estreito || vista === 'indice') && (
+        <Cabecalho
+          payload={versoes.data}
+          versao={versao}
+          indice={indice.dados}
+          query={reg.query}
+          onVersao={(edition) => setReg({ edition, sectionId: null, fromAssistant: false })}
+          onQuery={(query) => setReg({ query })}
+        />
+      )}
 
       {versao && vigente && versao.id !== vigente.id && (
         // FR-DF34.17 — nunca redireciona sozinho: a numeração muda entre emendas
@@ -355,7 +365,6 @@ export function RegulationPage() {
             {selecionado ? (
               <CartaoDaSecao
                 bloco={selecionado}
-                blocos={blocos}
                 versao={versao}
                 copia={copiaValida ? copia : null}
               />
@@ -386,6 +395,13 @@ export function RegulationPage() {
                 copia={copia}
                 sectionId={selecionado?.id ?? null}
                 estreito={estreito}
+              />
+            )}
+            {selecionado && (
+              <SecoesVizinhas
+                bloco={selecionado}
+                blocos={blocos}
+                onIr={(id) => setReg({ sectionId: id })}
               />
             )}
           </div>
@@ -654,22 +670,56 @@ function Achados({
   )
 }
 
+/**
+ * As seções vizinhas ficam abaixo do documento, não acima: no cartão elas somavam ~300px
+ * entre o topo e o visor, e o PDF nascia fora da primeira tela — em 1440 e em 390.
+ */
+function SecoesVizinhas({
+  bloco,
+  blocos,
+  onIr,
+}: {
+  bloco: Bloco
+  blocos: Bloco[]
+  onIr: (id: string) => void
+}) {
+  const vizinhos = irmaos(blocos, bloco.id).filter((b) => b.id !== bloco.id)
+  if (vizinhos.length === 0) return null
+  return (
+    <section className="bj-reg-irmaos" aria-labelledby="reg-irmaos">
+      <h3 className="bj-secao" id="reg-irmaos">
+        Seções vizinhas
+      </h3>
+      <ul className="bj-reg-achados">
+        {vizinhos.map((b) => (
+          <li key={b.id}>
+            <button type="button" className="bj-reg-achado" onClick={() => onIr(b.id)}>
+              <span className="bj-reg-num">{b.id}</span>
+              {b.title ? (
+                <span className="bj-reg-titulo">{b.title}</span>
+              ) : (
+                <span className="bj-reg-pagina">p. {b.pageStart}</span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 /** FR-DF34.9 — o cartão da seção: onde ela está, e por onde abrir o documento. */
 function CartaoDaSecao({
   bloco,
-  blocos,
   versao,
   copia,
 }: {
   bloco: Bloco
-  blocos: Bloco[]
   versao: VersaoRegulamento
   /** Cópia local já conferida por hash; nula = modo `ponteiro` (só o link oficial). */
   copia: CopiaLocal | null
 }) {
-  const setReg = useSession((s) => s.setRegulation)
   const [copiado, setCopiado] = useState(false)
-  const vizinhos = irmaos(blocos, bloco.id).filter((b) => b.id !== bloco.id)
 
   const copiar = async () => {
     const link = `${window.location.origin}${window.location.pathname}${hashDaSecao(bloco.id, versao.edition)}`
@@ -722,32 +772,6 @@ function CartaoDaSecao({
           ? `No celular o visualizador embutido pode abrir na primeira página — a seção está na p. ${bloco.pageStart}.`
           : `No celular o PDF abre na primeira página — a seção está na p. ${bloco.pageStart}.`}
       </p>
-
-      {vizinhos.length > 0 && (
-        <section className="bj-reg-irmaos" aria-labelledby="reg-irmaos">
-          <h3 className="bj-secao" id="reg-irmaos">
-            Seções vizinhas
-          </h3>
-          <ul className="bj-reg-achados">
-            {vizinhos.map((b) => (
-              <li key={b.id}>
-                <button
-                  type="button"
-                  className="bj-reg-achado"
-                  onClick={() => setReg({ sectionId: b.id })}
-                >
-                  <span className="bj-reg-num">{b.id}</span>
-                  {b.title ? (
-                    <span className="bj-reg-titulo">{b.title}</span>
-                  ) : (
-                    <span className="bj-reg-pagina">p. {b.pageStart}</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </article>
   )
 }

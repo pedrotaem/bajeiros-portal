@@ -483,3 +483,31 @@ Desenho conferido no canvas
 Entre 1024px e 1199px nada muda em relação ao que já estava no ar: uma coluna, painel
 antes do índice. É a largura de tablet, onde a rolagem até o documento é curta — se
 alguém reclamar dali, o mesmo corte serve.
+
+### 13.4 O que o §13.3 quebrou, e como foi medido (2026-09-07)
+
+Relato de staging: "a barra de rolagem do site todo está quebrada, o menu lateral não expande
+e o PDF não aparece". Três defeitos, dois deles anteriores ao §13.3 e escondidos até esta
+página existir. Medidos em Chrome headless por CDP (`document.scrollWidth`, caixas dos
+elementos, quem rola), não por dedução:
+
+1. **Nada rolava.** A página nasceu dentro de `page-body`/`page-inner`, invólucro da era do
+   editor: `overflow: hidden` e altura travada. Em 390px o documento ficava em `y = 5752`,
+   fora de qualquer vista, e `scrollers` vinha **vazio**. Página de conteúdo usa `bj-page`
+   dentro do `.bj-content`, que é quem rola — como Comunidade, Equipe e Ferramentas.
+2. **Rail estreito por dois caminhos.** A media query de 1199px copiava metade das regras do
+   `.bj-shell-compacto`: escondia o rótulo dos destinos, mas não o texto da marca nem o
+   chevron da conta, e não recentrava os itens — o "Bajeiros / portal das equipes" vazava dos
+   56px por cima do conteúdo. Agora o `Shell` acrescenta a classe quando a janela é estreita
+   (`railCompact || !largo`) e a media query saiu: **um caminho só**. O botão de expandir some
+   abaixo de 1200px, onde ele não teria o que fazer.
+3. **O PDF nascia fora da tela.** A URL da fonte, sem quebra, esticava a coluna para 421px
+   numa janela de 390 (rolagem horizontal); a faixa por extenso comia ~460px; o cartão com as
+   seções vizinhas somava outros ~300px antes do visor. Correções: `overflow-wrap: anywhere`
+   na procedência (que virou chip com o detalhe a um toque), cabeçalho só na vista Índice,
+   abas `sticky`, e **as seções vizinhas foram para depois do visor** — no celular e no
+   desktop. Link `#regulamento=` no boot também passa a abrir na vista Documento, como a
+   citação já fazia.
+
+Depois: em 390×844 o visor começa em `y = 477` (523px de altura) e a página tem um scroller
+só; em 1440×900, `y = 536`. Sem rolagem horizontal em nenhum dos dois.

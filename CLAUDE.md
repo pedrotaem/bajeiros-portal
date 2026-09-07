@@ -111,6 +111,12 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   (`.bj-reg-indice` é `display: flex`). Esconder por atributo exige seletor com classe
   (`.pai > [hidden] { display: none }`) — senão a troca de aba não esconde nada.
 
+- `page-body`/`page-inner` são invólucro do EDITOR (`overflow: hidden`, altura travada).
+  Página de conteúdo usa `bj-page` dentro do `.bj-content` — dentro do outro, nada rola.
+- Layout de tela se confere MEDINDO: Chrome headless com `--remote-debugging-port` + CDP pelo
+  `WebSocket` global do Node dá `scrollWidth`, caixas e quem rola em segundos. Duas correções
+  desta sessão foram deduzidas do CSS e erraram o alvo.
+
 ## Trabalhar aqui
 
 - Branch a partir de `main`; PR com base `main`. Não commitar direto na `main`.
