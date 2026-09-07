@@ -3930,6 +3930,15 @@
 }
 
 @media (max-width: 1023px) {
+  /*
+   * `[hidden]` é regra do NAVEGADOR (`display: none` na folha do agente) e perde para
+   * qualquer classe que declare `display` — e `.bj-reg-indice` é `display: flex`. Sem esta
+   * linha o índice não some, trocar de aba não muda nada na tela, e as outras duas abas
+   * parecem quebradas. Classe + atributo ganha em especificidade das colunas.
+   */
+  .bj-reg-corpo--vista > [hidden] {
+    display: none;
+  }
   /* uma vista por vez: a coluna escondida sai do fluxo pelo atributo `hidden` */
   .bj-reg-corpo--vista {
     grid-template-columns: minmax(0, 1fr);
