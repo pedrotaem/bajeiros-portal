@@ -151,7 +151,10 @@ resource "aws_cloudfront_response_headers_policy" "site" {
       override        = true
     }
     frame_options {
-      frame_option = "DENY"
+      # SAMEORIGIN, não DENY: o leitor do regulamento embute a cópia do PDF da PRÓPRIA
+      # origem num <iframe> (ADR-014), e DENY barra até o mesmo domínio — o navegador
+      # troca o visor por "conexão recusada". Enquadrar de fora continua proibido.
+      frame_option = "SAMEORIGIN"
       override     = true
     }
   }
