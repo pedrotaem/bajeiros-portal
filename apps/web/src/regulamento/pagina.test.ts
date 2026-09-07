@@ -4,7 +4,8 @@ import path from 'node:path'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { useSession } from '../session'
 import { achatar, abrirAte } from '../components/RegulationTree'
-import { arvore, type IndiceRegulamento } from './indice'
+import { classeDoCorpo } from '../components/RegulationPage'
+import { arvore, paiDe, vizinhas, type IndiceRegulamento } from './indice'
 import {
   copiaConfere,
   dataHora,
@@ -149,7 +150,13 @@ describe('ida e volta com o assistente (AC-DF34.5)', () => {
   beforeEach(() => {
     useSession.setState({
       page: 'assistant',
-      regulation: { edition: null, sectionId: null, query: '', fromAssistant: false },
+      regulation: {
+        edition: null,
+        sectionId: null,
+        query: '',
+        fromAssistant: false,
+        vista: 'indice',
+      },
     })
   })
 
@@ -165,6 +172,8 @@ describe('ida e volta com o assistente (AC-DF34.5)', () => {
       sectionId: 'B6.2.4.3',
       query: '',
       fromAssistant: true,
+      // no celular, quem chega por citação cai no documento, não no índice (§13.3)
+      vista: 'documento',
     })
   })
 
@@ -262,5 +271,45 @@ describe('emenda publicada sem cadastro no banco', () => {
     expect(versaoEscolhida(payload, null)?.semCadastro).toBeUndefined()
     expect(rotuloDaEdicao('emenda-06')).toBe('RATBSB Emenda 6')
     expect(rotuloDaEdicao('errata-2027')).toBe('RATBSB errata 2027')
+  })
+})
+
+describe('celular: uma vista por vez (§13.3)', () => {
+  it('o corpo troca de layout, não de conteúdo', () => {
+    expect(classeDoCorpo(false, 'documento', true)).toBe('bj-reg-corpo bj-reg-corpo--painel')
+    expect(classeDoCorpo(false, 'documento', false)).toBe('bj-reg-corpo')
+    expect(classeDoCorpo(true, 'documento', true)).toBe(
+      'bj-reg-corpo bj-reg-corpo--vista bj-reg-corpo--documento',
+    )
+    expect(classeDoCorpo(true, 'indice', false)).toBe(
+      'bj-reg-corpo bj-reg-corpo--vista bj-reg-corpo--indice',
+    )
+  })
+
+  it('a barra ‹ › anda entre as seções vizinhas', () => {
+    const v = vizinhas(indice.blocks, 'B6.2.4.3')
+    expect(v.anterior?.id).toBe('B6.2.4.2')
+    expect(v.proxima?.id).toBe('B6.2.4.4')
+  })
+
+  it('anda na ordem do documento, sem ficar preso no fim de um ramo', () => {
+    const filhas = indice.blocks.filter((b) => paiDe(b.id) === 'B6.2.4')
+    const ultima = filhas[filhas.length - 1]
+    expect(vizinhas(indice.blocks, ultima.id).proxima?.id).toBe('B6.2.5')
+    // do primeiro filho, para trás, vem o cabeçalho da seção — não a seção anterior
+    expect(vizinhas(indice.blocks, 'B6.2.4.1').anterior?.id).toBe('B6.2.4')
+  })
+
+  it('nas pontas do documento não há para onde ir', () => {
+    expect(vizinhas(indice.blocks, indice.blocks[0].id).anterior).toBeNull()
+    expect(vizinhas(indice.blocks, indice.blocks[indice.blocks.length - 1].id).proxima).toBeNull()
+    expect(vizinhas(indice.blocks, 'NAO-EXISTE')).toEqual({ anterior: null, proxima: null })
+  })
+
+  it('a citação abre o documento; sem seção, a vista é o índice', () => {
+    useSession.getState().goToRegulation('B6.2.4.3', { fromAssistant: true })
+    expect(useSession.getState().regulation.vista).toBe('documento')
+    useSession.getState().setRegulation({ vista: 'secao' })
+    expect(useSession.getState().regulation.vista).toBe('secao')
   })
 })

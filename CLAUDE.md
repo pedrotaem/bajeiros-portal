@@ -103,6 +103,10 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   O arquivo responde pelo que ele sabe; o banco responde pela curadoria (vigência, vínculo), e
   a tela diz qual dos dois está falando.
 
+- Teste que fatia CSS por **posição** (`lastIndexOf('@media …')`) quebra quando alguém
+  acrescenta um bloco vizinho. Procurar o bloco pelo seletor que ele deve conter é a mesma
+  guarda sem o falso positivo.
+
 ## Trabalhar aqui
 
 - Branch a partir de `main`; PR com base `main`. Não commitar direto na `main`.

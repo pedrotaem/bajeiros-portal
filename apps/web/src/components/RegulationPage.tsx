@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSession } from '../session'
+import { useSession, type RegulationView } from '../session'
 import { useStore } from '../store'
 import { mensagem, useFetch } from '../lib/useFetch'
 import { useMinWidth } from '../lib/calendario'
-import { IconArrow, IconFiles, IconInfoCircle, IconTriangleAlert } from '../icons/glyphs'
+import {
+  IconArrow,
+  IconChevronRight,
+  IconFiles,
+  IconInfoCircle,
+  IconTriangleAlert,
+} from '../icons/glyphs'
 import { askAssistant } from './AssistantPanel'
 import { RegulationTree, abrirAte } from './RegulationTree'
 import {
@@ -30,6 +36,7 @@ import {
   regrasDaSecao,
   rotuloDePaginas,
   urlDaPagina,
+  vizinhas,
   type Bloco,
   type IndiceRegulamento,
 } from '../regulamento/indice'
@@ -53,6 +60,107 @@ export const AVISO_REGULAMENTO =
   'O Portal é um facilitador de acesso à informação e não substitui a leitura integral do ' +
   'material direto da fonte. O usuário deve sempre verificar o documento oficial vigente ' +
   'referente à competição que lhe afeta e tomar qualquer decisão baseada no documento oficial.'
+
+/**
+ * Classe do corpo: três colunas no desktop, uma vista por vez no estreito. Função pura
+ * porque é o que o teste percorre — a regra de layout não mora numa expressão no JSX.
+ */
+export function classeDoCorpo(
+  estreito: boolean,
+  vista: RegulationView,
+  comPainel: boolean,
+): string {
+  if (estreito) return `bj-reg-corpo bj-reg-corpo--vista bj-reg-corpo--${vista}`
+  return comPainel ? 'bj-reg-corpo bj-reg-corpo--painel' : 'bj-reg-corpo'
+}
+
+/** As três vistas do estreito, na ordem em que a barra as mostra. */
+const ABAS: { id: RegulationView; label: string }[] = [
+  { id: 'documento', label: 'Documento' },
+  { id: 'indice', label: 'Índice' },
+  { id: 'secao', label: 'Nesta seção' },
+]
+
+/**
+ * Barra de vistas do celular. Cada alvo tem 44px de altura — o teto de 32px do design
+ * system é medida de mouse, e aqui quem aponta é o dedo (§10.8 do design-system trata do
+ * mínimo, não do confortável).
+ */
+function Abas({
+  vista,
+  temSecao,
+  onVista,
+}: {
+  vista: RegulationView
+  temSecao: boolean
+  onVista: (v: RegulationView) => void
+}) {
+  return (
+    <div className="bj-reg-abas" role="tablist" aria-label="Vistas do regulamento">
+      {ABAS.map((aba) => (
+        <button
+          key={aba.id}
+          type="button"
+          role="tab"
+          className={vista === aba.id ? 'bj-reg-aba bj-reg-aba--on' : 'bj-reg-aba'}
+          aria-selected={vista === aba.id}
+          // Documento e "Nesta seção" só existem depois de escolher uma seção; desabilitar
+          // é mais honesto do que abrir uma vista vazia.
+          disabled={!temSecao && aba.id !== 'indice'}
+          onClick={() => onVista(aba.id)}
+        >
+          {aba.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Barra `‹ B6.2.4.3 ›` do celular: anda entre as seções vizinhas sem voltar ao índice.
+ * É a "navegação fluida" do pedido num aparelho onde índice e documento não cabem juntos.
+ */
+function BarraDaSecao({
+  bloco,
+  blocos,
+  onIr,
+}: {
+  bloco: Bloco
+  blocos: Bloco[]
+  onIr: (id: string) => void
+}) {
+  const { anterior, proxima } = vizinhas(blocos, bloco.id)
+  const caminho = ancestrais(bloco.id).slice(0, -1).join(' › ')
+  return (
+    <div className="bj-reg-barra">
+      <button
+        type="button"
+        className="bj-reg-passo bj-reg-passo--voltar"
+        disabled={!anterior}
+        aria-label={anterior ? `Seção anterior, ${anterior.id}` : 'Não há seção anterior'}
+        onClick={() => anterior && onIr(anterior.id)}
+      >
+        <IconChevronRight size={20} />
+      </button>
+      <span className="bj-reg-barra-txt">
+        <span className="bj-reg-num">{bloco.id}</span>
+        <span className="bj-legenda">
+          {rotuloDePaginas(bloco)}
+          {caminho ? ` · ${caminho}` : ''}
+        </span>
+      </span>
+      <button
+        type="button"
+        className="bj-reg-passo"
+        disabled={!proxima}
+        aria-label={proxima ? `Próxima seção, ${proxima.id}` : 'Não há próxima seção'}
+        onClick={() => proxima && onIr(proxima.id)}
+      >
+        <IconChevronRight size={20} />
+      </button>
+    </div>
+  )
+}
 
 /** Contexto do assistente aceita id de item; "PARTE B" e "PREAMBULO" não são item. */
 function contextoDeRegra(sectionId: string): { ruleId: string } | undefined {
@@ -86,6 +194,9 @@ export function RegulationPage() {
   // referência é o do índice — que veio do mesmo manifest de que o assistente fala.
   const copiaValida = copiaConfere(copia, versao)
   const largo = useMinWidth(1200)
+  // Abaixo de 1024px não há espaço para duas colunas nem paciência para 1 500 px de
+  // rolagem até o documento: a página passa a mostrar UMA vista por vez (§13.3).
+  const estreito = !useMinWidth(1024)
   const [painelAberto, setPainelAberto] = useState(true)
   const [abertos, setAbertos] = useState<Set<string>>(new Set(['PARTE B']))
   const [ultimaSecao, setUltimaSecao] = useState<string | null>(null)
@@ -103,6 +214,8 @@ export function RegulationPage() {
   const selecionado = blocos.find((b) => b.id === reg.sectionId) ?? null
 
   const painel = !largo ? painelAberto : true
+  // Sem seção escolhida não há documento nem painel para mostrar: a vista é o índice.
+  const vista: RegulationView = selecionado ? reg.vista : 'indice'
 
   return (
     <div className="bj-reg">
@@ -181,11 +294,14 @@ export function RegulationPage() {
         </div>
       )}
 
+      {/* §13.3 — no estreito as três colunas viram três vistas, uma por vez */}
+      {versao && estreito && (
+        <Abas vista={vista} temSecao={!!selecionado} onVista={(v) => setReg({ vista: v })} />
+      )}
+
       {versao && (
-        <div
-          className={painel && selecionado ? 'bj-reg-corpo bj-reg-corpo--painel' : 'bj-reg-corpo'}
-        >
-          <div className="bj-reg-indice">
+        <div className={classeDoCorpo(estreito, vista, painel && !!selecionado)}>
+          <div className="bj-reg-indice" hidden={estreito && vista !== 'indice'}>
             <h2 className="bj-secao" id="reg-indice">
               <IconFiles size={16} /> Índice
             </h2>
@@ -212,13 +328,30 @@ export function RegulationPage() {
                 />
               )
             )}
+            {/* no estreito, escolher no índice tem que LEVAR à leitura */}
+            {estreito && selecionado && (
+              <button
+                type="button"
+                className="bj-btn bj-reg-ler"
+                onClick={() => setReg({ vista: 'documento' })}
+              >
+                Ler {selecionado.id} no documento <IconArrow size={16} />
+              </button>
+            )}
             <Referencias
               refs={referencias.data?.references ?? []}
               versoes={versoes.data?.versions ?? []}
             />
           </div>
 
-          <div className="bj-reg-documento">
+          <div className="bj-reg-documento" hidden={estreito && vista !== 'documento'}>
+            {estreito && selecionado && (
+              <BarraDaSecao
+                bloco={selecionado}
+                blocos={blocos}
+                onIr={(id) => setReg({ sectionId: id })}
+              />
+            )}
             {selecionado ? (
               <CartaoDaSecao
                 bloco={selecionado}
@@ -252,17 +385,19 @@ export function RegulationPage() {
                 pagina={selecionado?.pageStart ?? 1}
                 copia={copia}
                 sectionId={selecionado?.id ?? null}
+                estreito={estreito}
               />
             )}
           </div>
 
-          {selecionado && (
+          {selecionado && (!estreito || vista === 'secao') && (
             <PainelDaSecao
               bloco={selecionado}
               versao={versao}
               refs={referencias.data?.references ?? []}
-              aberto={painel}
+              aberto={estreito || painel}
               largo={largo}
+              estreito={estreito}
               onAlternar={() => setPainelAberto((v) => !v)}
             />
           )}
@@ -369,14 +504,20 @@ function LeitorEmbutido({
   pagina,
   copia,
   sectionId,
+  estreito,
 }: {
   edition: string
   pagina: number
   copia: CopiaLocal
   sectionId: string | null
+  /** No celular o visor ocupa o que sobra da tela e ganha ação de abrir em tela cheia. */
+  estreito: boolean
 }) {
   return (
-    <section className="bj-reg-leitor" aria-labelledby="reg-leitor">
+    <section
+      className={estreito ? 'bj-reg-leitor bj-reg-leitor--estreito' : 'bj-reg-leitor'}
+      aria-labelledby="reg-leitor"
+    >
       <div className="bj-reg-leitor-topo">
         <h3 className="bj-secao" id="reg-leitor">
           Documento{sectionId ? ` · ${sectionId}` : ''}
@@ -618,6 +759,7 @@ function PainelDaSecao({
   refs,
   aberto,
   largo,
+  estreito,
   onAlternar,
 }: {
   bloco: Bloco
@@ -625,6 +767,8 @@ function PainelDaSecao({
   refs: Referencia[]
   aberto: boolean
   largo: boolean
+  /** No celular o painel é uma VISTA, não uma coluna: quem abre e fecha é a barra de abas. */
+  estreito: boolean
   onAlternar: () => void
 }) {
   const user = useSession((s) => s.user)
@@ -657,10 +801,13 @@ function PainelDaSecao({
   }
 
   return (
-    <aside className="bj-reg-painel" aria-label={`Nesta seção: ${bloco.id}`}>
+    <aside
+      className={estreito ? 'bj-reg-painel bj-reg-painel--vista' : 'bj-reg-painel'}
+      aria-label={`Nesta seção: ${bloco.id}`}
+    >
       <div className="bj-reg-painel-topo">
         <h2 className="bj-secao">Nesta seção</h2>
-        {!largo && (
+        {!largo && !estreito && (
           <button type="button" className="bj-link" onClick={onAlternar}>
             Fechar
           </button>

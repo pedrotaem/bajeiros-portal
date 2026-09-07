@@ -4795,3 +4795,8 @@ padrão). Não é componente novo do catálogo — é o documento dentro do C-19
 e vem sempre com a **procedência** (`.bj-reg-procedencia`, `--bj-text-sm`/`--bj-fg-muted`) na
 faixa C-09 `fonte` e no rodapé do leitor: de onde o arquivo veio, em que data e hora foi
 baixado e o começo do sha256. Cópia sem procedência à vista não entra em tela.
+
+Emenda de celular (DF-34 §13.3): abaixo de **1024px** a página do regulamento troca as três
+colunas por três vistas numa barra `role="tablist"` (`.bj-reg-abas`/`.bj-reg-aba`, alvo de
+**44px** — o mínimo de 32px do §10.8 é medida de mouse), e o C-27 perde a rolagem aninhada
+(`max-height: none`), com linhas de 44px. Nenhum token novo; nenhum glifo novo.

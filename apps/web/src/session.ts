@@ -115,13 +115,23 @@ export interface RegulationState {
   sectionId: string | null
   query: string
   fromAssistant: boolean
+  /**
+   * Qual das três vistas está aberta no celular (DF-34 §13.3). No desktop as três são
+   * colunas e o campo não pinta nada; ele vive aqui, e não em `useState` da tela, para
+   * que ir ao assistente e voltar devolva a mesma vista.
+   */
+  vista: RegulationView
 }
+
+/** Vistas da página no estreito: o documento, o índice e o painel da seção. */
+export type RegulationView = 'documento' | 'indice' | 'secao'
 
 export const REGULATION_DEFAULT: RegulationState = {
   edition: null,
   sectionId: null,
   query: '',
   fromAssistant: false,
+  vista: 'indice',
 }
 
 /**
@@ -544,6 +554,9 @@ export const useSession = create<SessionState>((set, get) => ({
         edition: opts?.edition ?? s.regulation.edition,
         fromAssistant: opts?.fromAssistant ?? false,
         query: '',
+        // quem chega por citação, link ou checklist quer LER a seção, não procurá-la
+        // no índice — no celular a página abre direto no documento (§13.3)
+        vista: 'documento',
       },
     }))
   },
