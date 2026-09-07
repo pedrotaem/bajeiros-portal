@@ -88,6 +88,16 @@ Fonte normativa: `docs/design-system.md`. Ele manda; este arquivo só aponta.
   `Cache-Control` público. Coluna `date` sai do banco como `to_char(..., 'YYYY-MM-DD')`: o pg
   devolve `Date` local e a Data API devolve string — um prazo é um dia, não um instante.
 
+- **Título do manifest do gateway não é título** fora dos capítulos: em ~30 seções de nível 2 e
+  em tudo abaixo do nível 3 ele é o começo do parágrafo, ou seja, texto do regulamento. Quem
+  consome o manifest filtra (`ehTitulo` em `scripts/build-regulamento-indice.mjs`), e a guarda
+  vale para o artefato commitado, não só para a geração.
+- Arquivo **gerado** que o CI formata (`format:check`) precisa nascer no estilo do prettier do
+  repo — aspas simples, sem ponto e vírgula. `JSON.stringify` gera aspas duplas e quebra o CI
+  depois, no lugar errado. Alternativa: entrar no `.prettierignore`, como `tokens.css`.
+- Página nova no shell entra em **três** listas: `PageId`/`TITULO_PAGINA` (web), `PAGINAS` do
+  módulo de feedback (API, recusa página desconhecida na borda) e os testes que comparam as duas.
+
 ## Trabalhar aqui
 
 - Branch a partir de `main`; PR com base `main`. Não commitar direto na `main`.

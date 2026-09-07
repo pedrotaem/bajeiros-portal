@@ -193,6 +193,38 @@ protegido por JWT + RLS, com ou sem cortina (DF-27 §9).
   `calendar.*` em `audit_events`. Competição com `checked_at` > 30 dias e marco futuro exibe
   VERIFICAR na tela — conferir a fonte e salvar qualquer campo renova o carimbo.
 
+## Regulamento (DF-34) — emenda nova, uma vez por ano
+
+Ordem obrigatória; cada passo produz a entrada do seguinte.
+
+1. **Baixar o PDF oficial** da página de regras da organização (o site devolve 403 a cliente
+   não-browser: baixar pelo Chrome) e guardar o `sha256` do arquivo.
+2. **Ingerir no gateway** (`bajeiros-ai-gateway`, `scripts/ingest.ts`): sai o corpus e o
+   `<edition>.manifest.json`, com `version` (`ratbsb@emenda-08#sha256:…`) e `pdfSha256`.
+   Conferir que o `pdfSha256` do manifest é o mesmo hash do passo 1 — se não for, o assistente
+   e o índice falariam de arquivos diferentes.
+3. **Gerar o índice do portal:**
+   `node scripts/build-regulamento-indice.mjs --manifest <caminho>/<edition>.manifest.json`.
+   Ele escreve `apps/web/public/regulamento/indice-<edition>.json` e **falha** se algum item de
+   nível ≥ 3 vier com título (isso seria texto do regulamento) ou se um título raso for prosa.
+   Commitar o JSON: é metadado, muda uma vez por emenda, e é servido estático.
+4. **Cadastrar a emenda:** o documento-fonte (o PDF) entra por Administração › Calendário
+   (ou pelo `seed-calendar.mjs`); a emenda em si entra por
+   `node apps/api/scripts/seed-regulation.mjs` — dry-run por padrão, `--apply --admin <uuid>`
+   para gravar — ou por `POST /api/v1/admin/regulation/versions`. `edition` é a chave natural:
+   rodar de novo atualiza, não duplica. `appliesTo` é a lista **inteira** de competições da
+   emenda; mandar `[]` desvincula todas.
+5. **Conferir na tela:** Ferramentas › Regulamento deve abrir na emenda nova, com o rótulo
+   "vigente para" e o link do PDF oficial. Se o cabeçalho mostrar "índice de outra ingestão",
+   o JSON commitado e o `corpus_version` cadastrado saíram de ingestões diferentes — refazer o
+   passo 3 com o manifest certo.
+
+A emenda anterior **continua cadastrada**: a resposta antiga do assistente aponta para ela, e a
+numeração muda entre emendas. Não apague; ligue `supersedesId` da nova para a antiga.
+
+Ler o PDF dentro do portal (modo `embutido`) não existe e não se liga por variável: depende de
+autorização da organização — [ADR-013](adr/013-regulamento-embutido.md).
+
 ## Rollback
 
 **Opção A (preferida):** `git revert` do commit ruim em `main` → pipeline redeploya a versão anterior. Tempo: ~5 min.

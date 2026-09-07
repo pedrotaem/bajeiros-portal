@@ -1,5 +1,7 @@
 import type { RuleResult, Status } from '@bajeiros/core/rules/b6'
 import { useStore } from '../store'
+import { useSession } from '../session'
+import { RULE_SECTIONS } from '../regulamento/rule-sections'
 import { askAssistant } from './AssistantPanel'
 
 const BADGE: Record<Status, { label: string; className: string }> = {
@@ -12,6 +14,7 @@ const BADGE: Record<Status, { label: string; className: string }> = {
 export function RulePanel({ results }: { results: RuleResult[] }) {
   const highlightRule = useStore((s) => s.highlightRule)
   const setHighlightRule = useStore((s) => s.setHighlightRule)
+  const goToRegulation = useSession((s) => s.goToRegulation)
 
   const auto = results.filter((r) => r.status !== 'manual')
   const passed = auto.filter((r) => r.status === 'pass').length
@@ -45,6 +48,20 @@ export function RulePanel({ results }: { results: RuleResult[] }) {
               </div>
             )}
             {r.note && <div className="rule-note">{r.note}</div>}
+            {/* DF-34 FR-DF34.19 — a regra de modelagem do portal (SUSP.*, JOINT.X…) não
+                tem seção, e por isso não ganha o botão: não há o que ler lá. */}
+            {RULE_SECTIONS[r.id] && (
+              <button
+                className="rule-ask"
+                title="Abrir esta seção no índice do regulamento"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToRegulation(RULE_SECTIONS[r.id])
+                }}
+              >
+                ler no regulamento
+              </button>
+            )}
             {r.status !== 'pass' && (
               <button
                 className="rule-ask"

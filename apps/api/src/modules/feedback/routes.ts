@@ -32,6 +32,7 @@ export const PAGINAS = [
   'comunidade',
   'editor',
   'assistant',
+  'regulamento',
   'admin',
   'sobre',
   'projeto',

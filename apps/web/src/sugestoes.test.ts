@@ -145,6 +145,7 @@ describe('o conjunto de páginas é o mesmo dos dois lados (RF-DF26.10)', () => 
       'comunidade',
       'editor',
       'assistant',
+      'regulamento',
       'admin',
       'sobre',
       'projeto',

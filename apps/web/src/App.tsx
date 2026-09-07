@@ -10,6 +10,7 @@ import { Inspector } from './components/Inspector'
 import { Wizard } from './components/Wizard'
 import { SessionPanels } from './components/SessionPanels'
 import { AssistantPanel } from './components/AssistantPanel'
+import { RegulationPage } from './components/RegulationPage'
 import { AdminPanel } from './components/AdminPanel'
 import { TeamPage } from './components/TeamPage'
 import { HomePage } from './components/HomePage'
@@ -401,6 +402,14 @@ function Portal() {
         <div className="page-body">
           <div className="page-inner page-narrow">
             <AssistantPanel />
+          </div>
+        </div>
+      )}
+      {/* DF-34: acervo de referência, aberto sem conta como o calendário (FR-DF34.2) */}
+      {page === 'regulamento' && (
+        <div className="page-body">
+          <div className="page-inner">
+            <RegulationPage />
           </div>
         </div>
       )}

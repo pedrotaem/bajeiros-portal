@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AREA_IDS, AREA_LABELS } from '@bajeiros/evolution/areas'
 import type { AreaId } from '@bajeiros/evolution/types'
 import { useSession } from '../session'
@@ -292,11 +292,26 @@ export function KnowledgeTab({ teamId, canManage }: { teamId: string; canManage:
 
 function NovaDecisao({ teamId, onCriada }: { teamId: string; onCriada: () => void }) {
   const api = useSession((s) => s.api)
+  const prefill = useSession((s) => s.decisionPrefill)
+  const setDecisionPrefill = useSession((s) => s.setDecisionPrefill)
   const [aberto, setAberto] = useState(false)
   const [title, setTitle] = useState('')
   const [area, setArea] = useState<Area>('geral')
   const [why, setWhy] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+
+  /**
+   * DF-34 FR-DF34.12 — "Registrar decisão sobre esta seção" abre este formulário já
+   * escrito, com o número da seção e o link. O texto fica VISÍVEL antes de salvar: o
+   * portal não registra decisão de equipe sem alguém ler o que vai ser gravado.
+   */
+  useEffect(() => {
+    if (!prefill) return
+    setTitle(prefill.title)
+    setWhy(prefill.why)
+    setAberto(true)
+    setDecisionPrefill(null)
+  }, [prefill, setDecisionPrefill])
 
   const salvar = async () => {
     setErro(null)

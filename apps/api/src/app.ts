@@ -15,6 +15,7 @@ import { community } from './modules/community/routes'
 import { home } from './modules/home/routes'
 import { feedback } from './modules/feedback/routes'
 import { calendar, calendarPublic } from './modules/calendar/routes'
+import { regulationPublic } from './modules/regulation/routes'
 import { accessLog, activity } from './access-log'
 
 export const app = new Hono()
@@ -27,6 +28,9 @@ if (env('AUTH_MODE') === 'dev') app.route('/api/v1/dev', devIssuer)
 // com policy pública, não tem quota e sai com Cache-Control de 1 h — o visitante não
 // acorda a Aurora. Nenhuma outra rota pública deve nascer fora deste prefixo.
 app.route('/api/v1/public', calendarPublic)
+// DF-34 §6: mesma regra — a página do regulamento abre sem conta e só lê metadado
+// (que emenda vale para qual competição, e as referências oficiais do ciclo).
+app.route('/api/v1/public', regulationPublic)
 
 app.use('/api/v1/*', requireAuth)
 app.use('/api/v1/*', accessLog) // DF-9: atividade por usuário (após auth)

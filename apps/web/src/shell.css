@@ -3490,3 +3490,332 @@
     margin-left: 0;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   DF-34 — Regulamento (design-system C-27 índice em árvore, C-09 `fonte`, C-20 `menu`)
+   Três colunas: índice (320) · documento · painel (360). Abaixo de 1200px o painel
+   vira bloco colapsável e o índice vira acordeão de largura cheia (FR-DF34.12).
+   --------------------------------------------------------------------------- */
+.bj-reg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-4);
+}
+.bj-reg-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bj-space-3);
+}
+.bj-reg-campo {
+  display: flex;
+  align-items: center;
+}
+.bj-reg-campo--ir {
+  margin-left: auto;
+  min-width: 260px;
+}
+.bj-reg-campo--ir input {
+  width: 100%;
+}
+.bj-reg-fonte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bj-space-2);
+}
+/* Mesma anatomia da faixa da fonte, na família warn: emenda substituída é aviso,
+   não erro — e nunca redireciona sozinho (FR-DF34.17). */
+.bj-reg-aviso-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-2) var(--bj-space-3);
+  background: var(--bj-warn-bg);
+  border: 1px solid var(--bj-warn-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  font-size: var(--bj-text-sm);
+  line-height: var(--bj-leading-normal);
+}
+.bj-reg-aviso-warn > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.bj-reg-aviso-warn p {
+  margin: 0;
+}
+
+.bj-reg-corpo {
+  display: grid;
+  grid-template-columns: var(--bj-panel-w-sm) minmax(0, 1fr);
+  gap: var(--bj-space-4);
+  align-items: start;
+}
+.bj-reg-corpo--painel {
+  grid-template-columns: var(--bj-panel-w-sm) minmax(0, 1fr) var(--bj-panel-w);
+}
+.bj-reg-indice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  min-width: 0;
+}
+.bj-reg-documento {
+  min-width: 0;
+}
+
+.bj-reg-arvore {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  background: var(--bj-bg-base);
+}
+.bj-reg-item {
+  display: block;
+  padding-block: var(--bj-space-1);
+  padding-right: var(--bj-space-2);
+  border-left: 3px solid transparent;
+  color: var(--bj-fg-secondary);
+  cursor: pointer;
+}
+.bj-reg-item:hover {
+  background: var(--bj-hover);
+}
+.bj-reg-item:focus-visible {
+  outline: 2px solid var(--bj-focus-ring-color);
+  outline-offset: -2px;
+}
+/* Régua ocre no selecionado (C-02): a cor sozinha não conta, por isso a régua. */
+.bj-reg-item--sel {
+  border-left-color: var(--bj-accent);
+  background: var(--bj-selected);
+  color: var(--bj-fg-primary);
+}
+.bj-reg-item-linha {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  min-height: var(--bj-target-min);
+}
+.bj-reg-chevron {
+  display: inline-flex;
+  flex: none;
+  width: 16px;
+  color: var(--bj-fg-muted);
+  transition: transform var(--bj-dur-fast) var(--bj-ease);
+}
+.bj-reg-chevron--aberto {
+  transform: rotate(90deg);
+}
+.bj-reg-num {
+  flex: none;
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-primary);
+}
+.bj-reg-titulo {
+  font-size: var(--bj-text-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bj-reg-pagina {
+  font-family: var(--bj-font-mono);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+}
+.bj-reg-contador {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--bj-text-xs);
+  color: var(--bj-fg-muted);
+}
+
+.bj-reg-achados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.bj-reg-achado {
+  display: flex;
+  align-items: center;
+  gap: var(--bj-space-2);
+  width: 100%;
+  min-height: var(--bj-target-min);
+  padding: var(--bj-space-1) var(--bj-space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.bj-reg-achado:hover {
+  background: var(--bj-hover);
+}
+
+.bj-reg-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+  padding: var(--bj-space-4);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+}
+/* "Leitura numérica" (design-system §3.1): o número da seção é o título do cartão. */
+.bj-reg-cartao-id {
+  margin: 0;
+  font-family: var(--bj-font-display);
+  font-size: var(--bj-text-2xl);
+  color: var(--bj-fg-primary);
+}
+.bj-reg-cartao-titulo {
+  margin: 0;
+  font-size: var(--bj-text-lg);
+  color: var(--bj-fg-primary);
+}
+.bj-reg-cartao-pag {
+  margin: 0;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+}
+.bj-reg-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bj-space-2);
+}
+.bj-reg-irmaos {
+  margin-top: var(--bj-space-3);
+  border-top: 1px solid var(--bj-border);
+  padding-top: var(--bj-space-2);
+}
+
+.bj-reg-painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-3);
+  padding: var(--bj-space-3);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  position: sticky;
+  top: var(--bj-space-3);
+  max-height: calc(100vh - var(--bj-space-6));
+  overflow: auto;
+}
+.bj-reg-painel-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bj-space-2);
+}
+.bj-reg-painel-fechado {
+  min-height: var(--bj-target-min);
+  padding: var(--bj-space-2);
+  background: var(--bj-bg-raised);
+  border: 1px solid var(--bj-border);
+  border-radius: var(--bj-radius);
+  color: var(--bj-fg-secondary);
+  cursor: pointer;
+}
+.bj-reg-caminho {
+  margin: 0;
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-secondary);
+}
+.bj-reg-bloco {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bj-space-2);
+  border-top: 1px solid var(--bj-border);
+  padding-top: var(--bj-space-2);
+}
+.bj-reg-regras,
+.bj-reg-refs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-1);
+}
+.bj-reg-ref-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bj-space-2);
+}
+.bj-reg-rodape {
+  margin: 0;
+  border-top: 1px solid var(--bj-border);
+  padding-top: var(--bj-space-2);
+  font-size: var(--bj-text-sm);
+  color: var(--bj-fg-muted);
+  line-height: var(--bj-leading-normal);
+}
+.bj-reg-referencias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bj-space-2);
+}
+
+/* C-20 estado `menu` (DF-34 §7.2): o chip abre duas ações; o chip em si segue no
+   styles.css, com o desenho do assistente. */
+.assistant-cite-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.assistant-cite-menu {
+  position: absolute;
+  top: calc(100% + var(--bj-space-1));
+  left: 0;
+  z-index: var(--bj-z-dropdown);
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: var(--bj-space-1);
+  background: var(--bj-bg-overlay);
+  border: 1px solid var(--bj-border-strong);
+  border-radius: var(--bj-radius);
+  box-shadow: var(--bj-shadow-md);
+}
+.assistant-cite-menu button {
+  min-height: var(--bj-target-min);
+  padding: var(--bj-space-1) var(--bj-space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--bj-radius-sm);
+  color: var(--bj-fg-primary);
+  font-size: var(--bj-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.assistant-cite-menu button:hover {
+  background: var(--bj-hover);
+}
+
+/* FR-DF34.12 — abaixo de 1200px o painel deixa de ser coluna: vira bloco no topo,
+   como o painel do calendário abaixo de 1024px. */
+@media (max-width: 1199px) {
+  .bj-reg-corpo,
+  .bj-reg-corpo--painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bj-reg-painel {
+    position: static;
+    max-height: none;
+    order: -1;
+  }
+  .bj-reg-campo--ir {
+    margin-left: 0;
+  }
+}

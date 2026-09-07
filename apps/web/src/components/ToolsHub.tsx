@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AREA_LABELS } from '@bajeiros/evolution/areas'
 import type { AreaId } from '@bajeiros/evolution/types'
 import { useSession } from '../session'
-import { IconArrow } from '../icons/glyphs'
+import { IconArrow, IconFiles } from '../icons/glyphs'
 import { MarkAssistant, MarkCage } from '../icons/marks'
 import { StatusChip } from '../icons/statusIcon'
 
@@ -176,6 +176,25 @@ export function ToolsHub({ teamId }: { teamId: string | null }) {
           <div className="bj-card-acoes">
             <button type="button" className="bj-btn" onClick={() => setPage('assistant')}>
               {user ? 'Abrir o assistente' : 'Ver a demonstração'}
+              <IconArrow size={16} />
+            </button>
+          </div>
+        </article>
+
+        {/* DF-34 — acervo de referência, não ferramenta que produz coisa: sem marca de
+            produto e sem "alimenta" (ele não move nível de evolução por si). */}
+        <article className="bj-card">
+          <header>
+            <IconFiles size={20} />
+            <h2>Regulamento</h2>
+          </header>
+          <p>O índice do regulamento vigente, por parte e seção, com a página do PDF oficial.</p>
+          <div className="bj-card-estado">
+            <span>Abre sem conta. O texto é lido no documento oficial da organização.</span>
+          </div>
+          <div className="bj-card-acoes">
+            <button type="button" className="bj-btn" onClick={() => setPage('regulamento')}>
+              Abrir o regulamento
               <IconArrow size={16} />
             </button>
           </div>
