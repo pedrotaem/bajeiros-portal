@@ -8,11 +8,14 @@ import { arvore, type IndiceRegulamento } from './indice'
 import {
   copiaConfere,
   dataHora,
+  edicaoAberta,
   edicaoDoCorpus,
   referenciasDaSecao,
   rotuloVigencia,
   versaoEscolhida,
+  rotuloDaEdicao,
   urlDaCopia,
+  versaoDoArtefato,
   versaoVigente,
   type CopiaLocal,
   type PayloadRegulamento,
@@ -211,5 +214,53 @@ describe('cópia do PDF servida pelo portal (ADR-014)', () => {
     expect(urlDaCopia('emenda-07')).toBe('/regulamento/emenda-07.pdf')
     expect(dataHora('2026-09-07T00:40:33.877Z')).toMatch(/\d{2}\/\d{2}\/\d{4}/)
     expect(dataHora('nada')).toBe('—')
+  })
+})
+
+describe('emenda publicada sem cadastro no banco', () => {
+  const copia: CopiaLocal = JSON.parse(
+    readFileSync(path.resolve(__dirname, '../../public/regulamento/copia-emenda-07.json'), 'utf8'),
+  )
+  const edicoes: { edicoes: string[] } = JSON.parse(
+    readFileSync(path.resolve(__dirname, '../../public/regulamento/edicoes.json'), 'utf8'),
+  )
+
+  it('o portal declara em arquivo as emendas que publicou', () => {
+    expect(edicoes.edicoes).toContain(indice.edition)
+  })
+
+  it('sem linha no banco, o documento aparece com o que o arquivo sabe', () => {
+    const v = versaoDoArtefato(indice, copia)!
+    expect(v.edition).toBe('emenda-07')
+    expect(v.label).toBe('RATBSB Emenda 7')
+    expect(v.pageCount).toBe(148)
+    expect(v.corpusVersion).toBe(indice.corpusVersion)
+    expect(v.source.url).toBe(copia.url)
+    expect(v.semCadastro).toBe(true)
+    // e a leitura embutida continua valendo, conferida contra o hash do índice
+    expect(copiaConfere(copia, v)).toBe(true)
+  })
+
+  it('sem vigência declarada, a tela não inventa uma', () => {
+    const v = versaoDoArtefato(indice, copia)!
+    expect(v.appliesTo).toEqual([])
+    expect(rotuloVigencia(v)).toBeNull()
+  })
+
+  it('a emenda aberta cai no arquivo só quando não há cadastro nem escolha', () => {
+    expect(edicaoAberta(payload.versions[0], null, ['emenda-07'])).toBe('emenda-07')
+    expect(edicaoAberta(null, 'emenda-06', ['emenda-07'])).toBe('emenda-06')
+    expect(edicaoAberta(null, null, ['emenda-07', 'emenda-06'])).toBe('emenda-07')
+    expect(edicaoAberta(null, null, [])).toBeNull()
+  })
+
+  it('sem índice não há emenda de arquivo — o portal não publicou nada', () => {
+    expect(versaoDoArtefato(null, copia)).toBeNull()
+  })
+
+  it('o cadastro do banco tem precedência sobre o arquivo', () => {
+    expect(versaoEscolhida(payload, null)?.semCadastro).toBeUndefined()
+    expect(rotuloDaEdicao('emenda-06')).toBe('RATBSB Emenda 6')
+    expect(rotuloDaEdicao('errata-2027')).toBe('RATBSB errata 2027')
   })
 })

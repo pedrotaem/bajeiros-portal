@@ -439,3 +439,18 @@ repositório pesar, é para lá que vai.
 Carga: `apps/api/scripts/seed-regulation.mjs` (dry-run por padrão; exige que o
 `seed-calendar.mjs` já tenha criado o documento-fonte do PDF). A emenda 6 não foi cadastrada:
 não temos o arquivo em mãos para conferir o hash, e hash não se inventa.
+
+### 13.2 Correção pós-deploy (2026-09-06)
+
+Primeiro deploy em produção: índice e PDF no ar (`/regulamento/*` respondendo 200), e a
+página mostrando "nenhuma emenda cadastrada" — `regulation_versions` estava vazia nos dois
+ambientes, e TUDO na tela pendia dessa linha (o índice e a cópia só carregavam depois de a
+emenda existir no banco).
+
+A correção não foi cadastrar e seguir: um artefato que o deploy publicou não pode sumir por
+falta de uma linha em tabela. `scripts/build-regulamento-indice.mjs` passou a escrever
+`edicoes.json` (que emendas o portal tem em arquivo) e a página monta a emenda a partir do
+índice + procedência quando o banco não tem cadastro — com o chip **"vigência não declarada
+pela curadoria"**, porque o arquivo sabe qual emenda é, não para quais competições ela vale.
+Cadastro no banco continua tendo precedência e é o que traz "vigente para", substituição e
+o vínculo com o calendário.

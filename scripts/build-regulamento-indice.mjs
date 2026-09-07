@@ -17,7 +17,7 @@
 //      são prosa (A1.1, C4.3, B15.x…) porque a seção não tem cabeçalho no PDF. Regra
 //      dura, não estética: prosa é texto do regulamento em qualquer profundidade.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
@@ -176,9 +176,30 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } else {
     mkdirSync(path.dirname(destino), { recursive: true })
     writeFileSync(destino, texto)
+    const edicoes = listarEdicoes(path.dirname(destino))
+    writeFileSync(
+      path.join(path.dirname(destino), 'edicoes.json'),
+      `${JSON.stringify({ edicoes }, null, 2)}\n`,
+    )
     const comTitulo = indice.blocks.filter((b) => b.title).length
     console.log(
       `${path.relative(root, destino)}: ${indice.blocks.length} blocos, ${comTitulo} com título, ${indice.pageCount} páginas (${indice.corpusVersion})`,
     )
+    console.log(`edicoes.json: ${edicoes.join(', ')}`)
   }
+}
+
+/**
+ * Que emendas o PORTAL tem em arquivo, mais nova primeiro. É o que deixa a página abrir o
+ * regulamento quando o banco ainda não tem a emenda cadastrada: o índice e o PDF já foram
+ * publicados no deploy, e esconder o documento por falta de uma linha em tabela é perder o
+ * que o portal já entrega. A vigência continua vindo do banco — o que o arquivo não sabe é
+ * para QUAIS competições a emenda vale, e a tela diz isso.
+ */
+export function listarEdicoes(dir) {
+  return readdirSync(dir)
+    .map((f) => /^indice-(.+)\.json$/.exec(f)?.[1])
+    .filter((e) => !!e)
+    .sort()
+    .reverse()
 }

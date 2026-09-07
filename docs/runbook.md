@@ -230,6 +230,11 @@ Ordem obrigatória; cada passo produz a entrada do seguinte.
 A emenda anterior **continua cadastrada**: a resposta antiga do assistente aponta para ela, e a
 numeração muda entre emendas. Não apague; ligue `supersedesId` da nova para a antiga.
 
+Cadastrou e a vigência não apareceu? O payload público fica **1 h em cache** na borda
+(`/api/v1/public/*`): invalide esse caminho no CloudFront ou espere. O índice e o documento
+não dependem do cadastro — aparecem com o deploy, e a tela mostra "vigência não declarada
+pela curadoria" até a emenda entrar no banco.
+
 A cópia servida pelo portal é **inalterada** e sempre acompanhada da procedência
 ([ADR-014](adr/014-copia-do-regulamento.md)). Para desligar a leitura embutida, apague
 `apps/web/public/regulamento/<edition>.pdf` e o `copia-<edition>.json`: a página volta

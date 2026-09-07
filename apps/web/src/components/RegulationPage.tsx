@@ -10,9 +10,11 @@ import {
   KIND_LABEL,
   copiaConfere,
   dataHora,
+  edicaoAberta,
   referenciasDaSecao,
   rotuloVigencia,
   urlDaCopia,
+  versaoDoArtefato,
   versaoEscolhida,
   versaoVigente,
   type CopiaLocal,
@@ -67,15 +69,21 @@ export function RegulationPage() {
   const reg = useSession((s) => s.regulation)
   const setReg = useSession((s) => s.setRegulation)
   const versoes = useFetch<PayloadRegulamento>('/api/v1/public/regulation/versions')
-  const versao = versaoEscolhida(versoes.data, reg.edition)
+  const versaoApi = versaoEscolhida(versoes.data, reg.edition)
   const vigente = versaoVigente(versoes.data)
   const referencias = useFetch<{ season: number; references: Referencia[] }>(
     versoes.data ? `/api/v1/public/regulation/references?season=${versoes.data.season}` : null,
     [versoes.data?.season],
   )
-  const indice = useIndice(versao?.edition ?? null)
-  const copia = useCopia(versao?.edition ?? null)
-  // A cópia só vale se o hash bater com o da emenda cadastrada (FR-DF34.11)
+  // Que emenda abrir: a cadastrada (banco) ou, na falta dela, a que o portal PUBLICOU em
+  // arquivo. Sem isso, uma tabela vazia esconde um documento que já está no ar.
+  const edicoes = useEdicoes()
+  const edition = edicaoAberta(versaoApi, reg.edition, edicoes)
+  const indice = useIndice(edition)
+  const copia = useCopia(edition)
+  const versao = versaoApi ?? versaoDoArtefato(indice.dados, copia)
+  // A cópia só vale se o hash bater com o da emenda (FR-DF34.11). Sem cadastro, o hash de
+  // referência é o do índice — que veio do mesmo manifest de que o assistente fala.
   const copiaValida = copiaConfere(copia, versao)
   const largo = useMinWidth(1200)
   const [painelAberto, setPainelAberto] = useState(true)
@@ -163,12 +171,12 @@ export function RegulationPage() {
         </div>
       )}
 
-      {versoes.estado === 'ok' && !versao && (
+      {versoes.estado === 'ok' && !versao && !indice.carregando && (
         <div className="bj-vazio">
-          <h3>Nenhuma emenda cadastrada ainda</h3>
+          <h3>Nenhuma emenda publicada ainda</h3>
           <p>
-            A curadoria do portal registra qual emenda vale para cada competição. Enquanto isso, o
-            documento oficial é o da organização.
+            A curadoria do portal registra qual emenda vale para cada competição, e o índice entra
+            junto com ela. Enquanto isso, o documento oficial é o da organização.
           </p>
         </div>
       )}
@@ -301,6 +309,27 @@ function useIndice(edition: string | null) {
 }
 
 /**
+ * Que emendas o portal publicou em arquivo (`/regulamento/edicoes.json`, gerado junto com
+ * o índice). É o que permite abrir o regulamento antes de a curadoria cadastrar a emenda.
+ */
+function useEdicoes(): string[] {
+  const [edicoes, setEdicoes] = useState<string[]>([])
+
+  useEffect(() => {
+    let vivo = true
+    fetch('/regulamento/edicoes.json')
+      .then((r) => (r.ok ? (r.json() as Promise<{ edicoes: string[] }>) : Promise.reject(r.status)))
+      .then((j) => vivo && setEdicoes(j.edicoes ?? []))
+      .catch(() => vivo && setEdicoes([]))
+    return () => {
+      vivo = false
+    }
+  }, [])
+
+  return edicoes
+}
+
+/**
  * Procedência da cópia local (`/regulamento/copia-<edition>.json`). Ausente = a emenda
  * não tem cópia no portal, e a página segue no modo `ponteiro` sem reclamar de nada: é
  * estado normal, não erro.
@@ -391,6 +420,11 @@ function Cabecalho({
   onQuery: (q: string) => void
 }) {
   const vigencia = rotuloVigencia(versao)
+  // A emenda montada do arquivo (sem cadastro) também precisa aparecer no seletor — senão
+  // o `select` fica com um valor que não existe entre as opções.
+  const opcoes = versao?.semCadastro
+    ? [versao, ...(payload?.versions ?? [])]
+    : (payload?.versions ?? [])
   return (
     <div className="bj-reg-cabecalho">
       <label className="bj-reg-campo">
@@ -399,9 +433,9 @@ function Cabecalho({
           className="bj-eq-seletor"
           value={versao?.edition ?? ''}
           onChange={(e) => onVersao(e.target.value)}
-          disabled={!payload?.versions.length}
+          disabled={opcoes.length < 2}
         >
-          {(payload?.versions ?? []).map((v) => (
+          {opcoes.map((v) => (
             <option key={v.id} value={v.edition}>
               {v.label}
               {v.supersededById ? ' · substituída' : ''}
@@ -412,6 +446,11 @@ function Cabecalho({
 
       <div className="bj-reg-fonte">
         {vigencia && <span className="bj-chip bj-chip-neutro">VIGENTE PARA: {vigencia}</span>}
+        {versao?.semCadastro && (
+          // O documento está no portal, mas ninguém declarou a vigência: dizer isso é mais
+          // honesto do que esconder o regulamento ou afirmar uma vigência que não existe.
+          <span className="bj-chip bj-chip-neutro">VIGÊNCIA NÃO DECLARADA PELA CURADORIA</span>
+        )}
         {versao && (
           <>
             <a className="bj-link" href={versao.source.url} target="_blank" rel="noreferrer">
