@@ -30,3 +30,7 @@ apps/web/public/config.json.*.bak
 # o CI publica o código real da Lambda; o artefato local nunca é fonte
 infra/modules/api/lambda-stub.zip
 infra/modules/auth/idp-link-stub.zip
+
+# saida do /brag (video de lancamento gerado pelo plugin latent-spaces/brag) — artefato local, nunca fonte
+brag-output*/
+brag-plan.md
