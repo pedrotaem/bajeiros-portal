@@ -38,19 +38,19 @@ jobs:
           mv apps/api/dist/idp-link/idp-link.zip out/
           cp apps/api/dist/lambda/migrate.bundle.mjs out/migrate/
           cp apps/api/migrations/*.sql out/migrate/migrations/
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: site-${{ github.sha }}
           path: apps/web/dist/
           retention-days: 30
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lambda-${{ github.sha }}
           path: |
             out/lambda.zip
             out/idp-link.zip
           retention-days: 30 # rollback: republicar o zip de um SHA anterior (runbook)
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: migrate-${{ github.sha }}
           path: out/migrate/
